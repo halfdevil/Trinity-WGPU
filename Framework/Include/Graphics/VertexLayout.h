@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include <vector>
 #include <webgpu/webgpu_cpp.h>
 
 namespace Trinity
 {
-    class VertexLayout
+    class VertexLayout : public Resource
     {
     public:
 
@@ -22,7 +23,8 @@ namespace Trinity
             return mSize;
         }
 
-        void setAttributes(std::vector<wgpu::VertexAttribute> attributes);
+        virtual std::type_index getType() const override;
+        virtual void setAttributes(std::vector<wgpu::VertexAttribute> attributes);
 
     private:
 

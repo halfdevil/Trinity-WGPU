@@ -37,7 +37,7 @@ namespace Trinity
 	{
 		Pressed = 0,
 		Released,
-		iggered,
+		Triggered,
 		Max
 	};
 

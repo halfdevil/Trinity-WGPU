@@ -67,4 +67,8 @@ namespace Trinity
     {
         mHandle = 0;
     }
+    std::type_index BindGroup::getType() const
+    {
+        return typeid(BindGroup);
+    }
 }

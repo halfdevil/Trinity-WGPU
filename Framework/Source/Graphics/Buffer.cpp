@@ -9,6 +9,11 @@ namespace Trinity
     {
     }
 
+    std::type_index Buffer::getType() const
+    {
+        return typeid(Buffer);
+    }
+
     void Buffer::mapAsync(uint32_t offset, uint32_t size)
     {
         mHandle.MapAsync(wgpu::MapMode::Write, offset, size,

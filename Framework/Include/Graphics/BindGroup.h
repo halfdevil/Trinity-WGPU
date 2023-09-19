@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include "Graphics/BindGroupLayout.h"
 #include "Graphics/VertexBuffer.h"
 #include "Graphics/IndexBuffer.h"
@@ -57,7 +58,7 @@ namespace Trinity
             EmptyBindingResource> resource;
     };
 
-    class BindGroup
+    class BindGroup : public Resource
     {
     public:
 
@@ -82,6 +83,8 @@ namespace Trinity
 
         bool create(const BindGroupLayout& layout, const std::vector<BindGroupItem>& items);
         void destroy();
+
+        virtual std::type_index getType() const override;
 
     private:
 

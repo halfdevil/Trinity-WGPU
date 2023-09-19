@@ -11,8 +11,8 @@ namespace Trinity
         UniformBuffer() = default;
         ~UniformBuffer();
 
-        UniformBuffer(const UniformBuffer&) = default;
-        UniformBuffer& operator = (const UniformBuffer&) = default;
+        UniformBuffer(const UniformBuffer&) = delete;
+        UniformBuffer& operator = (const UniformBuffer&) = delete;
 
         UniformBuffer(UniformBuffer&&) noexcept = default;
         UniformBuffer& operator = (UniformBuffer&&) noexcept = default;

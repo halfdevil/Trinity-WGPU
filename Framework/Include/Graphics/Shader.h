@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include <webgpu/webgpu_cpp.h>
 #include <unordered_map>
 #include <string>
@@ -30,7 +31,7 @@ namespace Trinity
         std::unordered_map<std::string, bool> mIncludedFiles;
     };
 
-    class Shader
+    class Shader : public Resource
     {
     public:
 
@@ -56,6 +57,8 @@ namespace Trinity
         bool create(const std::string& fileName);
         bool createFromSource(const std::string& source);
         void destroy();
+
+        virtual std::type_index getType() const override;
 
     private:
 

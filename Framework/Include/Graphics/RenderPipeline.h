@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include "Graphics/Shader.h"
 #include "Graphics/VertexBuffer.h"
 #include "Graphics/BindGroupLayout.h"
@@ -58,7 +59,7 @@ namespace Trinity
         std::optional<DepthStencilState> depthStencil{ std::nullopt };
     };
 
-    class RenderPipeline
+    class RenderPipeline : public Resource
     {
     public:
 
@@ -83,6 +84,8 @@ namespace Trinity
 
         bool create(const RenderPipelineProperties& renderProps);
         void destroy();
+
+        virtual std::type_index getType() const override;
 
     private:
 

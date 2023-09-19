@@ -7,6 +7,11 @@ namespace Trinity
         setAttributes(std::move(attributes));
     }
 
+    std::type_index VertexLayout::getType() const
+    {
+        return typeid(VertexLayout);
+    }
+
     void VertexLayout::setAttributes(std::vector<wgpu::VertexAttribute> attributes)
     {
         mAttributes = std::move(attributes);

@@ -24,7 +24,8 @@ namespace Trinity
         Texture2D& operator = (Texture2D&&) = default;
 
         bool create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage);
-        bool create(const std::string& fileName, wgpu::TextureFormat format);
+        bool create(const std::string& fileName, wgpu::TextureFormat format = wgpu::TextureFormat::RGBA8UnormSrgb);
+        bool create(const Image& image, wgpu::TextureFormat format = wgpu::TextureFormat::RGBA8UnormSrgb);
         void destroy();
 
         void write(uint32_t channels, const void* data, uint32_t size);

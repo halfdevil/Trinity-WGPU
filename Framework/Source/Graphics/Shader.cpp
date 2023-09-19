@@ -128,4 +128,9 @@ namespace Trinity
 	{
 		mHandle = nullptr;
 	}
+
+	std::type_index Shader::getType() const
+	{
+		return typeid(Shader);
+	}
 }

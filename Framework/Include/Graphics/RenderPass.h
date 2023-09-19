@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include "Graphics/FrameBuffer.h"
 #include "Graphics/SwapChain.h"
 #include "Graphics/RenderPipeline.h"
@@ -9,7 +10,7 @@
 
 namespace Trinity
 {
-    class RenderPass
+    class RenderPass : public Resource
     {
     public:
 
@@ -21,6 +22,8 @@ namespace Trinity
 
         RenderPass(RenderPass&&) = default;
         RenderPass& operator = (RenderPass&&) = default;
+
+        virtual std::type_index getType() const override;
 
         bool begin(const FrameBuffer& frameBuffer);
         bool begin();

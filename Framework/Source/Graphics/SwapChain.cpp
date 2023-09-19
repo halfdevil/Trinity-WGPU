@@ -74,4 +74,9 @@ namespace Trinity
         mHandle.Present();
 #endif
     }
+
+    std::type_index SwapChain::getType() const
+    {
+        return typeid(SwapChain);
+    }
 }

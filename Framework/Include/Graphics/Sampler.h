@@ -1,6 +1,7 @@
 #pragma once
 
-#include <webgpu/webgpu_cpp.h>
+#include "Graphics/Resource.h"
+#include "webgpu/webgpu_cpp.h"
 
 namespace Trinity
 {
@@ -15,15 +16,15 @@ namespace Trinity
         wgpu::CompareFunction compare{ wgpu::CompareFunction::Undefined };
     };
 
-    class Sampler
+    class Sampler : public Resource
     {
     public:
 
         Sampler() = default;
         ~Sampler();
 
-        Sampler(const Sampler&) = default;
-        Sampler& operator = (const Sampler&) = default;
+        Sampler(const Sampler&) = delete;
+        Sampler& operator = (const Sampler&) = delete;
 
         Sampler(Sampler&&) = default;
         Sampler& operator = (Sampler&&) = default;
@@ -40,6 +41,8 @@ namespace Trinity
 
         bool create(const SamplerProperties& samplerProps);
         void destroy();
+
+        virtual std::type_index getType() const override;
 
     private:
 

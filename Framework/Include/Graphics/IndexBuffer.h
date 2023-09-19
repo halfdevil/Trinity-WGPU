@@ -11,8 +11,8 @@ namespace Trinity
         IndexBuffer() = default;
         ~IndexBuffer();
 
-        IndexBuffer(const IndexBuffer&) = default;
-        IndexBuffer& operator = (const IndexBuffer&) = default;
+        IndexBuffer(const IndexBuffer&) = delete;
+        IndexBuffer& operator = (const IndexBuffer&) = delete;
 
         IndexBuffer(IndexBuffer&&) = default;
         IndexBuffer& operator = (IndexBuffer&&) = default;

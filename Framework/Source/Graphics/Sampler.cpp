@@ -38,4 +38,9 @@ namespace Trinity
     {
         mHandle = nullptr;
     }
+
+    std::type_index Sampler::getType() const
+    {
+        return typeid(Sampler);
+    }
 }

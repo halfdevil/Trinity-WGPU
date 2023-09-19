@@ -75,4 +75,8 @@ namespace Trinity
     {
         return mHandle != 0;
     }
+    std::type_index BindGroupLayout::getType() const
+    {
+        return typeid(BindGroupLayout);
+    }
 }

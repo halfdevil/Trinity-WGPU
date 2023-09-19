@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include "Core/Image.h"
 #include <webgpu/webgpu_cpp.h>
 
@@ -12,23 +13,29 @@ namespace Trinity
         Cube
     };
 
-    class Texture
+    class Texture : public Resource
     {
     public:
 
         static const uint32_t kInvalidTexture = (uint32_t)-1;
 
         Texture() = default;
-        Texture(TextureType type)
-            : mType(type)
+        Texture(TextureType type) : 
+            mTextureType(type)
         {
         }
 
         virtual ~Texture() = 0;
 
-        TextureType getType() const
+        Texture(const Texture&) = delete;
+        Texture& operator = (const Texture&) = delete;
+
+        Texture(Texture&&) = default;
+        Texture& operator = (Texture&&) = default;
+
+        TextureType getTextureType() const
         {
-            return mType;
+            return mTextureType;
         }
 
         const wgpu::Texture& getHandle() const
@@ -46,10 +53,12 @@ namespace Trinity
             return mFormat;
         }
 
+        virtual std::type_index getType() const override;
+
     protected:
 
-        TextureType mType{ TextureType::Undefined };
-        wgpu::TextureFormat mFormat;
+        TextureType mTextureType{ TextureType::Undefined };
+        wgpu::TextureFormat mFormat{ wgpu::TextureFormat::RGBA8UnormSrgb };
         wgpu::Texture mHandle;
         wgpu::TextureView mView;
     };

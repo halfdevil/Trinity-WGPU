@@ -29,8 +29,15 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
 	include_directories("ThirdParty/dawnbuild/include")
 endif()
 
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "")
+set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "")
+set(TINYGLTF_INSTALL OFF CACHE BOOL "")
+
+add_subdirectory("ThirdParty/tinygltf")
+
 include_directories("ThirdParty/stb")
 include_directories("ThirdParty/glm")
+include_directories("ThirdParty/tinygltf")
 
 # Include sub-projects.
 add_subdirectory("Framework")

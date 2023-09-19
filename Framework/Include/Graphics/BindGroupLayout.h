@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include <webgpu/webgpu_cpp.h>
 #include <variant>
 #include <vector>
@@ -34,7 +35,7 @@ namespace Trinity
             SamplerBindingLayout> bindingLayout;
     };
 
-    class BindGroupLayout
+    class BindGroupLayout : public Resource
     {
     public:
 
@@ -56,6 +57,8 @@ namespace Trinity
         void destroy();
 
         bool isValid() const;
+
+        virtual std::type_index getType() const override;
 
     private:
 

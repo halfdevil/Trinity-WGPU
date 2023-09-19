@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include "Graphics/Texture.h"
 
 namespace Trinity
 {
-    class FrameBuffer
+    class FrameBuffer : public Resource
     {
     public:
 
@@ -31,6 +32,8 @@ namespace Trinity
         {
             return mHasDepthStencilAttachment;
         }
+
+        virtual std::type_index getType() const override;
 
         bool addColorAttachment(const Texture& texture, wgpu::Color clearColor = { 0, 0, 0, 1 });
         bool setDepthAttachment(const Texture& texture, float depthValue = 0.0f);

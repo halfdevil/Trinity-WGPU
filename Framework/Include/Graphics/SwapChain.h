@@ -1,19 +1,20 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include <webgpu/webgpu_cpp.h>
 #include <string>
 
 namespace Trinity
 {
-    class SwapChain
+    class SwapChain : public Resource
     {
     public:
 
         SwapChain() = default;
         ~SwapChain();
 
-        SwapChain(const SwapChain&) = default;
-        SwapChain& operator = (const SwapChain&) = default;
+        SwapChain(const SwapChain&) = delete;
+        SwapChain& operator = (const SwapChain&) = delete;
 
         SwapChain(SwapChain&&) = default;
         SwapChain& operator = (SwapChain&&) = default;
@@ -74,6 +75,8 @@ namespace Trinity
         void destroy();
         void setClearColor(const wgpu::Color& clearColor);
         void present();
+
+        virtual std::type_index getType() const override;
 
     private:
 

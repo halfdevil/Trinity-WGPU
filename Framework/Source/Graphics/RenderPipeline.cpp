@@ -125,4 +125,9 @@ namespace Trinity
         mLayout = nullptr;
         mHandle = nullptr;
     }
+
+    std::type_index RenderPipeline::getType() const
+    {
+        return typeid(RenderPipeline);
+    }
 }

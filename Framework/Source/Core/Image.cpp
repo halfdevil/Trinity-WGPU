@@ -31,16 +31,18 @@ namespace Trinity
 		std::vector<uint8_t> buffer(reader.getSize());
 		reader.read(buffer.data(), reader.getSize());
 
-		return create(buffer.data(), reader.getSize(), type);
+		return create(buffer, type);
 	}
 
-	bool Image::create(const uint8_t* data, uint32_t dataSize, ImageType type)
+	bool Image::create(const std::vector<uint8_t>& data, ImageType type)
 	{
 		int32_t width{ 0 };
 		int32_t height{ 0 };
 		int32_t numChannels{ 0 };
 
-		auto* image = stbi_load_from_memory(data, dataSize, &width, &height, &numChannels, STBI_rgb_alpha);
+		auto* image = stbi_load_from_memory(data.data(), (int)data.size(), &width, 
+			&height, &numChannels, STBI_rgb_alpha);
+
 		if (!image)
 		{
 			LogError("stbi_load_from_memory() failed!!");

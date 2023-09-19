@@ -130,7 +130,7 @@ namespace Trinity
 
 		if (mKeyboard.isKeyiggered(key))
 		{
-			auto& trigBindings = mActionBindings[InputEvent::iggered];
+			auto& trigBindings = mActionBindings[InputEvent::Triggered];
 			auto trigIt = trigBindings.find(keyIt->second);
 
 			if (trigIt != trigBindings.end())
@@ -166,7 +166,7 @@ namespace Trinity
 
 		if (mMouse.isButtoniggered(button))
 		{
-			auto& trigBindings = mActionBindings[InputEvent::iggered];
+			auto& trigBindings = mActionBindings[InputEvent::Triggered];
 			auto trigIt = trigBindings.find(buttonIt->second);
 
 			if (trigIt != trigBindings.end())

@@ -10,3 +10,9 @@
 [submodule "ThirdParty/dawnbuild"]
 	path = ThirdParty/dawnbuild
 	url = https://github.com/halfdevil/dawnbuild.git
+[submodule "ThirdParty/tinygltf"]
+	path = ThirdParty/tinygltf
+	url = https://github.com/syoyo/tinygltf.git
+[submodule "ThirdParty/spdlog"]
+	path = ThirdParty/spdlog
+	url = https://github.com/gabime/spdlog.git

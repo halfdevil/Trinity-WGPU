@@ -15,6 +15,11 @@ namespace Trinity
         mDepthStencilAttachment = {};
     }
 
+    std::type_index FrameBuffer::getType() const
+    {
+        return typeid(Resource);
+    }
+
     bool FrameBuffer::addColorAttachment(const Texture& texture, wgpu::Color clearColor)
     {
         wgpu::RenderPassColorAttachment colorAttachment = {

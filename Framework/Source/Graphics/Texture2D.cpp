@@ -69,6 +69,11 @@ namespace Trinity
             return false;
         }
 
+        return create(image, format);
+    }
+
+    bool Texture2D::create(const Image& image, wgpu::TextureFormat format)
+    {
         const wgpu::Device& device = GraphicsDevice::get();
         const wgpu::Queue& queue = GraphicsDevice::get().getQueue();
 

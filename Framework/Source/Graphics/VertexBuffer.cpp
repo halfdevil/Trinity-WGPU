@@ -10,16 +10,16 @@ namespace Trinity
         destroy();
     }
 
-    bool VertexBuffer::create(VertexLayout vertexLayout, uint32_t numVertices, const void* data)
+    bool VertexBuffer::create(const VertexLayout& vertexLayout, uint32_t numVertices, const void* data)
     {
         const wgpu::Device& device = GraphicsDevice::get();
 
-        mVertexLayout = std::move(vertexLayout);
+        mVertexLayout = &vertexLayout;
         mNumVertices = numVertices;
 
         wgpu::BufferDescriptor bufferDescriptor{};
         bufferDescriptor.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        bufferDescriptor.size = mVertexLayout.getSize() * mNumVertices;
+        bufferDescriptor.size = mVertexLayout->getSize() * mNumVertices;
         bufferDescriptor.mappedAtCreation = false;
 
         mHandle = device.CreateBuffer(&bufferDescriptor);
@@ -29,9 +29,9 @@ namespace Trinity
             return false;
         }
 
-        const auto& vertexAttributes = mVertexLayout.getAttributes();
+        const auto& vertexAttributes = mVertexLayout->getAttributes();
         mBufferLayout = {
-            .arrayStride = mVertexLayout.getSize(),
+            .arrayStride = mVertexLayout->getSize(),
             .stepMode = wgpu::VertexStepMode::Vertex,
             .attributeCount = static_cast<uint32_t>(vertexAttributes.size()),
             .attributes = vertexAttributes.data()
@@ -39,7 +39,7 @@ namespace Trinity
 
         if (data)
         {
-            write(0, mVertexLayout.getSize() * mNumVertices, data);
+            write(0, mVertexLayout->getSize() * mNumVertices, data);
         }
 
         return true;

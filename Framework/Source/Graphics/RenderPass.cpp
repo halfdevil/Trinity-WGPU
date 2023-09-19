@@ -15,6 +15,11 @@ namespace Trinity
         mEncoder = nullptr;
     }
 
+    std::type_index RenderPass::getType() const
+    {
+        return typeid(RenderPass);
+    }
+
     bool RenderPass::begin(const FrameBuffer& frameBuffer)
     {
         const wgpu::CommandEncoder& commandEncoder = GraphicsDevice::get().getEncoder();
