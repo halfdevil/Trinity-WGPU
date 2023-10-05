@@ -1,16 +1,20 @@
 #pragma once
 
 #include "Graphics/Resource.h"
-#include "Graphics/BindGroupLayout.h"
-#include "Graphics/VertexBuffer.h"
-#include "Graphics/IndexBuffer.h"
-#include "Graphics/UniformBuffer.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Sampler.h"
+#include <webgpu/webgpu_cpp.h>
 #include <optional>
+#include <variant>
 
 namespace Trinity
 {
+    class Buffer;
+    class BindGroupLayout;
+    class VertexBuffer;
+    class IndexBuffer;
+    class UniformBuffer;
+    class Texture;
+    class Sampler;
+
     struct BufferBindingResource
     {
         BufferBindingResource(const Buffer& inBuffer)

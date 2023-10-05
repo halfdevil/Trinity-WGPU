@@ -10,14 +10,23 @@
 namespace Trinity
 {
 	class BindGroup;
+	class BindGroupLayout;
 	class Texture;
 	class Sampler;
+	class Shader;
+	class UniformBuffer;
 
 	enum class AlphaMode : uint32_t
 	{
 		Opaque,
 		Mask,
 		Blend
+	};
+
+	struct MaterialTexture
+	{
+		Texture* texture{ nullptr };
+		Sampler* sampler{ nullptr };
 	};
 
 	class Material : public Resource
@@ -53,17 +62,36 @@ namespace Trinity
 			return mAlphaMode;
 		}
 
-		Texture* getTexture(const std::string& name);
-		Sampler* getSampler(const std::string& name);
+		Shader* getShader() const
+		{
+			return mShader;
+		}
 
+		BindGroup* getBindGroup() const
+		{
+			return mBindGroup.get();
+		}
+
+		BindGroupLayout* getBindGroupLayout() const
+		{
+			return mBindGroupLayout.get();
+		}
+
+		UniformBuffer* getParamsBuffer() const
+		{
+			return mParamsBuffer.get();
+		}
+
+		MaterialTexture* getTexture(const std::string& name);
 		virtual std::type_index getType() const override;
 
 		virtual void setEmissive(const glm::vec3& emissive);
 		virtual void setDoubleSided(bool doubleSided);
 		virtual void setAlphaCutoff(float alphaCutoff);
 		virtual void setAlphaMode(AlphaMode alphaMode);
-		virtual void setTexture(const std::string& name, Texture& texture);
-		virtual void setSampler(const std::string& name, Sampler& sampler);
+		virtual void setShader(Shader& shader);
+		virtual void setTexture(const std::string& name, Texture& texture, Sampler& sampler);
+		virtual bool compile() = 0;
 
 	protected:
 
@@ -71,7 +99,10 @@ namespace Trinity
 		bool mDoubleSided{ false };
 		float mAlphaCutoff{ 0.5f };
 		AlphaMode mAlphaMode{ AlphaMode::Opaque };
-		std::unordered_map<std::string, Texture*> mTextures;
-		std::unordered_map<std::string, Sampler*> mSamplers;
+		Shader* mShader{ nullptr };
+		std::unique_ptr<BindGroup> mBindGroup{ nullptr };
+		std::unique_ptr<BindGroupLayout> mBindGroupLayout{ nullptr };
+		std::unique_ptr<UniformBuffer> mParamsBuffer{ nullptr };
+		std::unordered_map<std::string, MaterialTexture> mTextures;
 	};
 }

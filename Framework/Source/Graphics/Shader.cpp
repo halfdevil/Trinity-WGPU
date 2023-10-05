@@ -6,9 +6,25 @@
 
 namespace Trinity
 {
-	std::string ShaderPreProcessor::process()
+	void ShaderPreProcessor::addDefine(const std::string& define)
 	{
-		return processFile(mFileName);
+		std::string newDefine;
+		std::transform(define.begin(), define.end(), newDefine.begin(), ::toupper);
+
+		mDefines.push_back(newDefine);
+	}
+
+	void ShaderPreProcessor::addDefines(const std::vector<std::string>& defines)
+	{
+		for (const std::string& define : defines)
+		{
+			addDefine(define);
+		}
+	}
+
+	std::string ShaderPreProcessor::process(const std::string& fileName)
+	{
+		return processFile(fileName);
 	}
 
 	std::string ShaderPreProcessor::processFile(const std::string& fileName)
@@ -77,9 +93,26 @@ namespace Trinity
 				mIncludedFiles.insert(std::pair(filePath, true));
 			}
 		}
+		else if (line.find("#ifdef ") != line.npos)
+		{
+			const auto pos = line.find("#ifdef ");
+			const auto name = line.substr(pos + 1);
+
+			if (std::find(std::begin(mDefines), std::end(mDefines), name) == mDefines.end())
+			{
+				mExcludeLine = true;
+			}
+		}
+		else if (line.find("#endif") != line.npos)
+		{
+			mExcludeLine = false;
+		}
 		else
 		{
-			output.append(line);
+			if (!mExcludeLine)
+			{
+				output.append(line);
+			}
 		}
 
 		return output;
@@ -90,11 +123,9 @@ namespace Trinity
 		destroy();
 	}
 
-	bool Shader::create(const std::string& fileName)
+	bool Shader::create(const std::string& fileName, ShaderPreProcessor& processor)
 	{
-		ShaderPreProcessor processor(fileName);
-		std::string source = processor.process();
-
+		std::string source = processor.process(fileName);
 		if (source.empty())
 		{
 			LogError("Error loading shader source: %s", fileName.c_str());

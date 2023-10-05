@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Math/Types.h"
-#include "Graphics/VertexLayout.h"
 #include <algorithm>
 #include <memory>
 #include <string>

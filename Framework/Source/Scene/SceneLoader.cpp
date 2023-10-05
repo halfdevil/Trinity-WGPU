@@ -11,6 +11,9 @@
 #include "Graphics/Sampler.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/BindGroup.h"
+#include "Graphics/UniformBuffer.h"
+#include "Graphics/BindGroup.h"
+#include "Graphics/BindGroupLayout.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "VFS/FileSystem.h"
@@ -166,7 +169,6 @@ namespace Trinity
 		}
 
 		mModelPath = dir.string();
-
 		return std::make_unique<Scene>(loadScene());
 	}
 
@@ -355,6 +357,21 @@ namespace Trinity
 		return std::make_unique<Texture2D>();
 	}
 
+	std::unique_ptr<Shader> SceneLoader::createDefaultShader(const std::vector<std::string>& defines) const
+	{
+		ShaderPreProcessor processor;
+		processor.addDefines(defines);
+
+		auto shader = std::make_unique<Shader>();
+		if (!shader->create(PBRMaterial::kDefaultShader, processor))
+		{
+			LogError("Shader::create() failed!!");
+			return nullptr;
+		}
+
+		return shader;
+	}
+
 	std::unique_ptr<PBRMaterial> SceneLoader::createDefaultMaterial() const
 	{
 		tinygltf::Material gltfMaterial;
@@ -432,6 +449,7 @@ namespace Trinity
 
 		std::vector<Texture*> textures;
 		std::vector<Sampler*> samplers;
+		std::vector<std::string> shaderDefines;
 
 		bool hasTextures = scene.getResourceCache().hasResource<Texture>();
 		bool hasSamplers = scene.getResourceCache().hasResource<Sampler>();
@@ -458,8 +476,8 @@ namespace Trinity
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 					
-					material->setTexture(gltfValue.first, *texture);
-					material->setSampler(gltfValue.first, *sampler);
+					shaderDefines.push_back(std::string("has_") + gltfValue.first);
+					material->setTexture(gltfValue.first, *texture, *sampler);
 				}
 			}
 
@@ -472,11 +490,21 @@ namespace Trinity
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 
-					material->setTexture(gltfValue.first, *texture);
-					material->setSampler(gltfValue.first, *sampler);
+					shaderDefines.push_back(std::string("has_") + gltfValue.first);
+					material->setTexture(gltfValue.first, *texture, *sampler);
 				}
 			}
 
+			auto shader = createDefaultShader(shaderDefines);
+			material->setShader(*shader);
+
+			if (!material->compile())
+			{
+				LogError("PBRMaterial::compile() failed!!");
+				return scene;
+			}
+
+			scene.getResourceCache().addResource(std::move(shader));
 			scene.getResourceCache().addResource(std::move(material));
 		}
 
@@ -510,7 +538,6 @@ namespace Trinity
 
 				std::string subMeshName(buffer);
 #endif
-
 				auto subMesh = std::make_unique<SubMesh>();
 				subMesh->setName(subMeshName);
 

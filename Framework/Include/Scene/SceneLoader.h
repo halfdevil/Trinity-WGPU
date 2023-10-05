@@ -21,6 +21,8 @@ namespace Trinity
 	class Image;
 	class Sampler;
 	class Texture;
+	class BindGroup;
+	class Shader;
 
 	template <typename T, typename Y>
 	struct TypeCast
@@ -56,6 +58,7 @@ namespace Trinity
 		virtual std::unique_ptr<Sampler> parseSampler(const tinygltf::Sampler& gltfSampler) const;
 		virtual std::unique_ptr<Texture> parseTexture(const tinygltf::Texture& gltfTexture) const;
 
+		virtual std::unique_ptr<Shader> createDefaultShader(const std::vector<std::string>& defines) const;
 		virtual std::unique_ptr<PBRMaterial> createDefaultMaterial() const;
 		virtual std::unique_ptr<Sampler> createDefaultSampler() const;
 		virtual std::unique_ptr<Camera> createDefaultCamera() const;

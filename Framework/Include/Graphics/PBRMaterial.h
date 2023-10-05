@@ -4,9 +4,13 @@
 
 namespace Trinity
 {
+	class UniformBuffer;
+
 	class PBRMaterial : public Material
 	{
 	public:
+
+		static constexpr const char* kDefaultShader = "/Framework/Shaders/PBR.wgsl";
 
 		PBRMaterial() = default;
 		virtual ~PBRMaterial() = default;
@@ -35,6 +39,7 @@ namespace Trinity
 		virtual void setBaseColorFactor(const glm::vec4& baseColorFactor);
 		virtual void setMetallicFactor(float metallicFactor);
 		virtual void setRoughnessFactor(float roughnessFactor);
+		virtual bool compile() override;
 
 	protected:
 

@@ -12,12 +12,12 @@ namespace Trinity
     {
     public:
 
-        ShaderPreProcessor(const std::string& fileName)
-            : mFileName(fileName)
-        {
-        }
+        ShaderPreProcessor() = default;
 
-        std::string process();
+        void addDefine(const std::string& define);
+        void addDefines(const std::vector<std::string>& defines);
+
+        std::string process(const std::string& fileName);
 
     private:
 
@@ -27,8 +27,9 @@ namespace Trinity
 
     private:
 
-        std::string mFileName;
         std::unordered_map<std::string, bool> mIncludedFiles;
+        std::vector<std::string> mDefines;
+        bool mExcludeLine{ false };
     };
 
     class Shader : public Resource
@@ -54,7 +55,7 @@ namespace Trinity
             return mHandle != nullptr;
         }
 
-        bool create(const std::string& fileName);
+        bool create(const std::string& fileName, ShaderPreProcessor& processor);
         bool createFromSource(const std::string& source);
         void destroy();
 

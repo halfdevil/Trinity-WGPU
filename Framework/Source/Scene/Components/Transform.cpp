@@ -67,7 +67,7 @@ namespace Trinity
 		auto parent = mNode->getParent();
 		if (parent != nullptr)
 		{
-			auto& transform = parent->getComponent<Transform>();
+			auto& transform = parent->getTransform();
 			mWorldMatrix = transform.getWorldMatrix() * mWorldMatrix;
 		}
 
