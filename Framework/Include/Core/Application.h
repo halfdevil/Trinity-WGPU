@@ -1,16 +1,30 @@
 #pragma once
 
-#include "Core/Logger.h"
-#include "Core/Debugger.h"
-#include "Core/Clock.h"
 #include "Core/Window.h"
-#include "VFS/FileSystem.h"
-#include "Input/Input.h"
-#include "Graphics/GraphicsDevice.h"
-#include "Graphics/SwapChain.h"
+#include "Core/Logger.h"
+#include <memory>
+
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
 
 namespace Trinity
 {
+    class Debugger;
+    class Clock;
+    class FileSystem;
+    class Input;
+    class GraphicsDevice;
+
+    struct ApplicationOptions
+    {
+        LogLevel logLevel{ LogLevel::Error };
+        std::string title;
+        uint32_t width{ 1024 };
+        uint32_t height{ 768 };
+        DisplayMode displayMode{ DisplayMode::Windowed };
+        std::string configFile;
+    };
+
     class Application
     {
     public:
@@ -24,14 +38,23 @@ namespace Trinity
         Application(Application&&) = delete;
         Application& operator = (Application&&) = delete;
 
-        virtual void run(const std::string& title, uint32_t width = 1024, uint32_t height = 768,
-            DisplayMode displayMode = DisplayMode::Windowed);
+        const json& getConfig() const
+        {
+            return mConfig;
+        }
+
+        const ApplicationOptions& getOptions() const
+        {
+            return mOptions;
+        }
+
+        virtual void run(const ApplicationOptions& options);
 
     protected:
 
         virtual bool init();
-        virtual void update();
-        virtual void render();
+        virtual void update(float deltaTime);
+        virtual void render(float deltaTime);
         virtual void frame();
         virtual void exit();
 
@@ -41,12 +64,14 @@ namespace Trinity
 
     protected:
 
-        Logger mLogger;
-        Debugger mDebugger;
-        Clock mClock;
-        Window mWindow;
-        FileSystem mFileSystem;
-        Input mInput;
-        GraphicsDevice mGraphicsDevice;
+        json mConfig;
+        ApplicationOptions mOptions;
+        std::unique_ptr<Logger> mLogger{ nullptr };
+        std::unique_ptr<Debugger> mDebugger{ nullptr };
+        std::unique_ptr<Clock> mClock{ nullptr };
+        std::unique_ptr<Window> mWindow{ nullptr };
+        std::unique_ptr<FileSystem> mFileSystem{ nullptr };
+        std::unique_ptr<Input> mInput{ nullptr };
+        std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
     };
 }

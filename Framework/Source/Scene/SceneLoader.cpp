@@ -20,6 +20,12 @@
 #include <format>
 #include <queue>
 
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_NO_EXTERNAL_IMAGE
+#define TINYGLTF_IMPLEMENTATION
+#include "tiny_gltf.h"
+
 namespace Trinity
 {
 	wgpu::FilterMode findMinFilter(int minFilter)
@@ -132,47 +138,7 @@ namespace Trinity
 		return wgpu::IndexFormat::Undefined;
 	}
 
-	std::unique_ptr<Scene> SceneLoader::readScene(const std::string& fileName)
-	{
-		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
-		if (!file)
-		{
-			LogError("FileSystem::openFile() failed for: %s", fileName.c_str());
-			return nullptr;
-		}
-
-		fs::path dir{ fileName };
-		dir.remove_filename();
-
-		FileReader reader{ *file };
-		std::string source = reader.readAsString();
-
-		std::string err;
-		std::string warn;
-		tinygltf::TinyGLTF gltfLoader;
-		
-		if (!gltfLoader.LoadASCIIFromString(&mModel, &err, &warn, source.c_str(), (uint32_t)source.length(), dir.string()))
-		{
-			LogError("Failed to load GLTF file: %s", fileName.c_str());
-			return nullptr;
-		}
-
-		if (!err.empty())
-		{
-			LogError("Error loading GLTF file: %s", err.c_str());
-			return nullptr;
-		}
-
-		if (!warn.empty())
-		{
-			LogWarning("Warning loading GLTF file: %s", warn.c_str());
-		}
-
-		mModelPath = dir.string();
-		return std::make_unique<Scene>(loadScene());
-	}
-
-	std::unique_ptr<Node> SceneLoader::parseNode(const tinygltf::Node& gltfNode) const
+	std::unique_ptr<Node> parseNode(const tinygltf::Node& gltfNode)
 	{
 		auto node = std::make_unique<Node>();
 		node->setName(gltfNode.name);
@@ -182,7 +148,7 @@ namespace Trinity
 		if (!gltfNode.translation.empty())
 		{
 			glm::vec3 translation;
-			std::transform(gltfNode.translation.begin(), gltfNode.translation.end(), 
+			std::transform(gltfNode.translation.begin(), gltfNode.translation.end(),
 				glm::value_ptr(translation), TypeCast<double, float>{});
 
 			transform.setTranslation(translation);
@@ -218,7 +184,7 @@ namespace Trinity
 		return node;
 	}
 
-	std::unique_ptr<Camera> SceneLoader::parseCamera(const tinygltf::Camera& gltfCamera) const
+	std::unique_ptr<Camera> parseCamera(const tinygltf::Camera& gltfCamera)
 	{
 		std::unique_ptr<Camera> camera{ nullptr };
 
@@ -240,7 +206,7 @@ namespace Trinity
 		return camera;
 	}
 
-	std::unique_ptr<Mesh> SceneLoader::parseMesh(const tinygltf::Mesh& gltfMesh) const
+	std::unique_ptr<Mesh> parseMesh(const tinygltf::Mesh& gltfMesh)
 	{
 		auto mesh = std::make_unique<Mesh>();
 		mesh->setName(gltfMesh.name);
@@ -248,7 +214,7 @@ namespace Trinity
 		return mesh;
 	}
 
-	std::unique_ptr<PBRMaterial> SceneLoader::parseMaterial(const tinygltf::Material& gltfMaterial) const
+	std::unique_ptr<PBRMaterial> parseMaterial(const tinygltf::Material& gltfMaterial)
 	{
 		auto material = std::make_unique<PBRMaterial>();
 
@@ -257,7 +223,7 @@ namespace Trinity
 			if (gltfValue.first == "baseColorFactor")
 			{
 				const auto& colorFactor = gltfValue.second.ColorFactor();
-				material->setBaseColorFactor(glm::vec4(colorFactor[0], colorFactor[1], 
+				material->setBaseColorFactor(glm::vec4(colorFactor[0], colorFactor[1],
 					colorFactor[2], colorFactor[3]));
 			}
 			else if (gltfValue.first == "metallicFactor")
@@ -305,7 +271,7 @@ namespace Trinity
 		return material;
 	}
 
-	std::unique_ptr<Image> SceneLoader::parseImage(const tinygltf::Image& gltfImage) const
+	std::unique_ptr<Image> parseImage(const std::string& modelPath, const tinygltf::Image& gltfImage)
 	{
 		std::unique_ptr<Image> image{ nullptr };
 
@@ -319,8 +285,8 @@ namespace Trinity
 		}
 		else
 		{
-			auto imageUri = mModelPath + "/" + gltfImage.uri;
-			
+			auto imageUri = modelPath + "/" + gltfImage.uri;
+
 			image = std::make_unique<Image>();
 			if (!image->create(imageUri))
 			{
@@ -331,7 +297,7 @@ namespace Trinity
 		return image;
 	}
 
-	std::unique_ptr<Sampler> SceneLoader::parseSampler(const tinygltf::Sampler& gltfSampler) const
+	std::unique_ptr<Sampler> parseSampler(const tinygltf::Sampler& gltfSampler)
 	{
 		SamplerProperties samplerProps =
 		{
@@ -352,12 +318,12 @@ namespace Trinity
 		return sampler;
 	}
 
-	std::unique_ptr<Texture> SceneLoader::parseTexture(const tinygltf::Texture& gltfTexture) const
+	std::unique_ptr<Texture> parseTexture(const tinygltf::Texture& gltfTexture)
 	{
 		return std::make_unique<Texture2D>();
 	}
 
-	std::unique_ptr<Shader> SceneLoader::createDefaultShader(const std::vector<std::string>& defines) const
+	std::unique_ptr<Shader> createDefaultShader(const std::vector<std::string>& defines)
 	{
 		ShaderPreProcessor processor;
 		processor.addDefines(defines);
@@ -372,13 +338,13 @@ namespace Trinity
 		return shader;
 	}
 
-	std::unique_ptr<PBRMaterial> SceneLoader::createDefaultMaterial() const
+	std::unique_ptr<PBRMaterial> createDefaultMaterial()
 	{
 		tinygltf::Material gltfMaterial;
 		return parseMaterial(gltfMaterial);
 	}
 
-	std::unique_ptr<Sampler> SceneLoader::createDefaultSampler() const
+	std::unique_ptr<Sampler> createDefaultSampler()
 	{
 		tinygltf::Sampler gltfSampler;
 
@@ -390,7 +356,7 @@ namespace Trinity
 		return parseSampler(gltfSampler);
 	}
 
-	std::unique_ptr<Camera> SceneLoader::createDefaultCamera() const
+	std::unique_ptr<Camera> createDefaultCamera()
 	{
 		tinygltf::Camera gltfCamera;
 
@@ -404,7 +370,7 @@ namespace Trinity
 		return parseCamera(gltfCamera);
 	}
 
-	Scene SceneLoader::loadScene()
+	Scene readScene(const std::string& modelPath, tinygltf::Model* model)
 	{
 		auto scene = Scene();
 		scene.setResourceCache(std::make_unique<ResourceCache>());
@@ -412,24 +378,24 @@ namespace Trinity
 		auto defaultSampler = createDefaultSampler();
 		scene.getResourceCache().addResource(std::move(defaultSampler));
 
-		for (const auto& gltfSampler : mModel.samplers)
+		for (const auto& gltfSampler : model->samplers)
 		{
 			auto sampler = parseSampler(gltfSampler);
 			scene.getResourceCache().addResource(std::move(sampler));
 		}
 
 		std::vector<std::unique_ptr<Image>> images;
-		for (const auto& gltfImage : mModel.images)
+		for (const auto& gltfImage : model->images)
 		{
-			auto image = parseImage(gltfImage);
+			auto image = parseImage(modelPath, gltfImage);
 			images.push_back(std::move(image));
 		}
 
 		std::unordered_map<size_t, size_t> texSampMap;
-		size_t numSamplers = mModel.samplers.size();
+		size_t numSamplers = model->samplers.size();
 		size_t numTextures = 0;
 
-		for (const auto& gltfTexture : mModel.textures)
+		for (const auto& gltfTexture : model->textures)
 		{
 			Assert(gltfTexture.source < images.size(), "Invalid gltfTexture.source");
 
@@ -464,7 +430,7 @@ namespace Trinity
 			samplers = scene.getResourceCache().getResources<Sampler>();
 		}
 
-		for (const auto& gltfMaterial : mModel.materials)
+		for (const auto& gltfMaterial : model->materials)
 		{
 			auto material = parseMaterial(gltfMaterial);
 			for (const auto& gltfValue : gltfMaterial.values)
@@ -514,15 +480,14 @@ namespace Trinity
 		auto vertexLayout = std::make_unique<VertexLayout>();
 		vertexLayout->setAttributes({
 			{ wgpu::VertexFormat::Float32x3, 0, 0 },
-			{ wgpu::VertexFormat::Float32x2, 12, 1 },
-			{ wgpu::VertexFormat::Float32x3, 20, 2 },
-			{ wgpu::VertexFormat::Float32x3, 32, 3 }
+			{ wgpu::VertexFormat::Float32x3, 12, 1 },
+			{ wgpu::VertexFormat::Float32x2, 24, 2 },
 		});
 
 		const auto* vertexLayoutPtr = vertexLayout.get();
 		scene.getResourceCache().addResource(std::move(vertexLayout));
 
-		for (const auto& gltfMesh : mModel.meshes)
+		for (const auto& gltfMesh : model->meshes)
 		{
 			auto mesh = std::make_unique<Mesh>();
 			mesh->setName(gltfMesh.name);
@@ -545,26 +510,26 @@ namespace Trinity
 				const float* normals = nullptr;
 				const float* uvs = nullptr;
 
-				auto& accessor = mModel.accessors[gltfPrimitive.attributes.find("POSITION")->second];
-				auto& bufferView = mModel.bufferViews[accessor.bufferView];
+				auto& accessor = model->accessors[gltfPrimitive.attributes.find("POSITION")->second];
+				auto& bufferView = model->bufferViews[accessor.bufferView];
 				size_t numVertices = accessor.count;
 
-				positions = reinterpret_cast<const float*>(&(mModel.buffers[bufferView.buffer].
+				positions = reinterpret_cast<const float*>(&(model->buffers[bufferView.buffer].
 					data[accessor.byteOffset + bufferView.byteOffset]));
 
 				if (gltfPrimitive.attributes.find("NORMAL") != gltfPrimitive.attributes.end())
 				{
-					accessor = mModel.accessors[gltfPrimitive.attributes.find("NORMAL")->second];
-					bufferView = mModel.bufferViews[accessor.bufferView];
-					normals = reinterpret_cast<const float*>(&(mModel.buffers[bufferView.buffer].
+					accessor = model->accessors[gltfPrimitive.attributes.find("NORMAL")->second];
+					bufferView = model->bufferViews[accessor.bufferView];
+					normals = reinterpret_cast<const float*>(&(model->buffers[bufferView.buffer].
 						data[accessor.byteOffset + bufferView.byteOffset]));
 				}
 
 				if (gltfPrimitive.attributes.find("TEXCOORD_0") != gltfPrimitive.attributes.end())
 				{
-					accessor = mModel.accessors[gltfPrimitive.attributes.find("TEXCOORD_0")->second];
-					bufferView = mModel.bufferViews[accessor.bufferView];
-					uvs = reinterpret_cast<const float*>(&(mModel.buffers[bufferView.buffer].
+					accessor = model->accessors[gltfPrimitive.attributes.find("TEXCOORD_0")->second];
+					bufferView = model->bufferViews[accessor.bufferView];
+					uvs = reinterpret_cast<const float*>(&(model->buffers[bufferView.buffer].
 						data[accessor.byteOffset + bufferView.byteOffset]));
 				}
 
@@ -592,9 +557,9 @@ namespace Trinity
 
 				if (gltfPrimitive.indices >= 0)
 				{
-					auto numIndices = getAttributeSize(mModel, gltfPrimitive.indices);
-					auto indexFormat = getIndexFormat(mModel, gltfPrimitive.indices);
-					auto indexData = getAttributeData(mModel, gltfPrimitive.indices);
+					auto numIndices = getAttributeSize(*model, gltfPrimitive.indices);
+					auto indexFormat = getIndexFormat(*model, gltfPrimitive.indices);
+					auto indexData = getAttributeData(*model, gltfPrimitive.indices);
 
 					auto indexBuffer = std::make_unique<IndexBuffer>();
 					if (!indexBuffer->create(indexFormat, (uint32_t)numIndices, indexData.data()))
@@ -625,7 +590,7 @@ namespace Trinity
 
 		scene.getResourceCache().addResource(std::move(defaultMaterial));
 
-		for (const auto& gltfCamera : mModel.cameras)
+		for (const auto& gltfCamera : model->cameras)
 		{
 			auto camera = parseCamera(gltfCamera);
 			scene.addComponent(std::move(camera));
@@ -636,7 +601,7 @@ namespace Trinity
 		
 		std::vector<std::unique_ptr<Node>> nodes;
 
-		for (const auto& gltfNode : mModel.nodes)
+		for (const auto& gltfNode : model->nodes)
 		{
 			auto node = parseNode(gltfNode);
 
@@ -661,13 +626,13 @@ namespace Trinity
 
 		tinygltf::Scene* gltfScene{ nullptr };
 
-		if (mModel.defaultScene >= 0 && mModel.defaultScene < (int)mModel.scenes.size())
+		if (model->defaultScene >= 0 && model->defaultScene < (int)model->scenes.size())
 		{
-			gltfScene = &mModel.scenes[mModel.defaultScene];
+			gltfScene = &model->scenes[model->defaultScene];
 		}
 		else
 		{
-			gltfScene = &mModel.scenes[0];
+			gltfScene = &model->scenes[0];
 		}
 
 		if (!gltfScene)
@@ -695,7 +660,7 @@ namespace Trinity
 			currentNode.setParent(traverseRootNode);
 			traverseRootNode.addChild(currentNode);
 
-			for (auto childNode : mModel.nodes[it.second].children)
+			for (auto childNode : model->nodes[it.second].children)
 			{
 				traverseNodes.push(std::make_pair(std::ref(currentNode), childNode));
 			}
@@ -717,5 +682,45 @@ namespace Trinity
 		scene.addNode(std::move(cameraNode));
 
 		return scene;
+	}
+
+	std::unique_ptr<Scene> SceneLoader::loadScene(const std::string& fileName)
+	{
+		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for: %s", fileName.c_str());
+			return nullptr;
+		}
+
+		fs::path dir{ fileName };
+		dir.remove_filename();
+
+		FileReader reader{ *file };
+		std::string source = reader.readAsString();
+
+		std::string err;
+		std::string warn;
+		tinygltf::TinyGLTF gltfLoader;
+
+		tinygltf::Model model{};
+		if (!gltfLoader.LoadASCIIFromString(&model, &err, &warn, source.c_str(), (uint32_t)source.length(), dir.string()))
+		{
+			LogError("Failed to load GLTF file: %s", fileName.c_str());
+			return nullptr;
+		}
+
+		if (!err.empty())
+		{
+			LogError("Error loading GLTF file: %s", err.c_str());
+			return nullptr;
+		}
+
+		if (!warn.empty())
+		{
+			LogWarning("Warning loading GLTF file: %s", warn.c_str());
+		}
+
+		return std::make_unique<Scene>(readScene(dir.string(), &model));
 	}
 }

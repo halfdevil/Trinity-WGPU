@@ -14,10 +14,10 @@ if (MSVC)
 endif()
 
 if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
-	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
-	set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
-	set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
-	set(GLFW_INSTALL OFF CACHE BOOL "")
+	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+	set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+	set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+	set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 	add_subdirectory("ThirdParty/glfw")
 	add_subdirectory("ThirdParty/dawnbuild")
@@ -29,15 +29,19 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
 	include_directories("ThirdParty/dawnbuild/include")
 endif()
 
-set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "")
-set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "")
-set(TINYGLTF_INSTALL OFF CACHE BOOL "")
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_HEADER_ONLY OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ThirdParty/tinygltf")
+add_subdirectory("ThirdParty/json")
+
+set_property(TARGET nlohmann_json PROPERTY FOLDER "ThirdParty")
 
 include_directories("ThirdParty/stb")
 include_directories("ThirdParty/glm")
 include_directories("ThirdParty/tinygltf")
+include_directories("ThirdParty/json/include")
 
 # Include sub-projects.
 add_subdirectory("Framework")

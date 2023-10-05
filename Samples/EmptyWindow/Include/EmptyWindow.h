@@ -1,15 +1,15 @@
 #pragma once
 
-#include "Core/Application.h"
+#include "SampleApplication.h"
 #include "Graphics/RenderPass.h"
 
 namespace Trinity
 {
-    class EmptyWindow : public Application
+    class EmptyWindow : public SampleApplication
     {
     protected:
 
-        virtual void render() override;
+        virtual void render(float deltaTime) override;
 
     protected:
 

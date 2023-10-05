@@ -1,4 +1,13 @@
 #include "Core/Application.h"
+#include "Core/Logger.h"
+#include "Core/Debugger.h"
+#include "Core/Clock.h"
+#include "Core/Window.h"
+#include "VFS/FileSystem.h"
+#include "VFS/DiskFile.h"
+#include "Input/Input.h"
+#include "Graphics/GraphicsDevice.h"
+#include "Graphics/SwapChain.h"
 #include <iostream>
 
 #ifdef __EMSCRIPTEN__
@@ -7,13 +16,19 @@
 
 namespace Trinity
 {
-	void Application::run(const std::string& title, uint32_t width, uint32_t height, DisplayMode displayMode)
+	void Application::run(const ApplicationOptions& options)
 	{
-#if DEBUG_BUILD
-		mLogger.setMaxLogLevel(LogLevel::Debug);
-#else
-		mLogger.setMaxLogLevel(LogLevel::Error);
-#endif
+
+		mOptions = options;
+
+		mLogger = std::make_unique<Logger>();
+		mLogger->setMaxLogLevel(options.logLevel);
+
+		mClock = std::make_unique<Clock>();
+		mFileSystem = std::make_unique<FileSystem>();
+		mInput = std::make_unique<Input>();
+		mWindow = std::make_unique<Window>();
+		mGraphicsDevice = std::make_unique<GraphicsDevice>();
 
 		if (!Window::initialize())
 		{
@@ -21,17 +36,17 @@ namespace Trinity
 			return;
 		}
 
-		if (!mWindow.create(title, width, height, displayMode))
+		if (!mWindow->create(options.title, options.width, options.height, options.displayMode))
 		{
 			LogFatal("Window::create() failed!!");
 			return;
 		}
 
-		mGraphicsDevice.onCreated.subscribe([this](bool result) {
+		mGraphicsDevice->onCreated.subscribe([this](bool result) {
 			if (result)
 			{
-				mClock.reset();
-				mWindow.show(true);
+				mClock->reset();
+				mWindow->show(true);
 
 				if (init())
 				{
@@ -42,75 +57,103 @@ namespace Trinity
 						app->frame();
 						}, this, 0, false);
 #else
-					while (!mWindow.isClosed())
+					while (!mWindow->isClosed())
 					{
 						frame();
-						mWindow.poll();
+						mWindow->poll();
 					}
 #endif
 				}
 			}
 		});
 
-		mGraphicsDevice.create(mWindow);
+		mGraphicsDevice->create(*mWindow);
 	}
 
 	bool Application::init()
 	{
-		if (!mFileSystem.addFolder("/Assets", "Assets"))
+		if (!mFileSystem->addFolder("/Assets", "Assets"))
 		{
 			LogError("FileSystem::addFolder() failed!!");
 			return false;
 		}
 
-		if (!mInput.create(mWindow))
+		if (!mOptions.configFile.empty())
+		{
+			DiskFile configFile;
+			if (!configFile.create(mOptions.configFile, mOptions.configFile, FileOpenMode::OpenRead))
+			{
+				LogError("PhysicalFile::create() failed for: %s!!", mOptions.configFile.c_str());
+				return false;
+			}
+
+			FileReader reader(configFile);
+			mConfig = json::parse(reader.readAsString());
+
+			if (mConfig.contains("folders"))
+			{
+				for (auto& folder : mConfig["folder"])
+				{
+					const std::string folderAlias = folder["alias"].get<std::string>();
+					const std::string folderPath = folder["path"].get<std::string>();
+
+					if (!mFileSystem->addFolder(folderAlias, folderPath))
+					{
+						LogError("FileSystem::addFolder() failed for: %s!!", folderPath.c_str());
+						return false;
+					}
+				}
+			}
+		}
+
+		if (!mInput->create(*mWindow))
 		{
 			LogError("Input::create() failed!!");
 			return false;
 		}
 
-		WindowCallbacks& callbacks = mWindow.getCallbacks();
+		WindowCallbacks& callbacks = mWindow->getCallbacks();
 
 		callbacks.onClose.subscribe([this]() {
 			onClose();
-			});
+		});
 
 		callbacks.onResize.subscribe([this](int32_t, int32_t) {
 			onResize();
-			});
+		});
 
 		onResize();
 
-		mGraphicsDevice.setClearColor({ 0.5f, 0.5f, 0.5f, 1.0f });
-		mWindow.showMouse(true, false);
+		mGraphicsDevice->setClearColor({ 0.5f, 0.5f, 0.5f, 1.0f });
+		mWindow->showMouse(true, false);
 
 		return true;
 	}
 
-	void Application::update()
+	void Application::update(float deltaTime)
 	{		
 	}
 
-	void Application::render()
+	void Application::render(float deltaTime)
 	{
 	}
 
 	void Application::frame()
 	{
-		mClock.update();
-		mInput.update();
-		update();
-		mInput.postUpdate();
+		mClock->update();
+		mInput->update();
+		update(mClock->getDeltaTime());
+		mInput->postUpdate();
 
-		mGraphicsDevice.beginFrame();
-		render();
-		mGraphicsDevice.endFrame();
-		mGraphicsDevice.present();
+		mGraphicsDevice->beginFrame();
+		render(mClock->getDeltaTime());
+		mGraphicsDevice->endFrame();
+		mGraphicsDevice->present();
 	}
 
 	void Application::exit()
 	{
-		mWindow.close();
+		mWindow->close();
 	}
 
 	void Application::onClose()
@@ -119,7 +162,7 @@ namespace Trinity
 
 	void Application::onResize()
 	{
-		if (!mGraphicsDevice.setupSwapChain(mWindow, wgpu::PresentMode::Fifo,
+		if (!mGraphicsDevice->setupSwapChain(*mWindow, wgpu::PresentMode::Fifo,
 			wgpu::TextureFormat::Depth32Float))
 		{
 			LogError("GraphicsDevice::setupSwapChain() failed!!");
