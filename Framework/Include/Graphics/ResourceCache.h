@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/Resource.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -9,8 +10,6 @@
 
 namespace Trinity
 {
-	class Resource;
-
 	class ResourceCache
 	{
 	public:

@@ -7,7 +7,6 @@
 #include "Input/Input.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/SwapChain.h"
-#include "Scene/Scene.h"
 #include <glm/glm.hpp>
 
 namespace Trinity

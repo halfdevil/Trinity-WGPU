@@ -6,6 +6,10 @@
 
 namespace Trinity
 {
+	Scene::~Scene()
+	{
+	}
+
 	bool Scene::hasComponent(const std::type_index& type) const
 	{
 		auto it = mComponents.find(type);

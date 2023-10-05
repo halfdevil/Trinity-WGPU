@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Math/Types.h"
+#include "Scene/Component.h"
+#include "Scene/Node.h"
+#include "Graphics/ResourceCache.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -10,10 +13,6 @@
 
 namespace Trinity
 {
-	class Node;
-	class Component;
-	class ResourceCache;
-
 	class Scene
 	{
 	public:
@@ -26,7 +25,7 @@ namespace Trinity
 		};
 
 		Scene() = default;
-		virtual ~Scene() = default;
+		virtual ~Scene();
 
 		Scene(const Scene&) = delete;
 		Scene& operator = (const Scene&) = delete;

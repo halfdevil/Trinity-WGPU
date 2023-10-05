@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Core/Application.h"
+#include "Scene/Scene.h"
 
 namespace Trinity
 {
-	class Scene;
 	class NodeScript;
 
 	class SampleApplication : public Application

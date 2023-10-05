@@ -30,7 +30,7 @@ namespace Trinity
     public:
 
         Application() = default;
-        virtual ~Application() = default;
+        virtual ~Application() = 0;
 
         Application(const Application&) = delete;
         Application& operator = (const Application&) = delete;

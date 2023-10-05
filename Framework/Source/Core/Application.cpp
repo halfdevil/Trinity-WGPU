@@ -16,9 +16,12 @@
 
 namespace Trinity
 {
+	Application::~Application()
+	{
+	}
+
 	void Application::run(const ApplicationOptions& options)
 	{
-
 		mOptions = options;
 
 		mLogger = std::make_unique<Logger>();

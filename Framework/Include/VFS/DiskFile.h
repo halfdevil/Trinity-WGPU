@@ -18,7 +18,7 @@ namespace Trinity
 		DiskFile(DiskFile&&) = default;
 		DiskFile& operator = (DiskFile&&) = default;
 
-		const fs::path& getActualPath() const
+		const std::string& getActualPath() const
 		{
 			return mActualPath;
 		}
