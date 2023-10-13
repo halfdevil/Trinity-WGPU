@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Core/Singleton.h"
 #include "Core/Window.h"
 #include "Core/Logger.h"
 #include <memory>
-
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
@@ -14,10 +14,12 @@ namespace Trinity
     class FileSystem;
     class Input;
     class GraphicsDevice;
+    class RenderPass;
 
     struct ApplicationOptions
     {
         LogLevel logLevel{ LogLevel::Error };
+        bool headless{ false };
         std::string title;
         uint32_t width{ 1024 };
         uint32_t height{ 768 };
@@ -25,7 +27,7 @@ namespace Trinity
         std::string configFile;
     };
 
-    class Application
+    class Application : public Singleton<Application>
     {
     public:
 
@@ -46,6 +48,46 @@ namespace Trinity
         const ApplicationOptions& getOptions() const
         {
             return mOptions;
+        }
+
+        Logger* getLogger() const
+        {
+            return mLogger.get();
+        }
+
+        Debugger* getDebugger() const
+        {
+            return mDebugger.get();
+        }
+
+        Clock* getClock() const
+        {
+            return mClock.get();
+        }
+
+        Window* getWindow() const
+        {
+            return mWindow.get();
+        }
+
+        FileSystem* getFileSystem() const
+        {
+            return mFileSystem.get();
+        }
+
+        Input* getInput() const
+        {
+            return mInput.get();
+        }
+
+        GraphicsDevice* getGraphicsDevice() const
+        {
+            return mGraphicsDevice.get();
+        }
+
+        RenderPass* getMainPass() const
+        {
+            return mMainPass.get();
         }
 
         virtual void run(const ApplicationOptions& options);
@@ -73,5 +115,6 @@ namespace Trinity
         std::unique_ptr<FileSystem> mFileSystem{ nullptr };
         std::unique_ptr<Input> mInput{ nullptr };
         std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
+        std::unique_ptr<RenderPass> mMainPass{ nullptr };
     };
 }

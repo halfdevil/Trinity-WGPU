@@ -8,6 +8,7 @@
 #include "Input/Input.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/SwapChain.h"
+#include "Graphics/RenderPass.h"
 #include <iostream>
 
 #ifdef __EMSCRIPTEN__
@@ -27,6 +28,7 @@ namespace Trinity
 		mLogger = std::make_unique<Logger>();
 		mLogger->setMaxLogLevel(options.logLevel);
 
+		mDebugger = std::make_unique<Debugger>();
 		mClock = std::make_unique<Clock>();
 		mFileSystem = std::make_unique<FileSystem>();
 		mInput = std::make_unique<Input>();
@@ -49,7 +51,7 @@ namespace Trinity
 			if (result)
 			{
 				mClock->reset();
-				mWindow->show(true);
+				mWindow->show(!mOptions.headless);
 
 				if (init())
 				{
@@ -58,7 +60,7 @@ namespace Trinity
 					static Application* app = this;
 					emscripten_set_main_loop_arg([](void* arg) {
 						app->frame();
-						}, this, 0, false);
+					}, this, 0, false);
 #else
 					while (!mWindow->isClosed())
 					{
@@ -95,7 +97,7 @@ namespace Trinity
 
 			if (mConfig.contains("folders"))
 			{
-				for (auto& folder : mConfig["folder"])
+				for (auto& folder : mConfig["folders"])
 				{
 					const std::string folderAlias = folder["alias"].get<std::string>();
 					const std::string folderPath = folder["path"].get<std::string>();
@@ -129,6 +131,7 @@ namespace Trinity
 
 		mGraphicsDevice->setClearColor({ 0.5f, 0.5f, 0.5f, 1.0f });
 		mWindow->showMouse(true, false);
+		mMainPass = std::make_unique<RenderPass>();
 
 		return true;
 	}

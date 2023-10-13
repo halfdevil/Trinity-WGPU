@@ -9,7 +9,7 @@ namespace Trinity
 
 		Singleton()
 		{
-			mInstance = static_cast<T*>(this);
+			mInstance = (T*)this;
 		}
 
 		static bool hasInstance()
@@ -25,6 +25,20 @@ namespace Trinity
 		static T& get()
 		{
 			return *mInstance;
+		}
+
+	public:
+
+		template <typename U>
+		static U* getPtrAs()
+		{
+			return (U*)mInstance;
+		}
+
+		template <typename U>
+		static U& getAs()
+		{
+			return *((U*)mInstance);
 		}
 
 	private:

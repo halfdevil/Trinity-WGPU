@@ -97,29 +97,6 @@ namespace Trinity
 		mData.clear();
 	}
 
-	bool Image::write(FileWriter& writer)
-	{
-		Assert(mType == ImageType::TwoD, "Write image only supported for 2D type");
-
-		auto writePng = [](void* context, void* data, int len) {
-			FileWriter* writer = (FileWriter*)context;
-
-			if (writer)
-			{
-				writer->write((uint8_t*)data, len);
-			}
-			};
-
-		if (!stbi_write_png_to_func(writePng, &writer, mWidth, mHeight, mChannels,
-			mData.data(), mWidth * mChannels))
-		{
-			LogError("stbi_write_png_to_func() failed!!");
-			return false;
-		}
-
-		return true;
-	}
-
 	glm::vec4 Image::getPixel(uint32_t x, uint32_t y) const
 	{
 		const uint32_t ofs = mChannels * (y * mWidth + x);

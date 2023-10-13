@@ -64,7 +64,6 @@ namespace Trinity
 			ImageType type, const uint8_t* data = nullptr);
 
 		void destroy();
-		bool write(FileWriter& writer);
 
 		glm::vec4 getPixel(uint32_t x, uint32_t y) const;
 		uint32_t getPixelAsRGBA(uint32_t x, uint32_t y) const;

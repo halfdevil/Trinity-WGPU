@@ -43,6 +43,7 @@ namespace Trinity
 
 		const glm::mat4& getWorldMatrix() const
 		{
+			const_cast<Transform*>(this)->updateWorldTransform();
 			return mWorldMatrix;
 		}
 

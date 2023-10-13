@@ -5,18 +5,7 @@
 
 namespace Trinity
 {
-	class Camera;
-	class Light;
-	class Mesh;
-	class Node;
-	class PBRMaterial;
 	class Scene;
-	class SubMesh;
-	class Image;
-	class Sampler;
-	class Texture;
-	class BindGroup;
-	class Shader;
 
 	template <typename T, typename Y>
 	struct TypeCast

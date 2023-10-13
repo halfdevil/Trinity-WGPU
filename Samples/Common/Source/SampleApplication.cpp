@@ -1,7 +1,10 @@
 #include "SampleApplication.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneLoader.h"
+#include "Scene/SceneRenderer.h"
 #include "Scene/Components/Script.h"
+#include "Graphics/RenderPass.h"
+#include "Core/Logger.h"
 
 namespace Trinity
 {
@@ -18,14 +21,23 @@ namespace Trinity
 
 			SceneLoader sceneLoader;
 			mScene = sceneLoader.loadScene(sceneFile);
+
+			onSceneLoaded();
 		}
 
 		if (mScene != nullptr)
 		{
-			mScripts = mScene->getComponents<NodeScript>();
+			mScripts = mScene->getComponents<Script>();
 			for (auto& script : mScripts)
 			{
 				script->init();
+			}
+
+			mSceneRenderer = std::make_unique<SceneRenderer>();
+			if (!mSceneRenderer->prepare(*mScene))
+			{
+				LogError("SceneRenderer::prepare() failed!!");
+				return false;
 			}
 		}
 
@@ -43,5 +55,22 @@ namespace Trinity
 				script->update(deltaTime);
 			}
 		}
+	}
+
+	void SampleApplication::onResize()
+	{
+		Application::onResize();
+
+		if (mScene != nullptr)
+		{
+			for (auto& script : mScripts)
+			{
+				script->resize(mWindow->getWidth(), mWindow->getHeight());
+			}
+		}
+	}
+
+	void SampleApplication::onSceneLoaded()
+	{
 	}
 }

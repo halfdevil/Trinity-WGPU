@@ -5,6 +5,7 @@ namespace Trinity
 	Node::Node() :
 		mTransform{ *this }
 	{
+		addComponent(mTransform);
 	}
 
 	void Node::setName(const std::string& name)

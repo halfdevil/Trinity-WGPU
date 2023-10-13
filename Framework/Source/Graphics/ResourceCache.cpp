@@ -6,7 +6,7 @@ namespace Trinity
 	bool ResourceCache::hasResource(const std::type_index& type) const
 	{
 		auto it = mResources.find(type);
-		return (it != mResources.end() && it->second.empty());
+		return (it != mResources.end() && !it->second.empty());
 	}
 
 	const std::vector<std::unique_ptr<Resource>>& ResourceCache::getResources(const std::type_index& type) const

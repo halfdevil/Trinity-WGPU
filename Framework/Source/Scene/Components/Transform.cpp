@@ -7,8 +7,7 @@ namespace Trinity
 {
 	Transform::Transform(Node& node)
 		: mNode(&node)
-	{
-		mNode->addComponent(*this);
+	{		
 	}
 
 	std::type_index Transform::getType() const

@@ -2,6 +2,8 @@
 
 #include "Math/Types.h"
 #include <vector>
+#include <string>
+#include <map>
 
 namespace Trinity
 {
@@ -13,9 +15,11 @@ namespace Trinity
 	class Mesh;
 	class Node;
 	class Scene;
-	class PerspectiveCamera;
+	class Camera;
+	class Light;
 	class RenderPass;
 	class UniformBuffer;
+	class StorageBuffer;
 
 	class SceneRenderer
 	{
@@ -25,10 +29,21 @@ namespace Trinity
 		static constexpr uint32_t kMaterialBindGroupIndex = 1;
 		static constexpr uint32_t kTransformBindGroupIndex = 2;
 
+		struct LightBufferData
+		{
+			glm::vec4 position;
+			glm::vec4 color;
+			glm::vec4 direction;
+			glm::vec2 info;
+			glm::vec2 padding;
+		};
+
 		struct SceneBufferData
 		{
 			glm::mat4 view;
 			glm::mat4 projection;
+			glm::vec3 cameraPos{ 0 };
+			uint32_t numLights{ 0 };
 		};
 
 		struct TransformBufferData
@@ -37,18 +52,26 @@ namespace Trinity
 			glm::mat4 rotation;
 		};
 
+		struct LightData
+		{
+			Light* light{ nullptr };
+			uint32_t storageIndex{ 0 };
+		};
+
 		struct SceneData
 		{
 			Scene* scene{ nullptr };
-			PerspectiveCamera* camera{ nullptr };
+			Camera* camera{ nullptr };
 			BindGroup* sceneBindGroup{ nullptr };
 			BindGroupLayout* sceneBindGroupLayout{ nullptr };
 			UniformBuffer* sceneBuffer{ nullptr };
+			StorageBuffer* lightsBuffer{ nullptr };
 		};
 
 		struct RenderData
 		{
 			SubMesh* subMesh{ nullptr };
+			Mesh* mesh{ nullptr };
 			Node* node{ nullptr };
 			UniformBuffer* transformBuffer{ nullptr };
 			RenderPipeline* pipeline{ nullptr };
@@ -58,17 +81,25 @@ namespace Trinity
 		};
 
 		bool prepare(Scene& scene);
-		void draw(RenderPass* renderPass);
+		void setCamera(const std::string& nodeName);
+		void draw(RenderPass& renderPass);
 
 	protected:
 
 		bool setupRenderData(Node* node, Mesh* mesh, SubMesh* subMesh, RenderData& renderData);
 		bool updateTransformData(Node* node, RenderData& renderData);
 		bool updateSceneData();
+		bool setupLights();
+		bool updateLightData(Light* light, uint32_t index);
+
+		void draw(RenderPass& renderPass, RenderData& renderer);
+		void getSortedRenderers(std::multimap<float, RenderData*>& opaqueRenderers, 
+			std::multimap<float, RenderData*>& transparentRenderers);
 
 	protected:
 
 		SceneData mSceneData;
 		std::vector<RenderData> mRenderers;
+		std::vector<LightData> mLights;
 	};
 }

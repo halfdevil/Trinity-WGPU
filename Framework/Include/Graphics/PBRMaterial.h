@@ -10,7 +10,7 @@ namespace Trinity
 	{
 	public:
 
-		static constexpr const char* kDefaultShader = "/Framework/Shaders/PBR.wgsl";
+		static constexpr const char* kDefaultShader = "/Assets/Framework/Shaders/PBR.wgsl";
 
 		PBRMaterial() = default;
 		virtual ~PBRMaterial() = default;

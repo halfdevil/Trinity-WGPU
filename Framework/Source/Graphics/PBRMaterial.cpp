@@ -171,6 +171,6 @@ namespace Trinity
 			return false;
 		}
 
-		return false;
+		return true;
 	}
 }

@@ -16,6 +16,7 @@
 #include "Graphics/BindGroupLayout.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
+#include "Core/Utils.h"
 #include "VFS/FileSystem.h"
 #include <format>
 #include <queue>
@@ -26,8 +27,55 @@
 #define TINYGLTF_IMPLEMENTATION
 #include "tiny_gltf.h"
 
+#define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
+
 namespace Trinity
 {
+	bool fileExists(const std::string& fileName, void* userData)
+	{
+		auto& fileSystem = FileSystem::get();
+		return fileSystem.isExist(fileName);
+	}
+
+	std::string expandFilePath(const std::string& filePath, void* userData)
+	{
+		return filePath;
+	}
+
+	bool readWholeFile(std::vector<unsigned char>* out, std::string* err, const std::string& filePath, void* userData)
+	{
+		auto file = FileSystem::get().openFile(filePath, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			*err = "FileSystem::openFile() failed";
+			return false;
+		}
+
+		FileReader reader(*file);
+		out->resize(file->getSize());
+		reader.read(out->data(), file->getSize());
+
+		return true;
+	}
+
+	bool writeWholeFile(std::string* err, const std::string& filePath, const std::vector<unsigned char>& contents, void* userData)
+	{
+		return true;
+	}
+
+	bool getFileSizeInBytes(size_t* sizeOut, std::string* err, const std::string& filePath, void* userData)
+	{
+		auto file = FileSystem::get().openFile(filePath, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			*err = "FileSystem::openFile() failed";
+			return false;
+		}
+
+		*sizeOut = (size_t)file->getSize();
+		return true;
+	}
+
 	wgpu::FilterMode findMinFilter(int minFilter)
 	{
 		switch (minFilter)
@@ -136,6 +184,115 @@ namespace Trinity
 		}
 
 		return wgpu::IndexFormat::Undefined;
+	}
+
+	std::vector<uint8_t> convertDataStride(const std::vector<uint8_t>& srcData, uint32_t srcStride, uint32_t dstStride)
+	{
+		auto indexCount = (uint32_t)srcData.size() / srcStride;
+		std::vector<uint8_t> result(indexCount * dstStride);
+
+		for (uint32_t idxSrc = 0, idxDst = 0; 
+			idxSrc < srcData.size() && idxDst < result.size(); 
+			idxSrc += srcStride, idxDst += dstStride)
+		{
+			std::copy(srcData.begin() + idxSrc, srcData.begin() + idxSrc + srcStride, result.begin() + idxDst);
+		}
+
+		return result;
+	}
+
+	std::vector<std::unique_ptr<Light>> parseLights(tinygltf::Model* model)
+	{
+		if (model->extensions.find(KHR_LIGHTS_PUNCTUAL_EXTENSION) == model->extensions.end() ||
+			!model->extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Has("lights"))
+		{
+			return {};
+		}
+
+		auto& khrLights = model->extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Get("Lights");
+		std::vector<std::unique_ptr<Light>> lights(khrLights.ArrayLen());
+
+		for (size_t idx = 0; idx < khrLights.ArrayLen(); idx++)
+		{
+			auto& khrLight = khrLights.Get((int)idx);
+			if (!khrLight.Has("type"))
+			{
+				LogWarning("KHR_lights_punctual extension: light doesn't have a type! ignoring");
+				continue;
+			}
+
+			auto light = std::make_unique<Light>();
+			light->setName(khrLight.Get("name").Get<std::string>());
+
+			LightType type;
+			LightProperties properties;
+
+			auto& gltfType = khrLight.Get("type").Get<std::string>();
+			if (gltfType == "point")
+			{
+				type = LightType::Point;
+			}
+			else if (gltfType == "spot")
+			{
+				type = LightType::Spot;
+			}
+			else if (gltfType == "directional")
+			{
+				type = LightType::Directional;
+			}
+			else
+			{
+				LogError("KHR_lights_punctual extension: light type '%s' is invalid! ignoring", gltfType.c_str());
+				continue;
+			}
+
+			if (khrLight.Has("color"))
+			{
+				properties.color = glm::vec3(
+					(float)(khrLight.Get("color").Get(0).Get<double>()),
+					(float)(khrLight.Get("color").Get(1).Get<double>()),
+					(float)(khrLight.Get("color").Get(2).Get<double>())
+				);
+			}
+
+			if (khrLight.Has("intensity"))
+			{
+				properties.intensity = (float)(khrLight.Get("intensity").Get<double>());
+			}
+
+			if (type != LightType::Directional)
+			{
+				properties.range = (float)(khrLight.Get("range").Get<double>());
+				if (type != LightType::Point)
+				{
+					if (!khrLight.Has("spot"))
+					{
+						LogError("KHR_lights_punctual extension: spot light doesn't have a spot property set");
+						continue;
+					}
+
+					properties.innerConeAngle = (float)(khrLight.Get("spot").Get("innerConeAngle").Get<double>());
+					if (khrLight.Get("spot").Has("outerConeAngle"))
+					{
+						properties.outerConeAngle = (float)(khrLight.Get("spot").Get("outerConeAngle").Get<double>());
+					}
+					else
+					{
+						properties.outerConeAngle = glm::pi<float>() / 4.0f;
+					}
+				}
+			}
+			else if (type == LightType::Directional || type == LightType::Spot)
+			{
+				properties.direction = glm::vec3(0.0f, 0.0f, -1.0f);
+			}
+
+			light->setLightType(type);
+			light->setLightProperties(properties);
+			lights[idx] = std::move(light);
+		}
+
+		return lights;
 	}
 
 	std::unique_ptr<Node> parseNode(const tinygltf::Node& gltfNode)
@@ -365,23 +522,26 @@ namespace Trinity
 		gltfCamera.perspective.aspectRatio = 1.77f;
 		gltfCamera.perspective.yfov = 1.0f;
 		gltfCamera.perspective.znear = 0.1f;
-		gltfCamera.perspective.zfar = 1000.0f;
+		gltfCamera.perspective.zfar = 10000.0f;
 
 		return parseCamera(gltfCamera);
 	}
 
-	Scene readScene(const std::string& modelPath, tinygltf::Model* model)
+	std::unique_ptr<Scene> readScene(const std::string& modelPath, tinygltf::Model* model)
 	{
-		auto scene = Scene();
-		scene.setResourceCache(std::make_unique<ResourceCache>());
+		auto scene = std::make_unique<Scene>();
+		scene->setResourceCache(std::make_unique<ResourceCache>());
+
+		auto lights = parseLights(model);
+		scene->setComponents(std::move(lights));
 
 		auto defaultSampler = createDefaultSampler();
-		scene.getResourceCache().addResource(std::move(defaultSampler));
+		scene->getResourceCache().addResource(std::move(defaultSampler));
 
 		for (const auto& gltfSampler : model->samplers)
 		{
 			auto sampler = parseSampler(gltfSampler);
-			scene.getResourceCache().addResource(std::move(sampler));
+			scene->getResourceCache().addResource(std::move(sampler));
 		}
 
 		std::vector<std::unique_ptr<Image>> images;
@@ -403,35 +563,36 @@ namespace Trinity
 			if (!texture->create(*images[gltfTexture.source]))
 			{
 				Exit("Texture2D::create() failed");
-				return scene;
+				return nullptr;
 			}
 
 			size_t samplerIndex = gltfTexture.sampler < numSamplers ? gltfTexture.sampler + 1 : 0;
 			texSampMap.insert(std::make_pair(numTextures, samplerIndex));
 
-			scene.getResourceCache().addResource(std::move(texture));
+			scene->getResourceCache().addResource(std::move(texture));
 			numTextures++;
 		}
 
 		std::vector<Texture*> textures;
 		std::vector<Sampler*> samplers;
-		std::vector<std::string> shaderDefines;
 
-		bool hasTextures = scene.getResourceCache().hasResource<Texture>();
-		bool hasSamplers = scene.getResourceCache().hasResource<Sampler>();
+		bool hasTextures = scene->getResourceCache().hasResource<Texture>();
+		bool hasSamplers = scene->getResourceCache().hasResource<Sampler>();
 
 		if (hasTextures)
 		{
-			textures = scene.getResourceCache().getResources<Texture>();
+			textures = scene->getResourceCache().getResources<Texture>();
 		}
 
 		if (hasSamplers)
 		{
-			samplers = scene.getResourceCache().getResources<Sampler>();
+			samplers = scene->getResourceCache().getResources<Sampler>();
 		}
 
 		for (const auto& gltfMaterial : model->materials)
 		{
+			std::vector<std::string> shaderDefines;
+
 			auto material = parseMaterial(gltfMaterial);
 			for (const auto& gltfValue : gltfMaterial.values)
 			{
@@ -439,11 +600,12 @@ namespace Trinity
 				{
 					Assert(gltfValue.second.TextureIndex() < textures.size(), "Invalid texture index");
 
+					const std::string textureName = toSnakeCase(gltfValue.first);
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 					
-					shaderDefines.push_back(std::string("has_") + gltfValue.first);
-					material->setTexture(gltfValue.first, *texture, *sampler);
+					shaderDefines.push_back("has_" + textureName);
+					material->setTexture(textureName, *texture, *sampler);
 				}
 			}
 
@@ -453,11 +615,12 @@ namespace Trinity
 				{
 					Assert(gltfValue.second.TextureIndex() < textures.size(), "Invalid texture index");
 
+					const std::string textureName = toSnakeCase(gltfValue.first);
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 
-					shaderDefines.push_back(std::string("has_") + gltfValue.first);
-					material->setTexture(gltfValue.first, *texture, *sampler);
+					shaderDefines.push_back("has_" + textureName);
+					material->setTexture(textureName, *texture, *sampler);
 				}
 			}
 
@@ -467,15 +630,15 @@ namespace Trinity
 			if (!material->compile())
 			{
 				LogError("PBRMaterial::compile() failed!!");
-				return scene;
+				return nullptr;
 			}
 
-			scene.getResourceCache().addResource(std::move(shader));
-			scene.getResourceCache().addResource(std::move(material));
+			scene->getResourceCache().addResource(std::move(shader));
+			scene->getResourceCache().addResource(std::move(material));
 		}
 
 		auto defaultMaterial = createDefaultMaterial();
-		auto materials = scene.getResourceCache().getResources<PBRMaterial>();
+		auto materials = scene->getResourceCache().getResources<Material>();
 
 		auto vertexLayout = std::make_unique<VertexLayout>();
 		vertexLayout->setAttributes({
@@ -485,7 +648,7 @@ namespace Trinity
 		});
 
 		const auto* vertexLayoutPtr = vertexLayout.get();
-		scene.getResourceCache().addResource(std::move(vertexLayout));
+		scene->getResourceCache().addResource(std::move(vertexLayout));
 
 		for (const auto& gltfMesh : model->meshes)
 		{
@@ -561,6 +724,12 @@ namespace Trinity
 					auto indexFormat = getIndexFormat(*model, gltfPrimitive.indices);
 					auto indexData = getAttributeData(*model, gltfPrimitive.indices);
 
+					if (indexFormat == wgpu::IndexFormat::Uint16)
+					{
+						indexFormat = wgpu::IndexFormat::Uint32;
+						indexData = convertDataStride(indexData, 2, 4);
+					}
+
 					auto indexBuffer = std::make_unique<IndexBuffer>();
 					if (!indexBuffer->create(indexFormat, (uint32_t)numIndices, indexData.data()))
 					{
@@ -582,22 +751,22 @@ namespace Trinity
 				}
 
 				mesh->addSubMesh(*subMesh);
-				scene.addComponent(std::move(subMesh));
+				scene->addComponent(std::move(subMesh));
 			}
 
-			scene.addComponent(std::move(mesh));
+			scene->addComponent(std::move(mesh));
 		}
 
-		scene.getResourceCache().addResource(std::move(defaultMaterial));
+		scene->getResourceCache().addResource(std::move(defaultMaterial));
 
 		for (const auto& gltfCamera : model->cameras)
 		{
 			auto camera = parseCamera(gltfCamera);
-			scene.addComponent(std::move(camera));
+			scene->addComponent(std::move(camera));
 		}
 
-		auto meshes = scene.getComponents<Mesh>();
-		auto cameras = scene.getComponents<Camera>();
+		auto meshes = scene->getComponents<Mesh>();
+		auto cameras = scene->getComponents<Camera>();
 		
 		std::vector<std::unique_ptr<Node>> nodes;
 
@@ -638,7 +807,7 @@ namespace Trinity
 		if (!gltfScene)
 		{
 			Exit("No scene found!!");
-			return scene;
+			return nullptr;
 		}
 
 		std::queue<std::pair<Node&, int>> traverseNodes;
@@ -666,20 +835,25 @@ namespace Trinity
 			}
 		}
 
-		scene.setRoot(*rootNode);
+		scene->setRoot(*rootNode);
 		nodes.push_back(std::move(rootNode));
-		scene.setNodes(std::move(nodes));
+		scene->setNodes(std::move(nodes));
 
 		auto cameraNode = std::make_unique<Node>();
-		cameraNode->setName("defaultCamera");
+		cameraNode->setName("default_camera");
 
 		auto defaultCamera = createDefaultCamera();
 		defaultCamera->setNode(*cameraNode);
 		cameraNode->addComponent(*defaultCamera);
-		scene.addComponent(std::move(defaultCamera));
+		scene->addComponent(std::move(defaultCamera));
 
-		scene.getRoot()->addChild(*cameraNode);
-		scene.addNode(std::move(cameraNode));
+		scene->getRoot()->addChild(*cameraNode);
+		scene->addNode(std::move(cameraNode));
+
+		if (!scene->hasComponent<Light>())
+		{
+			scene->addDirectionalLight(glm::quat({ glm::radians(-90.0f), 0.0f, glm::radians(30.0f) }));
+		}
 
 		return scene;
 	}
@@ -701,18 +875,22 @@ namespace Trinity
 
 		std::string err;
 		std::string warn;
+
 		tinygltf::TinyGLTF gltfLoader;
+		gltfLoader.SetFsCallbacks({
+			.FileExists = &fileExists,
+			.ExpandFilePath = &expandFilePath,
+			.ReadWholeFile = &readWholeFile,
+			.WriteWholeFile = &writeWholeFile,
+			.GetFileSizeInBytes = &getFileSizeInBytes
+		});
 
 		tinygltf::Model model{};
-		if (!gltfLoader.LoadASCIIFromString(&model, &err, &warn, source.c_str(), (uint32_t)source.length(), dir.string()))
-		{
-			LogError("Failed to load GLTF file: %s", fileName.c_str());
-			return nullptr;
-		}
+		gltfLoader.LoadASCIIFromString(&model, &err, &warn, source.c_str(), (uint32_t)source.length(), dir.string());
 
 		if (!err.empty())
 		{
-			LogError("Error loading GLTF file: %s", err.c_str());
+			LogError("Error loading GLTF file: '%s', with error: %s", fileName.c_str(), err.c_str());
 			return nullptr;
 		}
 
@@ -721,6 +899,6 @@ namespace Trinity
 			LogWarning("Warning loading GLTF file: %s", warn.c_str());
 		}
 
-		return std::make_unique<Scene>(readScene(dir.string(), &model));
+		return readScene(dir.string(), &model);
 	}
 }

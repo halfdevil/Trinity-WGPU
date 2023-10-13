@@ -21,8 +21,8 @@ namespace Trinity
 		glm::vec3 color{ 1.0f, 1.0f, 1.0f };
 		float intensity{ 1.0f };
 		float range{ 0.0f };
-		float innerCoreAngle{ 0.0f };
-		float outerCoreAngle{ 0.0f };
+		float innerConeAngle{ 0.0f };
+		float outerConeAngle{ 0.0f };
 	};
 
 	class Light : public Component

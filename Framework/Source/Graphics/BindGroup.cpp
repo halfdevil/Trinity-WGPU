@@ -35,8 +35,7 @@ namespace Trinity
                 {
                     using T = std::decay_t<decltype(resource)>;
 
-                    if constexpr (
-                        std::is_same_v<T, BufferBindingResource>)
+                    if constexpr (std::is_same_v<T, BufferBindingResource>)
                     {
                         entry.buffer = resource.buffer.getHandle();
                     }

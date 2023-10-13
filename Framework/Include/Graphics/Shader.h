@@ -4,7 +4,6 @@
 #include <webgpu/webgpu_cpp.h>
 #include <unordered_map>
 #include <string>
-#include <sstream>
 
 namespace Trinity
 {
@@ -14,13 +13,14 @@ namespace Trinity
 
         ShaderPreProcessor() = default;
 
-        void addDefine(const std::string& define);
+        void addDefine(const std::string& define, const std::string& value = "");
         void addDefines(const std::vector<std::string>& defines);
 
         std::string process(const std::string& fileName);
 
     private:
 
+        std::string processDefines(const std::string& line);
         std::string processFile(const std::string& fileName);
         std::string processLine(std::istringstream& input, const std::string& dir,
             const std::string& line);
@@ -28,7 +28,7 @@ namespace Trinity
     private:
 
         std::unordered_map<std::string, bool> mIncludedFiles;
-        std::vector<std::string> mDefines;
+        std::unordered_map<std::string, std::string> mDefines;
         bool mExcludeLine{ false };
     };
 

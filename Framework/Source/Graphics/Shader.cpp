@@ -2,16 +2,18 @@
 #include "Graphics/GraphicsDevice.h"
 #include "Core/Debugger.h"
 #include "Core/Logger.h"
+#include "Core/Utils.h"
 #include "VFS/FileSystem.h"
+#include <sstream>
 
 namespace Trinity
 {
-	void ShaderPreProcessor::addDefine(const std::string& define)
+	void ShaderPreProcessor::addDefine(const std::string& define, const std::string& value)
 	{
 		std::string newDefine;
-		std::transform(define.begin(), define.end(), newDefine.begin(), ::toupper);
+		std::transform(define.begin(), define.end(), std::back_inserter(newDefine), ::toupper);
 
-		mDefines.push_back(newDefine);
+		mDefines.insert(std::pair(newDefine, value));
 	}
 
 	void ShaderPreProcessor::addDefines(const std::vector<std::string>& defines)
@@ -25,6 +27,49 @@ namespace Trinity
 	std::string ShaderPreProcessor::process(const std::string& fileName)
 	{
 		return processFile(fileName);
+	}
+
+	std::string ShaderPreProcessor::processDefines(const std::string& line)
+	{
+		std::string newLine;
+		char word[512];
+		uint32_t l = 0;
+
+		for (size_t i = 0; i < line.length(); i++)
+		{
+			if (::isalnum(line[i]) || line[i] == '_')
+			{
+				word[l++] = line[i];
+			}
+			else
+			{
+				if (l > 0)
+				{
+					word[l] = 0;
+
+					if (auto it = mDefines.find(word); it != mDefines.end())
+					{
+						newLine.append(it->second);
+					}
+					else
+					{
+						newLine.append(word);
+					}
+
+					l = 0;
+				}
+					
+				newLine.push_back(line[i]);
+			}
+		}
+
+		if (l > 0)
+		{
+			word[l] = 0;
+			newLine.append(word);
+		}
+
+		return newLine;
 	}
 
 	std::string ShaderPreProcessor::processFile(const std::string& fileName)
@@ -53,10 +98,10 @@ namespace Trinity
 		return output;
 	}
 
-	std::string ShaderPreProcessor::processLine(std::istringstream& input, const std::string& dir,
-		const std::string& line)
+	std::string ShaderPreProcessor::processLine(std::istringstream& input, const std::string& dir, const std::string& line)
 	{
 		std::string output;
+
 		if (line.find("#include ") != line.npos)
 		{
 			const auto pos = line.find("#include ");
@@ -96,22 +141,44 @@ namespace Trinity
 		else if (line.find("#ifdef ") != line.npos)
 		{
 			const auto pos = line.find("#ifdef ");
-			const auto name = line.substr(pos + 1);
+			auto name = line.substr(pos + 7);
+			trim(name);
 
-			if (std::find(std::begin(mDefines), std::end(mDefines), name) == mDefines.end())
+			if (!mDefines.contains(name))
 			{
 				mExcludeLine = true;
 			}
+		}
+		else if (line.find("#else") != line.npos)
+		{
+			mExcludeLine = !mExcludeLine;
 		}
 		else if (line.find("#endif") != line.npos)
 		{
 			mExcludeLine = false;
 		}
+		else if (line.find("#define") != line.npos)
+		{
+			const auto pos = line.find("#define ");
+			const auto p1 = line.find(" ", pos + 8);
+
+			if (pos != line.npos && p1 != line.npos)
+			{
+				auto nameLen = p1 - pos - 8;
+				auto name = line.substr(pos + 8, nameLen);
+				auto value = line.substr(p1);
+
+				trim(name);
+				trim(value);
+
+				addDefine(name, value);
+			}
+		}
 		else
 		{
 			if (!mExcludeLine)
 			{
-				output.append(line);
+				output.append(processDefines(line));
 			}
 		}
 

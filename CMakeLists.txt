@@ -21,12 +21,14 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
 
 	add_subdirectory("ThirdParty/glfw")
 	add_subdirectory("ThirdParty/dawnbuild")
+	add_subdirectory("ThirdParty/CLI11")
 
 	set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
 	set_property(TARGET dawnbuild PROPERTY FOLDER "ThirdParty")
 
 	include_directories("ThirdParty/glfw/include")
 	include_directories("ThirdParty/dawnbuild/include")
+	include_directories("ThirdParty/CLI11/include") 
 endif()
 
 set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
@@ -47,3 +49,6 @@ include_directories("ThirdParty/json/include")
 add_subdirectory("Framework")
 add_subdirectory("Samples")
 
+if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
+	add_subdirectory("Tools")
+endif()

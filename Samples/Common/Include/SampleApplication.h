@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Core/Application.h"
-#include "Scene/Scene.h"
 
 namespace Trinity
 {
-	class NodeScript;
+	class Scene;
+	class SceneRenderer;
+	class Script;
 
 	class SampleApplication : public Application
 	{
@@ -20,14 +21,32 @@ namespace Trinity
 		SampleApplication(SampleApplication&&) = delete;
 		SampleApplication& operator = (SampleApplication&&) = delete;
 
+		Scene* getScene() const
+		{
+			return mScene.get();
+		}
+
+		SceneRenderer* getSceneRenderer() const
+		{
+			return mSceneRenderer.get();
+		}
+
+		bool hasScene() const
+		{
+			return mScene != nullptr;
+		}
+
 	protected:
 
 		virtual bool init() override;
 		virtual void update(float deltaTime) override;
+		virtual void onResize() override;
+		virtual void onSceneLoaded();
 
 	protected:
 
 		std::unique_ptr<Scene> mScene{ nullptr };
-		std::vector<NodeScript*> mScripts;
+		std::unique_ptr<SceneRenderer> mSceneRenderer{ nullptr };
+		std::vector<Script*> mScripts;
 	};
 }
