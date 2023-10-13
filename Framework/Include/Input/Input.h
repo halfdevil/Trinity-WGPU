@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
 
 namespace Trinity
 {
@@ -54,18 +56,20 @@ namespace Trinity
 		Input(Input&&) = delete;
 		Input& operator = (Input&&) = delete;
 
-		const Keyboard& getKeyboard() const
+		Keyboard* getKeyboard() const
 		{
-			return mKeyboard;
+			return mKeyboard.get();
 		}
 
-		const Mouse& getMouse() const
+		Mouse* getMouse() const
 		{
-			return mMouse;
+			return mMouse.get();
 		}
 
 		bool create(Window& window);
 		void destroy();
+		bool loadConfig(const json& inputConfig);
+
 		void update();
 		void postUpdate();
 
@@ -86,9 +90,8 @@ namespace Trinity
 
 	private:
 
-		Keyboard mKeyboard;
-		Mouse mMouse;
-
+		std::unique_ptr<Keyboard> mKeyboard{ nullptr };
+		std::unique_ptr<Mouse> mMouse{ nullptr };
 		std::unordered_map<std::string, InputAction> mActionMap;
 		std::unordered_map<std::string, InputAxis> mAxisMap;
 		std::unordered_map<int32_t, std::string> mKeyboardKeyActionMap;

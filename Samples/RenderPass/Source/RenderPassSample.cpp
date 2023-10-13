@@ -54,47 +54,7 @@ namespace Trinity
 	}
 
 	void RenderPassSample::setupInput()
-	{
-		mInput->addAction({
-			.name = "exit",
-			.keyboardKeys{ KEY_ESCAPE }
-		});
-
-		mInput->addAxis({
-			.name = "moveForward",
-			.keyboardKeys = {{ KEY_W, -1.0f }, { KEY_S, 1.0f }}
-		});
-
-		mInput->addAxis({
-			.name = "moveRight",
-			.keyboardKeys = {{ KEY_D, 1.0f }, { KEY_A, -1.0f }}
-		});
-		
-		mInput->addAxis({
-			.name = "moveUp",
-			.keyboardKeys = {{ KEY_E, 1.0f }, { KEY_Q, -1.0f }}
-		});
-
-		mInput->addAxis({
-			.name = "turn",
-			.mousePositions = {{ MOUSE_POSITION_X, -1.0f }}
-		});
-
-		mInput->addAxis({
-			.name = "lookUp",
-			.mousePositions = {{ MOUSE_POSITION_Y, -1.0f }}
-		});
-
-		mInput->addAxis({
-			.name = "turnKey",
-			.keyboardKeys = {{ KEY_RIGHT, -1.0f }, { KEY_LEFT, 1.0f }}
-		});
-
-		mInput->addAxis({
-			.name = "lookUpKey",
-			.keyboardKeys = {{ KEY_UP, 1.0f }, { KEY_DOWN, -1.0f }}
-		});
-
+	{		
 		mInput->bindAction("exit", InputEvent::Pressed, [this](int32_t key) {
             exit();
 		});
@@ -112,24 +72,10 @@ namespace Trinity
 		});
 
 		mInput->bindAxis("turn", [this](float scale) {
-			if (mInput->getMouse().isButtonDown(MOUSE_BUTTON_RIGHT))
-			{
-				turn(scale);
-			}
-		});
-
-		mInput->bindAxis("lookUp", [this](float scale) {
-			if (mInput->getMouse().isButtonDown(MOUSE_BUTTON_RIGHT))
-			{
-				lookUp(scale);
-			}
-		});
-
-		mInput->bindAxis("turnKey", [this](float scale) {
 			turn(scale);
 		});
 
-		mInput->bindAxis("lookUpKey", [this](float scale) {
+		mInput->bindAxis("lookUp", [this](float scale) {
 			lookUp(scale);
 		});
 	}

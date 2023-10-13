@@ -769,7 +769,6 @@ namespace Trinity
 		auto cameras = scene->getComponents<Camera>();
 		
 		std::vector<std::unique_ptr<Node>> nodes;
-
 		for (const auto& gltfNode : model->nodes)
 		{
 			auto node = parseNode(gltfNode);
@@ -794,7 +793,6 @@ namespace Trinity
 		}
 
 		tinygltf::Scene* gltfScene{ nullptr };
-
 		if (model->defaultScene >= 0 && model->defaultScene < (int)model->scenes.size())
 		{
 			gltfScene = &model->scenes[model->defaultScene];

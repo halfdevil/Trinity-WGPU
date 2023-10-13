@@ -94,6 +94,7 @@ namespace Trinity
         void poll();
         void setCursor(Cursor cursor) const;
 
+        float getScaleFactor() const;
         glm::uvec2 getSize() const;
         glm::uvec2 getFramebufferSize() const;
         std::unique_ptr<wgpu::ChainedStruct> getSurfaceDescriptor() const;

@@ -23,4 +23,9 @@ namespace Trinity
 	{
 		mResources[type] = std::move(resources);
 	}
+
+	void ResourceCache::clear()
+	{
+		mResources.clear();
+	}
 }

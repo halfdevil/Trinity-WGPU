@@ -14,7 +14,7 @@ set_property(TARGET "Trinity-Framework" PROPERTY CXX_STANDARD_REQUIRED ON)
 set(INCLUDE_DIRS "Include")
 set(COMPILE_DEFS "-DGLM_ENABLE_EXPERIMENTAL")
 set(LINK_OPTIONS "")
-set(LINK_LIBRARIES "glfw" "tinygltf")
+set(LINK_LIBRARIES "glfw" "tinygltf" "imguibuild")
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
 	set(COMPILE_DEFS ${COMPILE_DEFS} DEBUG_BUILD=1)  

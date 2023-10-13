@@ -109,6 +109,15 @@ namespace Trinity
 					}
 				}
 			}
+
+			if (mConfig.contains("input"))
+			{
+				if (!mInput->loadConfig(mConfig["input"]))
+				{
+					LogError("Input::loadConfig() failed!!");
+					return false;
+				}
+			}
 		}
 
 		if (!mInput->create(*mWindow))

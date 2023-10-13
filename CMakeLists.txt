@@ -37,6 +37,7 @@ set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory("ThirdParty/tinygltf")
 add_subdirectory("ThirdParty/json")
+add_subdirectory("ThirdParty/imguibuild")
 
 set_property(TARGET nlohmann_json PROPERTY FOLDER "ThirdParty")
 
@@ -44,6 +45,7 @@ include_directories("ThirdParty/stb")
 include_directories("ThirdParty/glm")
 include_directories("ThirdParty/tinygltf")
 include_directories("ThirdParty/json/include")
+include_directories("ThirdParty/imgui")
 
 # Include sub-projects.
 add_subdirectory("Framework")

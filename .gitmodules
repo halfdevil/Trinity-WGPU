@@ -25,3 +25,9 @@
 [submodule "ThirdParty/CLI11"]
 	path = ThirdParty/CLI11
 	url = https://github.com/CLIUtils/CLI11.git
+[submodule "ThirdParty/imgui"]
+	path = ThirdParty/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "ThirdParty/imguibuild"]
+	path = ThirdParty/imguibuild
+	url = https://github.com/halfdevil/imguibuild.git

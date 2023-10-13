@@ -81,8 +81,11 @@ namespace Trinity
 
         glfwSetKeyCallback(mHandle, [](GLFWwindow* handle, int key, int scancode, int action, int mods) {
             Window* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-            if (window && action != GLFW_REPEAT)
+            if (window)
             {
+				if (action != GLFW_PRESS && action != GLFW_RELEASE)
+					return;
+
                 window->mCallbacks.onKey.notify(key, action == GLFW_PRESS, mods);
             }
         });
@@ -113,8 +116,11 @@ namespace Trinity
 
         glfwSetMouseButtonCallback(mHandle, [](GLFWwindow* handle, int button, int action, int mods) {
             Window* window = static_cast<Window*>(glfwGetWindowUserPointer(handle));
-            if (window && action != GLFW_REPEAT)
+            if (window)
             {
+				if (action != GLFW_PRESS && action != GLFW_RELEASE)
+					return;
+
                 window->mCallbacks.onMouseButton.notify(button, action == GLFW_PRESS, mods);
             }
         });
@@ -193,7 +199,15 @@ namespace Trinity
         glfwSetCursor(mHandle, cursorHandle);
     }
 
-    glm::uvec2 Window::getSize() const
+	float Window::getScaleFactor() const
+	{
+        auto fbSize = getFramebufferSize();
+        auto size = getSize();
+
+        return (float)fbSize.x / size.x;
+	}
+
+	glm::uvec2 Window::getSize() const
     {
         int32_t x{ 0 };
         int32_t y{ 0 };

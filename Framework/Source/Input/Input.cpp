@@ -28,19 +28,108 @@ namespace Trinity
 			onMouseScrollCallback(xoffset, yoffset);
 		});
 
+		mKeyboard = std::make_unique<Keyboard>();
+		mMouse = std::make_unique<Mouse>();
 		mActionBindings.resize(InputEvent::Max);
+
 		return true;
 	}
 
 	void Input::destroy()
 	{
+	}
 
+	bool Input::loadConfig(const json& inputConfig)
+	{
+		if (inputConfig.contains("actions"))
+		{
+			for (auto& action : inputConfig["actions"])
+			{
+				InputAction inputAction;
+				inputAction.name = action["name"].get<std::string>();
+
+				if (action.contains("keyboardKeys"))
+				{
+					for (auto& key : action["keyboardKeys"])
+					{
+						inputAction.keyboardKeys.push_back(key.get<int32_t>());
+					}
+				}
+
+				if (action.contains("mouseButtons"))
+				{
+					for (auto& button : action["mouseButtons"])
+					{
+						inputAction.mouseButtons.push_back(button.get<int32_t>());
+					}
+				}
+
+				addAction(inputAction);
+			}
+		}
+
+		if (inputConfig.contains("axes"))
+		{
+			for (auto& axis : inputConfig["axes"])
+			{
+				InputAxis inputAxis;
+				inputAxis.name = axis["name"].get<std::string>();
+
+				if (axis.contains("keyboardKeys"))
+				{
+					for (auto& key : axis["keyboardKeys"])
+					{
+						auto type = key["type"].get<int32_t>();
+						auto scale = key["scale"].get<float>();
+
+						inputAxis.keyboardKeys.push_back({ type, scale });
+					}
+				}
+
+				if (axis.contains("mouseButtons"))
+				{
+					for (auto& button : axis["mouseButtons"])
+					{
+						auto type = button["type"].get<int32_t>();
+						auto scale = button["scale"].get<float>();
+
+						inputAxis.mouseButtons.push_back({ type, scale });
+					}
+				}
+
+				if (axis.contains("mousePositions"))
+				{
+					for (auto& position : axis["mousePositions"])
+					{
+						auto type = position["type"].get<int32_t>();
+						auto scale = position["scale"].get<float>();
+
+						inputAxis.mousePositions.push_back({ type, scale });
+					}
+				}
+
+				if (axis.contains("mouseScrolls"))
+				{
+					for (auto& scroll : axis["mouseScrolls"])
+					{
+						auto type = scroll["type"].get<int32_t>();
+						auto scale = scroll["scale"].get<float>();
+
+						inputAxis.mouseScrolls.push_back({ type, scale });
+					}
+				}
+
+				addAxis(inputAxis);
+			}
+		}
+
+		return true;
 	}
 
 	void Input::update()
 	{
-		const glm::vec2& relPosition = mMouse.getRelativePosition();
-		const glm::vec2& currScroll = mMouse.getScroll();
+		const glm::vec2& relPosition = mMouse->getRelativePosition();
+		const glm::vec2& currScroll = mMouse->getScroll();
 
 		for (auto& inputAxis : mAxisMap)
 		{
@@ -52,12 +141,12 @@ namespace Trinity
 
 			for (auto& key : inputAxis.second.keyboardKeys)
 			{
-				it->second.notify(mKeyboard.isKeyDown(key.type) ? key.scale : 0.0f);
+				it->second.notify(mKeyboard->isKeyDown(key.type) ? key.scale : 0.0f);
 			}
 
 			for (auto& button : inputAxis.second.mouseButtons)
 			{
-				it->second.notify(mMouse.isButtonDown(button.type) ? button.scale : 0.0f);
+				it->second.notify(mMouse->isButtonDown(button.type) ? button.scale : 0.0f);
 			}
 
 			for (auto& position : inputAxis.second.mousePositions)
@@ -74,8 +163,8 @@ namespace Trinity
 
 	void Input::postUpdate()
 	{
-		mKeyboard.postUpdate();
-		mMouse.postUpdate();
+		mKeyboard->postUpdate();
+		mMouse->postUpdate();
 	}
 
 	void Input::addAction(const InputAction& action)
@@ -111,7 +200,7 @@ namespace Trinity
 
 	void Input::onKeyCallback(int32_t key, bool pressed)
 	{
-		mKeyboard.update(key, pressed);
+		mKeyboard->update(key, pressed);
 
 		auto keyIt = mKeyboardKeyActionMap.find(key);
 		if (keyIt == mKeyboardKeyActionMap.end())
@@ -128,7 +217,7 @@ namespace Trinity
 			bindingIt->second.notify(key);
 		}
 
-		if (mKeyboard.isKeyiggered(key))
+		if (mKeyboard->isKeyiggered(key))
 		{
 			auto& trigBindings = mActionBindings[InputEvent::Triggered];
 			auto trigIt = trigBindings.find(keyIt->second);
@@ -142,12 +231,12 @@ namespace Trinity
 
 	void Input::onMousePosCallback(float x, float y)
 	{
-		mMouse.updatePosition(x, y);
+		mMouse->updatePosition(x, y);
 	}
 
 	void Input::onMouseButtonCallback(int32_t button, bool pressed, int32_t mods)
 	{
-		mMouse.update(button, pressed);
+		mMouse->update(button, pressed);
 
 		auto buttonIt = mMouseButtonActionMap.find(button);
 		if (buttonIt == mMouseButtonActionMap.end())
@@ -164,7 +253,7 @@ namespace Trinity
 			bindingIt->second.notify(button);
 		}
 
-		if (mMouse.isButtoniggered(button))
+		if (mMouse->isButtoniggered(button))
 		{
 			auto& trigBindings = mActionBindings[InputEvent::Triggered];
 			auto trigIt = trigBindings.find(buttonIt->second);
@@ -178,6 +267,6 @@ namespace Trinity
 
 	void Input::onMouseScrollCallback(float xoffset, float yoffset)
 	{
-		mMouse.updateScroll(xoffset, yoffset);
+		mMouse->updateScroll(xoffset, yoffset);
 	}
 }

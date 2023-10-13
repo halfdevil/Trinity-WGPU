@@ -28,6 +28,7 @@ namespace Trinity
 
 		virtual void addResource(std::unique_ptr<Resource> resource);
 		virtual void setResources(const std::type_index& type, std::vector<std::unique_ptr<Resource>> resources);
+		virtual void clear();
 
 	public:
 
