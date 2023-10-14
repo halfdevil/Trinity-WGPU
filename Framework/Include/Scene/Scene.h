@@ -5,7 +5,6 @@
 #include "Scene/Node.h"
 #include "Scene/Components/Light.h"
 #include "Scene/Components/Scripts/FreeCamera.h"
-#include "Graphics/ResourceCache.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -15,6 +14,8 @@
 
 namespace Trinity
 {
+	class ResourceCache;
+
 	class Scene
 	{
 	public:

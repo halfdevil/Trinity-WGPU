@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/Resource.h"
+#include "Core/Resource.h"
 #include "Graphics/Shader.h"
 #include "Graphics/VertexBuffer.h"
 #include "Graphics/BindGroupLayout.h"

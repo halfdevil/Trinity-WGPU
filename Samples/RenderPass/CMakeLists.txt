@@ -28,12 +28,9 @@ target_link_libraries("Trinity-RenderPass" PRIVATE ${LINK_LIBRARIES} ${LINK_OPTI
 file(COPY "../../Assets/Framework" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
 
 if (CMAKE_SYSTEM_NAME MATCHES Emscripten)
-	file(COPY "AppConfig.json" DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/Assets")
-endif()
-
-if (CMAKE_SYSTEM_NAME MATCHES Emscripten)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/index.html ${CMAKE_CURRENT_BINARY_DIR}/index.html COPYONLY)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/style.css ${CMAKE_CURRENT_BINARY_DIR}/style.css COPYONLY)
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/AppConfig.json" "${CMAKE_CURRENT_SOURCE_DIR}/Assets" COPYONLY)
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/index.html" "${CMAKE_CURRENT_BINARY_DIR}/index.html" COPYONLY)
+	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/style.css" "${CMAKE_CURRENT_BINARY_DIR}/style.css" COPYONLY)
 else()
 	file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/Assets" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	configure_file("${CMAKE_CURRENT_SOURCE_DIR}/AppConfig.json" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)

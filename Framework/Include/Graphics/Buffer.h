@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/Resource.h"
+#include "Core/Resource.h"
 #include "Core/Observer.h"
 #include <webgpu/webgpu_cpp.h>
 

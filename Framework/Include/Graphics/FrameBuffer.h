@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/Resource.h"
+#include "Core/Resource.h"
 #include "Graphics/Texture.h"
 
 namespace Trinity

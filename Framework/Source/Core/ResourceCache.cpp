@@ -1,5 +1,5 @@
-#include "Graphics/ResourceCache.h"
-#include "Graphics/Resource.h"
+#include "Core/ResourceCache.h"
+#include "Core/Resource.h"
 
 namespace Trinity
 {

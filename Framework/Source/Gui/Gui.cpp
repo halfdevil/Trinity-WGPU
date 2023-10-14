@@ -3,7 +3,6 @@
 #include "Graphics/RenderPass.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Sampler.h"
-#include "Graphics/ResourceCache.h"
 #include "Graphics/Shader.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/UniformBuffer.h"
@@ -17,6 +16,7 @@
 #include "Input/Types.h"
 #include "Core/Window.h"
 #include "Core/Logger.h"
+#include "Core/ResourceCache.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 

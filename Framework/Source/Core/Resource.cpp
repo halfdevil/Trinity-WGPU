@@ -1,4 +1,4 @@
-#include "Graphics/Resource.h"
+#include "Core/Resource.h"
 
 namespace Trinity
 {

@@ -3,7 +3,7 @@
 #include "Scene/Component.h"
 #include "Scene/Components/Light.h"
 #include "Scene/Components/Scripts/FreeCamera.h"
-#include "Graphics/ResourceCache.h"
+#include "Core/ResourceCache.h"
 #include "Core/Logger.h"
 #include <queue>
 

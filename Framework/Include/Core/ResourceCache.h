@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Graphics/Resource.h"
+#include "Core/Resource.h"
 #include <algorithm>
 #include <memory>
 #include <string>

@@ -12,12 +12,12 @@
 #include "Graphics/BindGroupLayout.h"
 #include "Graphics/UniformBuffer.h"
 #include "Graphics/StorageBuffer.h"
-#include "Graphics/ResourceCache.h"
 #include "Graphics/SwapChain.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/RenderPass.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {

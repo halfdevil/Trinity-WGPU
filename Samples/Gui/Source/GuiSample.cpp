@@ -3,6 +3,7 @@
 #include "Core/Debugger.h"
 #include "Core/Clock.h"
 #include "Core/Window.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 #include "Input/Input.h"
 #include "Graphics/GraphicsDevice.h"

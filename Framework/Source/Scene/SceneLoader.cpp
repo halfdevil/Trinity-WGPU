@@ -6,7 +6,6 @@
 #include "Scene/Components/Mesh.h"
 #include "Scene/Components/SubMesh.h"
 #include "Scene/Components/PerspectiveCamera.h"
-#include "Graphics/ResourceCache.h"
 #include "Graphics/PBRMaterial.h"
 #include "Graphics/Sampler.h"
 #include "Graphics/Texture2D.h"
@@ -16,6 +15,7 @@
 #include "Graphics/BindGroupLayout.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
+#include "Core/ResourceCache.h"
 #include "Core/Utils.h"
 #include "VFS/FileSystem.h"
 #include <format>
