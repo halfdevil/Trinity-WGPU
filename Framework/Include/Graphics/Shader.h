@@ -7,6 +7,9 @@
 
 namespace Trinity
 {
+    class FileReader;
+    class FileWriter;
+
     class ShaderPreProcessor
     {
     public:
@@ -55,13 +58,16 @@ namespace Trinity
             return mHandle != nullptr;
         }
 
-        bool create(const std::string& fileName, ShaderPreProcessor& processor);
-        bool createFromSource(const std::string& source);
-        void destroy();
+		virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool write() override;
+        virtual void destroy();
+
+        virtual bool load(const std::string& fileName, ShaderPreProcessor& processor);
+		virtual bool loadFromSource(const std::string& source);
 
         virtual std::type_index getType() const override;
 
-    private:
+    protected:
 
         wgpu::ShaderModule mHandle;
     };

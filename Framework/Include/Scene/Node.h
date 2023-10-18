@@ -27,6 +27,11 @@ namespace Trinity
 			return mName;
 		}
 
+		uint32_t getId() const
+		{
+			return mId;
+		}
+
 		Transform& getTransform()
 		{
 			return mTransform;
@@ -43,12 +48,18 @@ namespace Trinity
 		}
 
 		virtual void setName(const std::string& name);
+		virtual void setId(uint32_t id);
 		virtual void setParent(Node& parent);
 		virtual void addChild(Node& child);
 
-		Component& getComponent(const std::type_index& type);
-		bool hasComponent(const std::type_index& type);
-		void addComponent(Component& component);
+		virtual Component& getComponent(const std::type_index& type);
+		virtual bool hasComponent(const std::type_index& type);
+		virtual void setComponent(Component& component);
+
+		virtual bool read(FileReader& reader, Scene& scene);
+		virtual bool write(FileWriter& writer, Scene& scene);
+		virtual bool readComponents(FileReader& reader, Scene& scene);
+		virtual bool writeComponents(FileWriter& writer, Scene& scene);
 
 	public:
 
@@ -67,6 +78,7 @@ namespace Trinity
 	protected:
 
 		std::string mName;
+		uint32_t mId{ (uint32_t)-1 };
 		Node* mParent{ nullptr };
 		Transform mTransform;
 		std::vector<Node*> mChildren;

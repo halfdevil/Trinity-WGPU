@@ -15,6 +15,9 @@ namespace Trinity
 	class Sampler;
 	class Shader;
 	class UniformBuffer;
+	class FileReader;
+	class FileWriter;
+	class ResourceCache;
 
 	enum class AlphaMode : uint32_t
 	{
@@ -82,6 +85,11 @@ namespace Trinity
 			return mParamsBuffer.get();
 		}
 
+		const std::vector<std::string>& getShaderDefines() const
+		{
+			return mShaderDefines;
+		}
+
 		MaterialTexture* getTexture(const std::string& name);
 		virtual std::type_index getType() const override;
 
@@ -90,8 +98,24 @@ namespace Trinity
 		virtual void setAlphaCutoff(float alphaCutoff);
 		virtual void setAlphaMode(AlphaMode alphaMode);
 		virtual void setShader(Shader& shader);
+		virtual void setShaderDefines(std::vector<std::string>&& defines);
+
 		virtual void setTexture(const std::string& name, Texture& texture, Sampler& sampler);
+		virtual bool addTexture(const std::string& name, const std::string& textureFileName, 
+			const std::string& samplerFileName, ResourceCache& cache);
+
+		virtual bool load(const std::string& shaderFileName, const std::vector<std::string>& defines, 
+			ResourceCache& cache);
+
 		virtual bool compile() = 0;
+
+		using Resource::create;
+		using Resource::write;
+
+	protected:
+
+		virtual bool read(FileReader& reader, ResourceCache& cache);
+		virtual bool write(FileWriter& writer);
 
 	protected:
 
@@ -100,6 +124,7 @@ namespace Trinity
 		float mAlphaCutoff{ 0.5f };
 		AlphaMode mAlphaMode{ AlphaMode::Opaque };
 		Shader* mShader{ nullptr };
+		std::vector<std::string> mShaderDefines;
 		std::unique_ptr<BindGroup> mBindGroup{ nullptr };
 		std::unique_ptr<BindGroupLayout> mBindGroupLayout{ nullptr };
 		std::unique_ptr<UniformBuffer> mParamsBuffer{ nullptr };

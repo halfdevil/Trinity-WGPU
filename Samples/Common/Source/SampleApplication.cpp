@@ -2,6 +2,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneLoader.h"
 #include "Scene/SceneRenderer.h"
+#include "Scene/ComponentFactory.h"
 #include "Scene/Components/Script.h"
 #include "Graphics/RenderPass.h"
 #include "Core/Logger.h"

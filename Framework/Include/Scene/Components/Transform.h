@@ -12,7 +12,7 @@ namespace Trinity
 	{
 	public:
 
-		Transform(Node& node);
+		Transform() = default;
 		virtual ~Transform() = default;
 
 		Transform(const Transform&) = delete;
@@ -21,7 +21,7 @@ namespace Trinity
 		Transform(Transform&&) = default;
 		Transform& operator = (Transform&&) = default;
 
-		Node* getNode()
+		Node* getNode() const
 		{
 			return mNode;
 		}
@@ -48,16 +48,21 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
+		virtual size_t getHashCode() const override;
 
 		glm::mat4 getMatrix() const;
 		void setMatrix(const glm::mat4& matrix);
 
+		void setNode(Node& node);
 		void setTranslation(const glm::vec3& translation);
 		void setRotation(const glm::quat& rotation);
 		void setScale(const glm::vec3& scale);
 		void invalidateWorldMatrix();
 
-	private:
+		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+	protected:
 
 		void updateWorldTransform();
 

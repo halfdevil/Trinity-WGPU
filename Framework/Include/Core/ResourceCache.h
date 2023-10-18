@@ -24,6 +24,11 @@ namespace Trinity
 		ResourceCache& operator = (ResourceCache&&) = default;
 
 		bool hasResource(const std::type_index& type) const;
+		bool isLoaded(const std::type_index& type, const std::string& fileName) const;
+
+		Resource* getResource(const std::type_index& type, uint32_t id) const;
+		Resource* getResource(const std::type_index& type, const std::string& fileName) const;
+
 		const std::vector<std::unique_ptr<Resource>>& getResources(const std::type_index& type) const;
 
 		virtual void addResource(std::unique_ptr<Resource> resource);
@@ -31,6 +36,24 @@ namespace Trinity
 		virtual void clear();
 
 	public:
+
+		template <typename T>
+		bool isLoaded(const std::string& fileName) const
+		{
+			return isLoaded(typeid(T), fileName);
+		}
+
+		template <typename T>
+		T* getResource(uint32_t id) const
+		{
+			return dynamic_cast<T*>(getResource(typeid(T), id));
+		}
+
+		template <typename T>
+		T* getResource(const std::string& fileName) const
+		{
+			return dynamic_cast<T*>(getResource(typeid(T), fileName));
+		}
 
 		template <typename T>
 		void setResources(std::vector<std::unique_ptr<T>> resources)
@@ -80,5 +103,6 @@ namespace Trinity
 	protected:
 
 		std::unordered_map<std::type_index, std::vector<std::unique_ptr<Resource>>> mResources;
+		std::unordered_map<std::type_index, std::unordered_map<std::string, Resource*>> mFileResourceMap;
 	};
 }

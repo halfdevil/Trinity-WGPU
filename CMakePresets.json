@@ -18,8 +18,8 @@
       }
     },
     {
-      "name": "windows-x64-debug",
-      "displayName": "Windows x64 Debug",
+      "name": "win64-debug",
+      "displayName": "Win64 Debug",
       "inherits": "windows-base",
       "architecture": {
         "value": "x64",
@@ -30,9 +30,30 @@
       }
     },
     {
-      "name": "windows-x64-release",
-      "displayName": "Windows x64 Release",
-      "inherits": "windows-x64-debug",
+      "name": "win64-release",
+      "displayName": "Win64 Release",
+      "inherits": "win64-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "win64-editor-debug",
+      "displayName": "Win64 Editor Debug",
+      "inherits": "windows-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TRINITY_BUILD_TYPE": "Editor"
+      }
+    },
+    {
+      "name": "win64-editor-release",
+      "displayName": "Win64 Editor Release",
+      "inherits": "win64-editor-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }

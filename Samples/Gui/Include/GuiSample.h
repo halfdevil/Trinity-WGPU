@@ -4,7 +4,7 @@
 
 namespace Trinity
 {
-	class Gui;
+	class GuiRenderer;
 
 	class GuiSample : public SampleApplication
 	{
@@ -23,10 +23,11 @@ namespace Trinity
 
 		virtual bool init() override;
 		virtual void render(float deltaTime) override;
+		virtual void onGui() override;
 		virtual void setupInput();
 
 	protected:
 
-		std::unique_ptr<Gui> mGui{ nullptr };
+		std::unique_ptr<GuiRenderer> mGui{ nullptr };
 	};
 }

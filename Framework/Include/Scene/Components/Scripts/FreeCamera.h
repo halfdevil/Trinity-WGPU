@@ -9,7 +9,7 @@ namespace Trinity
 	{
 	public:
 
-		FreeCamera(Node& node);
+		FreeCamera() = default;
 		virtual ~FreeCamera() = default;
 
 		FreeCamera(const FreeCamera&) = delete;
@@ -24,9 +24,15 @@ namespace Trinity
 		virtual void turn(float scale);
 		virtual void lookUp(float scale);
 
+		virtual size_t getHashCode() const override;
+
 		virtual void init() override;
 		virtual void update(float deltaTime) override;
 		virtual void resize(uint32_t width, uint32_t height) override;
+
+	public:
+
+		static std::unique_ptr<Component> createNew();
 
 	public:
 

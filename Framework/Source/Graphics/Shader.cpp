@@ -1,9 +1,10 @@
 #include "Graphics/Shader.h"
 #include "Graphics/GraphicsDevice.h"
+#include "VFS/FileSystem.h"
 #include "Core/Debugger.h"
 #include "Core/Logger.h"
 #include "Core/Utils.h"
-#include "VFS/FileSystem.h"
+#include "Core/ResourceCache.h"
 #include <sstream>
 
 namespace Trinity
@@ -190,7 +191,28 @@ namespace Trinity
 		destroy();
 	}
 
-	bool Shader::create(const std::string& fileName, ShaderPreProcessor& processor)
+	bool Shader::create(const std::string& fileName, ResourceCache& cache)
+	{
+		ShaderPreProcessor processor;
+		return load(fileName, processor);
+	}
+
+	bool Shader::write()
+	{
+		return true;
+	}
+
+	void Shader::destroy()
+	{
+		mHandle = nullptr;
+	}
+
+	std::type_index Shader::getType() const
+	{
+		return typeid(Shader);
+	}
+
+	bool Shader::load(const std::string& fileName, ShaderPreProcessor& processor)
 	{
 		std::string source = processor.process(fileName);
 		if (source.empty())
@@ -199,10 +221,10 @@ namespace Trinity
 			return false;
 		}
 
-		return createFromSource(source);
+		return loadFromSource(source);
 	}
 
-	bool Shader::createFromSource(const std::string& source)
+	bool Shader::loadFromSource(const std::string& source)
 	{
 		wgpu::ShaderModuleWGSLDescriptor wgslDesc{};
 		wgslDesc.code = source.c_str();
@@ -220,15 +242,5 @@ namespace Trinity
 		}
 
 		return true;
-	}
-
-	void Shader::destroy()
-	{
-		mHandle = nullptr;
-	}
-
-	std::type_index Shader::getType() const
-	{
-		return typeid(Shader);
 	}
 }

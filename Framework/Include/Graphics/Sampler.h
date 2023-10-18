@@ -5,6 +5,9 @@
 
 namespace Trinity
 {
+    class FileReader;
+    class FileWriter;
+
     struct SamplerProperties
     {
         wgpu::AddressMode addressModeU{ wgpu::AddressMode::ClampToEdge };
@@ -19,6 +22,8 @@ namespace Trinity
     class Sampler : public Resource
     {
     public:
+
+        static constexpr const char* kDefault = "/Assets/Framework/Samplers/Default.tsamp";
 
         Sampler() = default;
         ~Sampler();
@@ -39,13 +44,28 @@ namespace Trinity
             return mHandle != nullptr;
         }
 
-        bool create(const SamplerProperties& samplerProps);
-        void destroy();
+        const SamplerProperties& getProperties() const
+        {
+            return mProperties;
+        }
+
+        virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+        virtual bool write() override;
+		virtual void destroy();
+
+		virtual bool load(const SamplerProperties& samplerProps);
+        virtual void setProperties(SamplerProperties& samplerProps);
 
         virtual std::type_index getType() const override;
 
-    private:
+    protected:
 
+		virtual bool read(FileReader& reader, ResourceCache& cache);
+		virtual bool write(FileWriter& writer);
+
+    protected:
+
+        SamplerProperties mProperties;
         wgpu::Sampler mHandle;
     };
 }

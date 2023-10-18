@@ -33,6 +33,7 @@ namespace Trinity
 		std::string combinePath(const std::string& pathA, const std::string& pathB) const;
 		std::string relativePath(const std::string& path, const std::string& basePath) const;
 		std::string sanitizePath(const std::string& path) const;
+		std::string canonicalPath(const std::string& path) const;
 
 		bool isExist(const std::string& filePath) const;
 		bool isDirectory(const std::string& filePath) const;

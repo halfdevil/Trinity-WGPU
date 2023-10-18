@@ -15,6 +15,7 @@ namespace Trinity
     class Input;
     class GraphicsDevice;
     class RenderPass;
+    class GuiRenderer;
 
     struct ApplicationOptions
     {
@@ -98,10 +99,12 @@ namespace Trinity
         virtual void update(float deltaTime);
         virtual void render(float deltaTime);
         virtual void frame();
-        virtual void exit();
+		virtual void exit();
+		virtual void drawGui(float deltaTime);
 
         virtual void onClose();
         virtual void onResize();
+        virtual void onGui();
         virtual void setupInput();
 
     protected:
@@ -115,6 +118,8 @@ namespace Trinity
         std::unique_ptr<FileSystem> mFileSystem{ nullptr };
         std::unique_ptr<Input> mInput{ nullptr };
         std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
+
         std::unique_ptr<RenderPass> mMainPass{ nullptr };
+        std::unique_ptr<GuiRenderer> mGuiRenderer{ nullptr };
     };
 }

@@ -1,0 +1,10 @@
+{
+  "input": {
+    "actions": [
+      {
+        "name": "exit",
+        "keyboardKeys": [256]
+      }      
+    ]
+  }
+}

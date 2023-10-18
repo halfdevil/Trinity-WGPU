@@ -43,6 +43,15 @@ namespace Trinity
 		virtual void setFarPlane(float farPlane);
 		virtual void setNearPlane(float nearPlane);
 
+		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+		virtual size_t getHashCode() const override;
+
+	public:
+
+		static std::unique_ptr<Component> createNew();
+
 	protected:
 
 		float mAspectRatio{ 0.0f };

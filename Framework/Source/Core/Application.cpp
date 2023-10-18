@@ -3,12 +3,14 @@
 #include "Core/Debugger.h"
 #include "Core/Clock.h"
 #include "Core/Window.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 #include "VFS/DiskFile.h"
 #include "Input/Input.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/SwapChain.h"
 #include "Graphics/RenderPass.h"
+#include "Gui/GuiRenderer.h"
 #include <iostream>
 
 #ifdef __EMSCRIPTEN__
@@ -142,6 +144,13 @@ namespace Trinity
 		mWindow->showMouse(true, false);
 		mMainPass = std::make_unique<RenderPass>();
 
+		mGuiRenderer = std::make_unique<GuiRenderer>();
+		if (!mGuiRenderer->create(*mWindow, "/Assets/Fonts/CascadiaCode.ttf"))
+		{
+			LogError("Gui::create() failed!!");
+			return false;
+		}
+
 		return true;
 	}
 
@@ -171,6 +180,13 @@ namespace Trinity
 		mWindow->close();
 	}
 
+	void Application::drawGui(float deltaTime)
+	{
+		mGuiRenderer->newFrame(*mWindow, deltaTime);
+		onGui();
+		mGuiRenderer->draw(ImGui::GetDrawData(), *mMainPass);
+	}
+
 	void Application::onClose()
 	{
 	}
@@ -182,6 +198,10 @@ namespace Trinity
 		{
 			LogError("GraphicsDevice::setupSwapChain() failed!!");
 		}
+	}
+
+	void Application::onGui()
+	{
 	}
 
 	void Application::setupInput()

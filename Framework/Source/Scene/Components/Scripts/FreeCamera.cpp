@@ -2,16 +2,12 @@
 #include "Scene/Components/PerspectiveCamera.h"
 #include "Scene/Components/Transform.h"
 #include "Scene/Node.h"
+#include "Scene/ComponentFactory.h"
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 namespace Trinity
 {
-	FreeCamera::FreeCamera(Node& node) :
-		NodeScript(node)
-	{
-	}
-
 	void FreeCamera::moveForward(float scale)
 	{
 		mTranslation.z += scale * moveSpeed;
@@ -37,21 +33,26 @@ namespace Trinity
 		mRotation.x += scale * rotationSpeed;
 	}
 
+	size_t FreeCamera::getHashCode() const
+	{
+		return typeid(FreeCamera).hash_code();
+	}
+
 	void FreeCamera::init()
 	{
-		NodeScript::init();
+		Script::init();
 	}
 
 	void FreeCamera::update(float deltaTime)
 	{
-		NodeScript::update(deltaTime);
+		Script::update(deltaTime);
 
 		mTranslation *= deltaTime;
 		mRotation *= deltaTime;
 
 		if (mRotation != glm::vec3(0.0f) || mTranslation != glm::vec3(0.0f))
 		{
-			auto& transform = getNode().getTransform();
+			auto& transform = getNode()->getTransform();
 
 			glm::quat qx = glm::angleAxis(mRotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 			glm::quat qy = glm::angleAxis(mRotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -68,14 +69,18 @@ namespace Trinity
 
 	void FreeCamera::resize(uint32_t width, uint32_t height)
 	{
-		auto& cameraNode = getNode();
-
-		if (cameraNode.hasComponent<Camera>())
+		auto* cameraNode = getNode();
+		if (cameraNode->hasComponent<Camera>())
 		{
-			if (auto camera = dynamic_cast<PerspectiveCamera*>(&cameraNode.getComponent<Camera>()))
+			if (auto camera = dynamic_cast<PerspectiveCamera*>(&cameraNode->getComponent<Camera>()))
 			{
 				camera->setAspectRatio((float)width / height);
 			}
 		}
+	}
+
+	std::unique_ptr<Component> FreeCamera::createNew()
+	{
+		return std::make_unique<FreeCamera>();
 	}
 }

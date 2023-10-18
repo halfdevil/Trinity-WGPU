@@ -56,7 +56,7 @@ namespace Trinity
 			return false;
 		}
 
-		mTexture->write(sizePerPixel, pixels, sizePerPixel * width * height);
+		mTexture->upload(sizePerPixel, pixels, sizePerPixel * width * height);
 		io.Fonts->SetTexID((ImTextureID)mTexture.get());
 
 		mName = name;

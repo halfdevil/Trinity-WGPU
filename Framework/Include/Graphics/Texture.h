@@ -1,11 +1,13 @@
 #pragma once
 
 #include "Core/Resource.h"
-#include "Core/Image.h"
 #include <webgpu/webgpu_cpp.h>
 
 namespace Trinity
 {
+    class FileReader;
+    class FileWriter;
+
     enum class TextureType : uint32_t
     {
         Undefined = 0,
@@ -53,13 +55,21 @@ namespace Trinity
             return mFormat;
         }
 
+        using Resource::create;
+        using Resource::write;
+
         virtual std::type_index getType() const override;
+
+    protected:
+
+        virtual bool read(FileReader& reader, ResourceCache& cache);
+        virtual bool write(FileWriter& writer);
 
     protected:
 
         TextureType mTextureType{ TextureType::Undefined };
         wgpu::TextureFormat mFormat{ wgpu::TextureFormat::RGBA8UnormSrgb };
         wgpu::Texture mHandle;
-        wgpu::TextureView mView;
+		wgpu::TextureView mView;
     };
 }

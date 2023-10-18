@@ -15,6 +15,7 @@
 namespace Trinity
 {
 	class ResourceCache;
+	class ComponentFactory;
 
 	class Scene
 	{
@@ -41,6 +42,11 @@ namespace Trinity
 			return mName;
 		}
 
+		const std::string& getFileName() const
+		{
+			return mFileName;
+		}
+
 		Node* getRoot() const
 		{
 			return mRoot;
@@ -51,9 +57,19 @@ namespace Trinity
 			return *mResourceCache;
 		}
 
-		bool hasComponent(const std::type_index& type) const;
-		Node* findNode(const std::string& name);
-		const std::vector<std::unique_ptr<Component>>& getComponents(const std::type_index& type) const;
+		ComponentFactory& getComponentFactory()
+		{
+			return *mComponentFactory;
+		}
+
+		virtual bool create(const std::string& fileName);
+		virtual bool write();
+		virtual void registerCreators();
+
+		virtual bool hasComponent(const std::type_index& type) const;
+		virtual Node* findNode(const std::string& name);
+		virtual Node* getNode(uint32_t idx) const;
+		virtual const std::vector<std::unique_ptr<Component>>& getComponents(const std::type_index& type) const;
 
 		virtual void setName(const std::string& name);
 		virtual void addNode(std::unique_ptr<Node> node);
@@ -129,9 +145,16 @@ namespace Trinity
 
 	protected:
 
+		virtual bool read(FileReader& reader);
+		virtual bool write(FileWriter& writer);
+
+	protected:
+
 		std::string mName;
+		std::string mFileName;
 		Node* mRoot{ nullptr };
 		std::unique_ptr<ResourceCache> mResourceCache{ nullptr };
+		std::unique_ptr<ComponentFactory> mComponentFactory{ nullptr };
 		std::vector<std::unique_ptr<Node>> mNodes;
 		std::unordered_map<std::type_index, std::vector<std::unique_ptr<Component>>> mComponents;
 	};

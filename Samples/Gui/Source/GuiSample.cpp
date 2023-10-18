@@ -11,7 +11,7 @@
 #include "Graphics/Texture2D.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
-#include "Gui/Gui.h"
+#include "Gui/GuiRenderer.h"
 #include "Gui/Font.h"
 #include <glm/glm.hpp>
 
@@ -24,13 +24,6 @@ namespace Trinity
 			return false;
 		}
 
-		mGui = std::make_unique<Gui>();
-		if (!mGui->create(*mWindow, "/Assets/Fonts/CascadiaCode.ttf"))
-		{
-			LogError("Gui::create() failed!!");
-			return false;
-		}
-
 		setupInput();
 		return true;
 	}
@@ -38,13 +31,14 @@ namespace Trinity
 	void GuiSample::render(float deltaTime)
 	{
 		mMainPass->begin();		
-		mGui->newFrame(*mWindow, deltaTime);
+		drawGui(deltaTime);
+		mMainPass->end();
+	}
 
+	void GuiSample::onGui()
+	{
 		ImGui::ShowDemoWindow();
 		ImGui::Render();
-
-		mGui->draw(ImGui::GetDrawData(), *mMainPass);
-		mMainPass->end();
 	}
 
 	void GuiSample::setupInput()

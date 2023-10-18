@@ -40,6 +40,11 @@ namespace Trinity
 		return fs::path(path).generic_string();
 	}
 
+	std::string FileSystem::canonicalPath(const std::string& path) const
+	{
+		return fs::weakly_canonical(path).string();
+	}
+
 	bool FileSystem::isExist(const std::string& filePath) const
 	{
 		for (auto& it : mStorages)

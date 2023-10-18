@@ -20,6 +20,7 @@ namespace Trinity
 		Script& operator = (Script&&) = delete;
 
 		virtual std::type_index getType() const override;
+		virtual size_t getHashCode() const override;
 
 		virtual void init();
 		virtual void update(float deltaTime);
@@ -30,13 +31,22 @@ namespace Trinity
 	{
 	public:
 
-		NodeScript(Node& node);
+		NodeScript() = default;
 		virtual ~NodeScript() = default;
 
-		Node& getNode();
+		Node* getNode() const
+		{
+			return mNode;
+		}
+
+		virtual size_t getHashCode() const override;
+
+		virtual void setNode(Node& node);
+		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	protected:
 
-		Node& mNode;
+		Node* mNode{ nullptr };
 	};
 }

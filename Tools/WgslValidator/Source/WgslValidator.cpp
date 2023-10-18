@@ -41,7 +41,7 @@ namespace Trinity
 		processor.addDefines(mDefines);
 		
 		Shader shader;
-		if (!shader.create(mFileName, processor))
+		if (!shader.load(mFileName, processor))
 		{
 			LogError("Shader::create() failed for: %s!!", mFileName.c_str());
 			mResult = false;

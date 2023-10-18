@@ -1,5 +1,8 @@
 #include "Scene/Components/Camera.h"
 #include "Scene/Node.h"
+#include "Scene/Scene.h"
+#include "VFS/FileReader.h"
+#include "VFS/FileWriter.h"
 
 namespace Trinity
 {
@@ -19,8 +22,41 @@ namespace Trinity
 		return typeid(Camera);
 	}
 
+	size_t Camera::getHashCode() const
+	{
+		return typeid(Camera).hash_code();
+	}
+
 	void Camera::setNode(Node& node)
 	{
 		mNode = &node;
 	}
+
+	bool Camera::read(FileReader& reader, Scene& scene)
+	{
+		if (!Component::read(reader, scene))
+		{
+			return false;
+		}
+
+		uint32_t nodeId{ 0 };
+		reader.read(&nodeId);
+		mNode = scene.getNode(nodeId);
+
+		return true;
+	}
+
+	bool Camera::write(FileWriter& writer, Scene& scene)
+	{
+		if (!Component::write(writer, scene))
+		{
+			return false;
+		}
+
+		const uint32_t nodeId = mNode->getId();
+		writer.write(&nodeId);
+
+		return true;
+	}
+
 }

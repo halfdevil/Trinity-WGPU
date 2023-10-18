@@ -7,6 +7,7 @@ namespace Trinity
 {
 	class SubMesh;
 	class Node;
+	class Model;
 
 	class Mesh : public Component
 	{
@@ -26,6 +27,11 @@ namespace Trinity
 			return mBounds;
 		}
 
+		Model* getModel() const
+		{
+			return mModel;
+		}
+
 		const std::vector<SubMesh*>& getSubMeshes() const
 		{
 			return mSubMeshes;
@@ -37,13 +43,24 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
+		virtual size_t getHashCode() const override;
+
 		virtual void setBounds(const BoundingBox& bounds);
 		virtual void addSubMesh(SubMesh& subMesh);
 		virtual void addNode(Node& node);
+		virtual void setModel(Model& model);
+
+		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+	public:
+
+		static std::unique_ptr<Component> createNew();
 
 	protected:
 
 		BoundingBox mBounds;
+		Model* mModel{ nullptr };
 		std::vector<SubMesh*> mSubMeshes;
 		std::vector<Node*> mNodes;
 	};

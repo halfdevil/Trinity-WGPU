@@ -1,48 +1,34 @@
 #include "Scene/Components/SubMesh.h"
+#include "Scene/Scene.h"
+#include "VFS/FileReader.h"
+#include "VFS/FileWriter.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {
-	VertexBuffer* SubMesh::getVertexBuffer(const std::string& type)
-	{
-		return mVertexBuffers.at(type).get();
-	}
-
 	std::type_index SubMesh::getType() const
 	{
 		return typeid(SubMesh);
 	}
 
-	void SubMesh::setVertexLayout(const VertexLayout& vertexLayout)
+	size_t SubMesh::getHashCode() const
 	{
-		mVertexLayout = &vertexLayout;
+		return typeid(SubMesh).hash_code();
 	}
 
-	void SubMesh::setMaterial(const Material& material)
+	void SubMesh::setMaterial(Material& material)
 	{
 		mMaterial = &material;
 	}
 
-	void SubMesh::setShader(const Shader& shader)
+	void SubMesh::setVertexBuffer(VertexBuffer& vertexBuffer)
 	{
-		mShader = &shader;
+		mVertexBuffer = &vertexBuffer;
 	}
 
-	void SubMesh::setVertexBuffer(const std::string& type, std::unique_ptr<VertexBuffer> vertexBuffer)
+	void SubMesh::setIndexBuffer(IndexBuffer& indexBuffer)
 	{
-		auto it = mVertexBuffers.find(type);
-		if (it != mVertexBuffers.end())
-		{
-			it->second = std::move(vertexBuffer);
-		}
-		else
-		{
-			mVertexBuffers.insert(std::make_pair(type, std::move(vertexBuffer)));
-		}
-	}
-
-	void SubMesh::setIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer)
-	{
-		mIndexBuffer = std::move(indexBuffer);
+		mIndexBuffer = &indexBuffer;
 	}
 
 	void SubMesh::setNumVertices(uint32_t numVertices)

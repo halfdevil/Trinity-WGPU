@@ -1,11 +1,64 @@
 #include "Graphics/PBRMaterial.h"
+#include "Graphics/Texture2D.h"
 #include "Graphics/BindGroupLayout.h"
 #include "Graphics/BindGroup.h"
 #include "Graphics/UniformBuffer.h"
+#include "VFS/FileSystem.h"
 #include "Core/Logger.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {
+	bool PBRMaterial::create(const std::string& fileName, ResourceCache& cache)
+	{
+		auto& fileSystem = FileSystem::get();
+		mFileName = fileName;
+
+		if (fileSystem.isExist(fileName))
+		{
+			auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
+			if (!file)
+			{
+				LogError("Error opening texture file: %s", fileName.c_str());
+				return false;
+			}
+
+			FileReader reader(*file);
+			if (!read(reader, cache))
+			{
+				LogError("PBRMaterial::read() failed for: %s!!", fileName.c_str());
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool PBRMaterial::write()
+	{
+		if (mFileName.empty())
+		{
+			LogError("Cannot write to file as filename is empty!!");
+			return false;
+		}
+
+		auto file = FileSystem::get().openFile(mFileName, FileOpenMode::OpenWrite);
+		if (!file)
+		{
+			LogError("Error opening PBR material file: %s", mFileName.c_str());
+			return false;
+		}
+
+		FileWriter writer(*file);
+		if (!write(writer))
+		{
+			LogError("PBRMaterial::write() failed for: %s!!", mFileName.c_str());
+			return false;
+		}
+
+		return true;
+	}
+
 	void PBRMaterial::setBaseColorFactor(const glm::vec4& baseColorFactor)
 	{
 		mBaseColorFactor = baseColorFactor;
@@ -170,6 +223,36 @@ namespace Trinity
 			LogError("BindGroup::create() failed!!");
 			return false;
 		}
+
+		return true;
+	}
+
+	bool PBRMaterial::read(FileReader& reader, ResourceCache& cache)
+	{
+		if (!Material::read(reader, cache))
+		{
+			LogError("Material::read() failed!!");
+			return false;
+		}
+
+		reader.read(&mBaseColorFactor);
+		reader.read(&mMettalicFactor);
+		reader.read(&mRoughnessFactor);
+
+		return true;
+	}
+
+	bool PBRMaterial::write(FileWriter& writer)
+	{
+		if (!Material::write(writer))
+		{
+			LogError("Material::write() failed!!");
+			return false;
+		}
+
+		writer.write(&mBaseColorFactor);
+		writer.write(&mMettalicFactor);
+		writer.write(&mRoughnessFactor);
 
 		return true;
 	}

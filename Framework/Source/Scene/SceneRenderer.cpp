@@ -120,7 +120,7 @@ namespace Trinity
 				materialLayout,
 				transformLayout
 			},
-			.vertexBuffers = { subMesh->getVertexBuffer("vertexBuffer") },
+			.vertexBuffers = { subMesh->getVertexBuffer() },
 			.primitive = {
 				.topology = wgpu::PrimitiveTopology::TriangleList,
 				.cullMode = wgpu::CullMode::Back
@@ -411,7 +411,7 @@ namespace Trinity
 		renderPass.setPipeline(*renderer.pipeline);
 		renderPass.setBindGroup(kMaterialBindGroupIndex, *renderer.materialBindGroup);
 		renderPass.setBindGroup(kTransformBindGroupIndex, *renderer.transformBindGroup);
-		renderPass.setVertexBuffer(0, *renderer.subMesh->getVertexBuffer("vertexBuffer"));
+		renderPass.setVertexBuffer(0, *renderer.subMesh->getVertexBuffer());
 
 		if (renderer.subMesh->hasIndexBuffer())
 		{

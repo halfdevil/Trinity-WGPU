@@ -18,7 +18,63 @@ namespace Trinity
 		destroy();
 	}
 
-	bool Image::create(const std::string& filePath, ImageType type)
+	bool Image::create(const std::string& fileName, ResourceCache& cache)
+	{
+		auto& fileSystem = FileSystem::get();
+		mFileName = fileName;
+
+		if (fileSystem.isExist(fileName))
+		{
+			return load(fileName);
+		}
+
+		return true;
+	}
+
+	bool Image::write()
+	{
+		if (mFileName.empty())
+		{
+			LogError("Cannot write to file as filename is empty!!");
+			return false;
+		}
+
+		auto& fileSystem = FileSystem::get();
+		if (fileSystem.isExist(mFileName))
+		{
+			LogWarning("Image file '%s' already exists!!", mFileName.c_str());
+			return true;
+		}
+
+		auto writePng = [](void* context, void* data, int len) {
+			FileWriter* writer = (FileWriter*)context;
+
+			if (writer)
+			{
+				writer->write((uint8_t*)data, len);
+			}
+		};
+
+		auto file = fileSystem.openFile(mFileName, FileOpenMode::OpenWrite);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for: %s", mFileName.c_str());
+			return false;
+		}
+
+		FileWriter writer(*file);
+
+		if (!stbi_write_png_to_func(writePng, &writer, mWidth, mHeight, mChannels,
+			mData.data(), mWidth * mChannels))
+		{
+			LogError("stbi_write_png_to_func() failed for: %s!!", mFileName.c_str());
+			return false;
+		}
+
+		return true;
+	}
+
+	bool Image::load(const std::string& filePath)
 	{
 		auto file = FileSystem::get().openFile(filePath, FileOpenMode::OpenRead);
 		if (!file)
@@ -31,10 +87,10 @@ namespace Trinity
 		std::vector<uint8_t> buffer(reader.getSize());
 		reader.read(buffer.data(), reader.getSize());
 
-		return create(buffer, type);
+		return load(buffer);
 	}
 
-	bool Image::create(const std::vector<uint8_t>& data, ImageType type)
+	bool Image::load(const std::vector<uint8_t>& data)
 	{
 		int32_t width{ 0 };
 		int32_t height{ 0 };
@@ -49,7 +105,6 @@ namespace Trinity
 			return false;
 		}
 
-		mType = type;
 		mWidth = (uint32_t)width;
 		mHeight = (uint32_t)height;
 		mChannels = 4;
@@ -59,23 +114,13 @@ namespace Trinity
 
 		stbi_image_free(image);
 
-		if (mType == ImageType::Cube)
-		{
-			if (mWidth == 2 * mHeight)
-			{
-				convertToVerticalCross();
-			}
-
-			convertToCubeMapFaces();
-		}
-
 		return true;
 	}
 
-	bool Image::create(uint32_t width, uint32_t height, uint32_t depth, uint32_t channels,
+	bool Image::load(uint32_t width, uint32_t height, uint32_t depth, uint32_t channels,
 		ImageType type, const uint8_t* data)
 	{
-		mType = type;
+		mImageType = type;
 		mWidth = width;
 		mDepth = depth;
 		mHeight = height;
@@ -90,6 +135,11 @@ namespace Trinity
 		}
 
 		return true;
+	}
+
+	std::type_index Image::getType() const
+	{
+		return typeid(Image);
 	}
 
 	void Image::destroy()
@@ -134,6 +184,18 @@ namespace Trinity
 		if (mChannels > 3) mData[ofs + 3] = uint8_t(c.w * 255.0f);
 	}
 
+	void Image::convertToCube()
+	{
+		mImageType = ImageType::Cube;
+
+		if (mWidth == 2 * mHeight)
+		{
+			convertToVerticalCross();
+		}
+
+		convertToCubeMapFaces();
+	}
+
 	void Image::convertToVerticalCross()
 	{
 		const uint32_t faceSize = mWidth / 4;
@@ -166,7 +228,7 @@ namespace Trinity
 		};
 
 		Image result;
-		result.create(w, h, 1, mChannels, mType);
+		result.load(w, h, 1, mChannels, mImageType);
 
 		const uint32_t clampW = mWidth - 1;
 		const uint32_t clampH = mHeight - 1;
@@ -206,7 +268,7 @@ namespace Trinity
 			}
 		}
 
-		create(w, h, 1, mChannels, mType, result.getData().data());
+		load(w, h, 1, mChannels, mImageType, result.getData().data());
 	}
 
 	void Image::convertToCubeMapFaces()
@@ -215,7 +277,7 @@ namespace Trinity
 		const uint32_t faceHeight = mHeight / 4;
 
 		Image result;
-		result.create(faceWidth, faceHeight, 6, mChannels, ImageType::Cube);
+		result.load(faceWidth, faceHeight, 6, mChannels, ImageType::Cube);
 
 		const uint8_t* src = mData.data();
 		uint8_t* dst = result.mData.data();
@@ -268,6 +330,6 @@ namespace Trinity
 			}
 		}
 
-		create(faceWidth, faceHeight, 6, mChannels, mType, result.getData().data());
+		load(faceWidth, faceHeight, 6, mChannels, mImageType, result.getData().data());
 	}
 }

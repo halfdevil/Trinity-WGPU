@@ -5,6 +5,8 @@
 
 namespace Trinity
 {
+    class Image;
+
     class TextureCube : public Texture
     {
     public:
@@ -29,14 +31,28 @@ namespace Trinity
             return mSize;
         }
 
-        bool create(const std::vector<std::string>& fileNames, wgpu::TextureFormat format);
-        bool create(const std::string& fileName, wgpu::TextureFormat format);
-        void destroy();
+        const std::vector<Image*>& getImages() const
+        {
+            return mImages;
+        }
 
-        void write(uint32_t channels, uint32_t face, const void* data, uint32_t size);
+        virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool write() override;        
+		virtual void destroy();
 
-    private:
+		virtual bool load(Image* image, wgpu::TextureFormat format);
+		virtual bool load(const std::vector<Image*>& images, wgpu::TextureFormat format);
+		virtual void upload(uint32_t channels, uint32_t face, const void* data, uint32_t size);
+        virtual void setImages(std::vector<Image*>&& images);
+
+    protected:
+
+        virtual bool read(FileReader& reader, ResourceCache& cache) override;
+        virtual bool write(FileWriter& writer) override;
+
+    protected:
 
         uint32_t mSize{ 0 };
+        std::vector<Image*> mImages;
     };
 }

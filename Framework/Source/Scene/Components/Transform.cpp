@@ -1,18 +1,21 @@
 #include "Scene/Components/Transform.h"
 #include "Scene/Node.h"
+#include "Scene/Scene.h"
 #include "Core/Debugger.h"
+#include "VFS/FileReader.h"
+#include "VFS/FileWriter.h"
 #include "glm/gtx/matrix_decompose.hpp"
 
 namespace Trinity
 {
-	Transform::Transform(Node& node)
-		: mNode(&node)
-	{		
-	}
-
 	std::type_index Transform::getType() const
 	{
 		return typeid(Transform);
+	}
+
+	size_t Transform::getHashCode() const
+	{
+		return typeid(Transform).hash_code();
 	}
 
 	glm::mat4 Transform::getMatrix() const
@@ -29,6 +32,11 @@ namespace Trinity
 		glm::decompose(matrix, mScale, mRotation, mTranslation, skew, perspective);
 
 		invalidateWorldMatrix();
+	}
+
+	void Transform::setNode(Node& node)
+	{
+		mNode = &node;
 	}
 
 	void Transform::setTranslation(const glm::vec3& translation)
@@ -52,6 +60,42 @@ namespace Trinity
 	void Transform::invalidateWorldMatrix()
 	{
 		mUpdateMatrix = true;
+	}
+
+	bool Transform::read(FileReader& reader, Scene& scene)
+	{
+		if (!Component::read(reader, scene))
+		{
+			return false;
+		}
+
+		uint32_t nodeId{ 0 };
+		reader.read(&nodeId);
+		mNode = scene.getNode(nodeId);
+
+		reader.read(&mTranslation);
+		reader.read(&mRotation);
+		reader.read(&mScale);
+
+		mUpdateMatrix = true;
+		return true;
+	}
+
+	bool Transform::write(FileWriter& writer, Scene& scene)
+	{
+		if (!Component::write(writer, scene))
+		{
+			return false;
+		}
+
+		const uint32_t nodeId = mNode->getId();
+		writer.write(&nodeId);
+
+		writer.write(&mTranslation);
+		writer.write(&mRotation);
+		writer.write(&mScale);
+
+		return true;
 	}
 
 	void Transform::updateWorldTransform()

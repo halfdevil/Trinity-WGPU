@@ -10,6 +10,7 @@ namespace Trinity
 	{
 	public:
 
+		static constexpr const char* kDefault = "/Assets/Framework/Materials/Default.tmat";
 		static constexpr const char* kDefaultShader = "/Assets/Framework/Shaders/PBR.wgsl";
 
 		PBRMaterial() = default;
@@ -36,10 +37,18 @@ namespace Trinity
 			return mRoughnessFactor;
 		}
 
+		virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool write() override;
+
 		virtual void setBaseColorFactor(const glm::vec4& baseColorFactor);
 		virtual void setMetallicFactor(float metallicFactor);
 		virtual void setRoughnessFactor(float roughnessFactor);
 		virtual bool compile() override;
+
+	protected:
+
+		virtual bool read(FileReader& reader, ResourceCache& cache) override;
+		virtual bool write(FileWriter& writer) override;
 
 	protected:
 

@@ -28,8 +28,13 @@ namespace Trinity
 		glm::mat4 getView();
 
 		virtual std::type_index getType() const override;
+		virtual size_t getHashCode() const override;
+
 		virtual glm::mat4 getProjection() const = 0;
 		virtual void setNode(Node& node);
+
+		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	protected:
 
