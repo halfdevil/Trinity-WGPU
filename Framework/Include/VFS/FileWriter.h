@@ -35,6 +35,11 @@ namespace Trinity
 			return mFile.getPath();
 		}
 
+		std::string getDirectory() const
+		{
+			return mFile.getDirectory();
+		}
+
 		template <typename T>
 		bool write(const T* data, uint32_t count = 1, uint32_t* writeSize = nullptr)
 		{

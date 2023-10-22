@@ -14,9 +14,9 @@ namespace Trinity
 		return typeid(ScriptContainer);
 	}
 
-	size_t ScriptContainer::getHashCode() const
+	std::string ScriptContainer::getTypeStr() const
 	{
-		return typeid(ScriptContainer).hash_code();
+		return getStaticType();
 	}
 
 	void ScriptContainer::init()
@@ -43,26 +43,26 @@ namespace Trinity
 		}
 	}
 
-	Script& ScriptContainer::getScript(size_t hashCode)
+	Script& ScriptContainer::getScript(const std::string& type)
 	{
-		return *mScripts.at(hashCode);
+		return *mScripts.at(type);
 	}
 
-	bool ScriptContainer::hasScript(size_t hashCode)
+	bool ScriptContainer::hasScript(const std::string& type)
 	{
-		return mScripts.contains(hashCode);
+		return mScripts.contains(type);
 	}
 
 	void ScriptContainer::setScript(Script& script)
 	{
-		auto it = mScripts.find(script.getHashCode());
+		auto it = mScripts.find(script.getTypeStr());
 		if (it != mScripts.end())
 		{
 			it->second = &script;
 		}
 		else
 		{
-			mScripts.insert(std::make_pair(script.getHashCode(), &script));
+			mScripts.insert(std::make_pair(script.getTypeStr(), &script));
 		}
 	}
 
@@ -88,19 +88,18 @@ namespace Trinity
 
 		for (uint32_t idx = 0; idx < numScripts; idx++)
 		{
-			size_t type;
-			reader.read(&type);
+			std::string type = reader.readString();
 
 			auto component = scene.getComponentFactory().createComponent(type);
 			if (!component)
 			{
-				LogError("ComponentFactory::createComponent() failed for type: %ld!!", type);
+				LogError("ComponentFactory::createComponent() failed for type: %s!!", type.c_str());
 				return false;
 			}
 
 			if (!component->read(reader, scene))
 			{
-				LogError("Component::read() failed for type: %ld!!", type);
+				LogError("Component::read() failed for type: %s!!", type.c_str());
 				return false;
 			}
 
@@ -108,7 +107,7 @@ namespace Trinity
 			scene.addComponent(std::move(component));
 		}
 
-		return false;
+		return true;
 	}
 
 	bool ScriptContainer::write(FileWriter& writer, Scene& scene)
@@ -123,16 +122,21 @@ namespace Trinity
 
 		for (auto& it : mScripts)
 		{
-			const size_t type = it.second->getHashCode();
-			writer.write(&type);
+			const std::string type = it.second->getTypeStr();
+			writer.writeString(type);
 
 			if (!it.second->write(writer, scene))
 			{
-				LogError("Component::write() failed for type: %ld!!", type);
+				LogError("Component::write() failed for type: %s!!", type.c_str());
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	std::string ScriptContainer::getStaticType()
+	{
+		return "ScriptContainer";
 	}
 }

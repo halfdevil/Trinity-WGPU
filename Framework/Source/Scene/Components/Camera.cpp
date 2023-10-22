@@ -22,9 +22,9 @@ namespace Trinity
 		return typeid(Camera);
 	}
 
-	size_t Camera::getHashCode() const
+	std::string Camera::getTypeStr() const
 	{
-		return typeid(Camera).hash_code();
+		return getStaticType();
 	}
 
 	void Camera::setNode(Node& node)
@@ -59,4 +59,8 @@ namespace Trinity
 		return true;
 	}
 
+	std::string Camera::getStaticType()
+	{
+		return "Camera";
+	}
 }

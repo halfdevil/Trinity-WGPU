@@ -48,7 +48,7 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
-		virtual size_t getHashCode() const override;
+		virtual std::string getTypeStr() const override;
 
 		glm::mat4 getMatrix() const;
 		void setMatrix(const glm::mat4& matrix);
@@ -61,6 +61,10 @@ namespace Trinity
 
 		virtual bool read(FileReader& reader, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+	public:
+
+		static std::string getStaticType();
 
 	protected:
 

@@ -11,9 +11,9 @@ namespace Trinity
 		return typeid(SubMesh);
 	}
 
-	size_t SubMesh::getHashCode() const
+	std::string SubMesh::getTypeStr() const
 	{
-		return typeid(SubMesh).hash_code();
+		return getStaticType();
 	}
 
 	void SubMesh::setMaterial(Material& material)
@@ -44,5 +44,10 @@ namespace Trinity
 	void SubMesh::setNumIndices(uint32_t numIndices)
 	{
 		mNumIndices = numIndices;
+	}
+
+	std::string SubMesh::getStaticType()
+	{
+		return "SubMesh";
 	}
 }

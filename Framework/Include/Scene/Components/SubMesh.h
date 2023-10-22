@@ -57,7 +57,7 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
-		virtual size_t getHashCode() const override;
+		virtual std::string getTypeStr() const override;
 
 		virtual void setMaterial(Material& material);
 		virtual void setVertexBuffer(VertexBuffer& vertexBuffer);
@@ -65,6 +65,10 @@ namespace Trinity
 		virtual void setNumVertices(uint32_t numVertices);
 		virtual void setIndexOffset(uint32_t indexOffset);
 		virtual void setNumIndices(uint32_t numIndices);
+
+	public:
+
+		static std::string getStaticType();
 
 	protected:
 

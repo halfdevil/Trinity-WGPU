@@ -25,7 +25,7 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
-		virtual size_t getHashCode() const override;
+		virtual std::string getTypeStr() const override;
 
 		virtual void init();
 		virtual void update(float deltaTime);
@@ -34,6 +34,10 @@ namespace Trinity
 		virtual void setNode(Node& node);
 		virtual bool read(FileReader& reader, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+	public:
+
+		static std::string getStaticType();
 
 	protected:
 

@@ -33,11 +33,6 @@ namespace Trinity
 		mRotation.x += scale * rotationSpeed;
 	}
 
-	size_t FreeCamera::getHashCode() const
-	{
-		return typeid(FreeCamera).hash_code();
-	}
-
 	void FreeCamera::init()
 	{
 		Script::init();

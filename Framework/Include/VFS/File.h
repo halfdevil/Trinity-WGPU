@@ -59,6 +59,14 @@ namespace Trinity
 			return mPath;
 		}
 
+		std::string getDirectory() const
+		{
+			fs::path path(mPath);
+			path.remove_filename();
+
+			return path.string();
+		}
+
 		virtual bool isEOF() const = 0;
 		virtual bool seek(SeekOrigin origin, int32_t offset) = 0;
 		virtual bool read(void* data, uint32_t size, uint32_t* readSize = nullptr) = 0;

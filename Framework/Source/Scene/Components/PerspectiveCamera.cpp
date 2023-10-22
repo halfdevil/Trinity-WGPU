@@ -60,8 +60,13 @@ namespace Trinity
 		return true;
 	}
 
-	size_t PerspectiveCamera::getHashCode() const
+	std::string PerspectiveCamera::getTypeStr() const
 	{
-		return typeid(PerspectiveCamera).hash_code();
+		return getStaticType();
+	}
+
+	std::string PerspectiveCamera::getStaticType()
+	{
+		return "PerspectiveCamera";
 	}
 }

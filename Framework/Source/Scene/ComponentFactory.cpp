@@ -2,15 +2,16 @@
 #include "Scene/Components/Light.h"
 #include "Scene/Components/Mesh.h"
 #include "Scene/Components/PerspectiveCamera.h"
+#include "Core/Logger.h"
 
 namespace Trinity
 {
-	void ComponentFactory::registerCreator(size_t type, ComponentCreator creator)
+	void ComponentFactory::registerCreator(const std::string& type, ComponentCreator creator)
 	{
 		mCreators.insert(std::make_pair(type, std::move(creator)));
 	}
 
-	void ComponentFactory::removeCreator(size_t type)
+	void ComponentFactory::removeCreator(const std::string& type)
 	{
 		if (auto it = mCreators.find(type); it != mCreators.end())
 		{
@@ -18,7 +19,7 @@ namespace Trinity
 		}
 	}
 
-	std::unique_ptr<Component> ComponentFactory::createComponent(size_t type)
+	std::unique_ptr<Component> ComponentFactory::createComponent(const std::string& type)
 	{
 		if (auto it = mCreators.find(type); it != mCreators.end())
 		{

@@ -127,19 +127,18 @@ namespace Trinity
 
 		for (uint32_t idx = 0; idx < numComponents; idx++)
 		{
-			size_t type;
-			reader.read(&type);
+			std::string type = reader.readString();
 
 			auto component = scene.getComponentFactory().createComponent(type);
 			if (!component)
 			{
-				LogError("ComponentFactory::createComponent() failed for type: %ld!!", type);
+				LogError("ComponentFactory::createComponent() failed for type: %s!!", type.c_str());
 				return false;
 			}
 
 			if (!component->read(reader, scene))
 			{
-				LogError("Component::read() failed for type: %ld!!", type);
+				LogError("Component::read() failed for type: %s!!", type.c_str());
 				return false;
 			}
 
@@ -169,7 +168,7 @@ namespace Trinity
 			return false;
 		}
 
-		const uint32_t numComponents = (uint32_t)mComponents.size() - 1;
+		const uint32_t numComponents = (uint32_t)mComponents.size() - 2;
 		writer.write(&numComponents);
 
 		for (auto& it : mComponents)
@@ -179,12 +178,12 @@ namespace Trinity
 				continue;
 			}
 
-			const size_t type = it.second->getHashCode();
-			writer.write(&type);
+			const std::string type = it.second->getTypeStr();
+			writer.writeString(type);
 
 			if (!it.second->write(writer, scene))
 			{
-				LogError("Component::write() failed for type: %ld!!", type);
+				LogError("Component::write() failed for type: %s!!", type.c_str());
 				return false;
 			}
 		}

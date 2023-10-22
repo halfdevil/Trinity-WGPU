@@ -19,7 +19,6 @@ namespace Trinity
         mDepthFormat = depthFormat;
 
         const wgpu::Device& device = GraphicsDevice::get();
-        LogError("#### Creating swap chain of size (%d, %d)", mWidth, mHeight);
 
         wgpu::SwapChainDescriptor swapChainDesc = {
             .label = "SwapChain.Target",
@@ -39,8 +38,6 @@ namespace Trinity
 
         if (mDepthFormat != wgpu::TextureFormat::Undefined)
         {
-            LogError("#### Creating swap chain depth texture of size (%d, %d)", mWidth, mHeight);
-
             wgpu::TextureDescriptor textureDesc = {
                 .label = "SwapChain.DepthTexture",
                 .usage = wgpu::TextureUsage::RenderAttachment,

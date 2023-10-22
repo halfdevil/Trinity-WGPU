@@ -35,6 +35,11 @@ namespace Trinity
 			return mFile.getPath();
 		}
 
+		std::string getDirectory() const
+		{
+			return mFile.getDirectory();
+		}
+
 		bool isEOF() const
 		{
 			return mFile.isEOF();

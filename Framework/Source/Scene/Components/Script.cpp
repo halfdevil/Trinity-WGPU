@@ -11,9 +11,9 @@ namespace Trinity
 		return typeid(Script);
 	}
 
-	size_t Script::getHashCode() const
+	std::string Script::getTypeStr() const
 	{
-		return typeid(Script).hash_code();
+		return getStaticType();
 	}
 
 	void Script::init()
@@ -58,5 +58,10 @@ namespace Trinity
 		writer.write(&nodeId);
 
 		return true;
+	}
+
+	std::string Script::getStaticType()
+	{
+		return "Script";
 	}
 }

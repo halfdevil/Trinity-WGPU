@@ -14,9 +14,9 @@ namespace Trinity
 		return typeid(Mesh);
 	}
 
-	size_t Mesh::getHashCode() const
+	std::string Mesh::getTypeStr() const
 	{
-		return typeid(Mesh).hash_code();
+		return getStaticType();
 	}
 
 	void Mesh::setBounds(const BoundingBox& bounds)
@@ -124,5 +124,10 @@ namespace Trinity
 		
 		writer.writeVector(nodes);
 		return true;
+	}
+
+	std::string Mesh::getStaticType()
+	{
+		return "Mesh";
 	}
 }

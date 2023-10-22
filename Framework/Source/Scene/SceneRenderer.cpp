@@ -402,6 +402,8 @@ namespace Trinity
 
 	void SceneRenderer::draw(RenderPass& renderPass, RenderData& renderer)
 	{
+		LogError("SceneRenderer::draw() called");
+
 		if (!updateTransformData(renderer.node, renderer))
 		{
 			LogError("updateTransformData() failed!!");

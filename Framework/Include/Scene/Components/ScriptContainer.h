@@ -27,14 +27,14 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
-		virtual size_t getHashCode() const override;
+		virtual std::string getTypeStr() const override;
 
 		virtual void init();
 		virtual void update(float deltaTime);
 		virtual void resize(uint32_t width, uint32_t height);
 
-		virtual Script& getScript(size_t hashCode);
-		virtual bool hasScript(size_t hashCode);
+		virtual Script& getScript(const std::string& type);
+		virtual bool hasScript(const std::string& type);
 		virtual void setScript(Script& script);
 
 		virtual void setNode(Node& node);
@@ -43,21 +43,23 @@ namespace Trinity
 
 	public:
 
+		static std::string getStaticType();
+
 		template <typename T>
 		inline T& getScript()
 		{
-			return dynamic_cast<T&>(getScript(typeid(T).hash_code()));
+			return dynamic_cast<T&>(getScript(T::getStaticType()));
 		}
 
 		template <typename T>
 		inline bool hasComponent()
 		{
-			return hasScript(typeid(T).hash_code());
+			return hasScript(T::getStaticType());
 		}
 
 	protected:
 
 		Node* mNode{ nullptr };
-		std::unordered_map<size_t, Script*> mScripts;
+		std::unordered_map<std::string, Script*> mScripts;
 	};
 }

@@ -13,9 +13,9 @@ namespace Trinity
 		return typeid(Transform);
 	}
 
-	size_t Transform::getHashCode() const
+	std::string Transform::getTypeStr() const
 	{
-		return typeid(Transform).hash_code();
+		return getStaticType();
 	}
 
 	glm::mat4 Transform::getMatrix() const
@@ -115,5 +115,10 @@ namespace Trinity
 		}
 
 		mUpdateMatrix = false;
+	}
+
+	std::string Transform::getStaticType()
+	{
+		return "Transform";
 	}
 }

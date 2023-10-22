@@ -23,8 +23,8 @@ namespace Trinity
 
 	std::string FileSystem::combinePath(const std::string& pathA, const std::string& pathB) const
 	{
-		fs::path fullPath(pathA);
-		fullPath /= pathB;
+		fs::path fullPath(sanitizePath(pathA));
+		fullPath /= sanitizePath(pathB);
 
 		return fullPath.generic_string();
 	}
@@ -37,7 +37,10 @@ namespace Trinity
 
 	std::string FileSystem::sanitizePath(const std::string& path) const
 	{
-		return fs::path(path).generic_string();
+		std::string p = path;
+		std::replace(p.begin(), p.end(), '\\', '/');
+
+		return fs::path(p).generic_string();
 	}
 
 	std::string FileSystem::canonicalPath(const std::string& path) const

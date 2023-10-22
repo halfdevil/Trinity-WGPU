@@ -11,9 +11,9 @@ namespace Trinity
 		return typeid(Light);
 	}
 
-	size_t Light::getHashCode() const
+	std::string Light::getTypeStr() const
 	{
-		return typeid(Light).hash_code();
+		return getStaticType();
 	}
 
 	void Light::setNode(Node& node)
@@ -62,5 +62,10 @@ namespace Trinity
 		writer.write(&mProperties);
 
 		return true;
+	}
+
+	std::string Light::getStaticType()
+	{
+		return "Light";
 	}
 }

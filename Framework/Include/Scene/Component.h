@@ -30,7 +30,7 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const = 0;
-		virtual size_t getHashCode() const = 0;
+		virtual std::string getTypeStr() const = 0;
 
 		virtual void setName(const std::string& name);
 		virtual bool read(FileReader& reader, Scene& scene);

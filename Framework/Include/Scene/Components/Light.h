@@ -54,7 +54,7 @@ namespace Trinity
 		}
 
 		virtual std::type_index getType() const override;
-		virtual size_t getHashCode() const override;
+		virtual std::string getTypeStr() const override;
 
 		virtual void setNode(Node& node);
 		virtual void setLightType(LightType lightType);
@@ -62,6 +62,10 @@ namespace Trinity
 
 		virtual bool read(FileReader& reader, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
+
+	public:
+
+		static std::string getStaticType();
 
 	protected:
 
