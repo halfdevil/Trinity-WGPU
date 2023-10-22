@@ -20,7 +20,6 @@ EM_JS(int, getCanvasWidth, (), {
 	return canvas.clientWidth;
 });
 
-
 EM_JS(int, getCanvasHeight, (), {
 	return canvas.clientHeight;
 });
