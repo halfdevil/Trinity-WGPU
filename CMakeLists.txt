@@ -13,6 +13,10 @@ if (MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+if (CMAKE_SYSTEM_NAME MATCHES Emscripten)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -fexperimental-library")
+endif()
+
 if (NOT CMAKE_SYSTEM_NAME MATCHES Emscripten)
 	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 	set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)

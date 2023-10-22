@@ -177,6 +177,7 @@ namespace Trinity
 		auto fbSize = window.getFramebufferSize();
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 		io.DisplaySize.x = (float)fbSize.x;
 		io.DisplaySize.y = (float)fbSize.y;

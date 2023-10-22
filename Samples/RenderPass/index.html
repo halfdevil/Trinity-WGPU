@@ -7,35 +7,49 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <canvas id="canvas" tabindex="1" width="1024" height="768" oncontextmenu="event.preventDefault()">
+    <canvas id="canvas" tabindex="1" width="1024" height="768">
         Your browser does not support the HTML5 canvas element.
     </canvas>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+            integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+            crossorigin="anonymous"></script>
     <script type='text/javascript'>
         var runtimeInitialized = false;
 
         var Module = {
-            canvas: (function () { return document.getElementById('canvas'); })()
+            onRuntimeInitialized: () => {
+                runtimeInitialized = true;
+            },
+            canvas: (() => { return document.getElementById('canvas'); })()
         };
 
-        Module.onRuntimeInitialized = () => {
-            runtimeInitialized = true;
-            onResize(document.body.clientWidth, document.body.clientHeight);
-        };
-
-        function onResize(width, height) {
+        var onResize = (width, height) => {
             if (runtimeInitialized) {
                 Module.ccall('onCanvasResize', null, ['number', 'number'], [width, height]);
             }
         }
 
-        window.onload = window.onresize = function () {
-            var canvas = document.getElementById("canvas");
-            canvas.width = document.body.clientWidth;
-            canvas.height = document.body.clientHeight;
+        var updateSize = () => {
+            var canvas = $('#canvas');
+            canvas.width($(window).innerWidth());
+            canvas.height($(window).innerHeight());
 
-            onResize(canvas.width, canvas.height);
-        }
+            onResize(canvas.width(), canvas.height());
+        };
+
+        $(document).ready(() => {
+            var canvas = $('#canvas');
+            canvas.on("contextmenu", (e) => {
+                e.preventDefault();
+            });
+
+            updateSize();
+        });
+
+        $(window).resize(() => {
+            updateSize();
+        });
     </script>
-    <script src="Trinity-RenderPass.js"></script>
+    <script src="Trinity-ImGui.js"></script>
 </body>
 </html>

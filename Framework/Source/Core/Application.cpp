@@ -16,6 +16,15 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
+EM_JS(int, getCanvasWidth, (), {
+	return canvas.clientWidth;
+});
+
+
+EM_JS(int, getCanvasHeight, (), {
+	return canvas.clientHeight;
+});
+
 extern "C"
 {
 	void EMSCRIPTEN_KEEPALIVE onCanvasResize(int width, int height)
@@ -52,7 +61,14 @@ namespace Trinity
 			return;
 		}
 
-		if (!mWindow->create(options.title, options.width, options.height, options.displayMode))
+#ifdef __EMSCRIPTEN__
+		mOptions.width = getCanvasWidth();
+		mOptions.height = getCanvasHeight();
+
+		LogError("Width: %d, Height: %d", mOptions.width, mOptions.height);
+#endif
+
+		if (!mWindow->create(mOptions.title, mOptions.width, mOptions.height, mOptions.displayMode))
 		{
 			LogFatal("Window::create() failed!!");
 			return;
