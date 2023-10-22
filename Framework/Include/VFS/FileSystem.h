@@ -37,6 +37,7 @@ namespace Trinity
 
 		bool isExist(const std::string& filePath) const;
 		bool isDirectory(const std::string& filePath) const;
+		bool hasExtension(const std::string& filePath, const std::string& extension = "") const;
 
 		bool getFiles(const std::string& dir, bool recurse, std::vector<FileEntry>& files) const;
 		bool addFolder(const std::string& alias, const std::string& path);

@@ -1045,7 +1045,6 @@ namespace Trinity
 
 			model->setMeshes(std::move(modelMeshes));
 			model->setMaterials(std::move(materials));
-			cache.addResource(std::move(model));
 		}
 
 		return model;

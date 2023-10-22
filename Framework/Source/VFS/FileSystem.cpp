@@ -80,6 +80,18 @@ namespace Trinity
 		return false;
 	}
 
+	bool FileSystem::hasExtension(const std::string& filePath, const std::string& extension) const
+	{
+		fs::path path(filePath);
+
+		if (!extension.empty())
+		{
+			return path.extension() == extension;
+		}
+
+		return path.has_extension();
+	}
+
 	bool FileSystem::getFiles(const std::string& dir, bool recurse, std::vector<FileEntry>& files) const
 	{
 		for (auto& it : mStorages)
