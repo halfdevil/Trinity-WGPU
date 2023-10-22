@@ -10,8 +10,6 @@ namespace Trinity
 {	
 	std::unique_ptr<Scene> SceneLoader::loadScene(const std::string& fileName)
 	{
-		LogError("SceneLoader::loadScene() started");
-
 		auto scene = std::make_unique<Scene>();
 		if (!scene->create(fileName))
 		{
@@ -19,7 +17,6 @@ namespace Trinity
 			return nullptr;
 		}
 
-		LogError("SceneLoader::loadScene() completed");
 		return scene;
 	}
 }

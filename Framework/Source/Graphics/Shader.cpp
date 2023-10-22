@@ -191,10 +191,25 @@ namespace Trinity
 		destroy();
 	}
 
-	bool Shader::create(const std::string& fileName, ResourceCache& cache)
+	bool Shader::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		ShaderPreProcessor processor;
-		return load(fileName, processor);
+		mFileName = fileName;
+
+		if (loadContent)
+		{
+			if (FileSystem::get().isExist(fileName))
+			{
+				ShaderPreProcessor processor;
+				return load(fileName, processor);
+			}
+			else
+			{
+				LogError("Shader file '%s' not found", fileName.c_str());
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool Shader::write()

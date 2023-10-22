@@ -36,7 +36,7 @@ namespace Trinity
 		virtual void setFileName(const std::string& fileName);
 		virtual std::type_index getType() const = 0;
 
-		virtual bool create(const std::string& fileName, ResourceCache& cache);
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true);
 		virtual bool write();
 
 	protected:

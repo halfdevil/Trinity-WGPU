@@ -14,7 +14,7 @@
 
 namespace Trinity
 {
-	bool Scene::create(const std::string& fileName)
+	bool Scene::create(const std::string& fileName, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 
@@ -24,19 +24,27 @@ namespace Trinity
 
 		registerCreators();
 
-		if (fileSystem.isExist(fileName))
+		if (loadContent)
 		{
-			auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
-			if (!file)
+			if (fileSystem.isExist(fileName))
 			{
-				LogError("Error opening scene file: %s", fileName.c_str());
-				return false;
-			}
+				auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
+				if (!file)
+				{
+					LogError("Error opening scene file: %s", fileName.c_str());
+					return false;
+				}
 
-			FileReader reader(*file);
-			if (!read(reader))
+				FileReader reader(*file);
+				if (!read(reader))
+				{
+					LogError("Scene::read() failed for: %s!!", fileName.c_str());
+					return false;
+				}
+			}
+			else
 			{
-				LogError("Scene::read() failed for: %s!!", fileName.c_str());
+				LogError("Scene file '%s' not found", fileName.c_str());
 				return false;
 			}
 		}

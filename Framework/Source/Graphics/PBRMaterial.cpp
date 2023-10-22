@@ -9,24 +9,32 @@
 
 namespace Trinity
 {
-	bool PBRMaterial::create(const std::string& fileName, ResourceCache& cache)
+	bool PBRMaterial::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 		mFileName = fileName;
 
-		if (fileSystem.isExist(fileName))
+		if (loadContent)
 		{
-			auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
-			if (!file)
+			if (fileSystem.isExist(fileName))
 			{
-				LogError("Error opening texture file: %s", fileName.c_str());
-				return false;
-			}
+				auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
+				if (!file)
+				{
+					LogError("Error opening texture file: %s", fileName.c_str());
+					return false;
+				}
 
-			FileReader reader(*file);
-			if (!read(reader, cache))
+				FileReader reader(*file);
+				if (!read(reader, cache))
+				{
+					LogError("PBRMaterial::read() failed for: %s!!", fileName.c_str());
+					return false;
+				}
+			}
+			else
 			{
-				LogError("PBRMaterial::read() failed for: %s!!", fileName.c_str());
+				LogError("PBR Material file '%s' not found", fileName.c_str());
 				return false;
 			}
 		}

@@ -58,7 +58,7 @@ namespace Trinity
             return mHandle != nullptr;
         }
 
-		virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual bool write() override;
         virtual void destroy();
 

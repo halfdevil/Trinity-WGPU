@@ -11,24 +11,32 @@
 
 namespace Trinity
 {
-	bool Model::create(const std::string& fileName, ResourceCache& cache)
+	bool Model::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 		mFileName = fileName;
 
-		if (fileSystem.isExist(fileName))
+		if (loadContent)
 		{
-			auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
-			if (!file)
+			if (fileSystem.isExist(fileName))
 			{
-				LogError("Error opening model file: %s", fileName.c_str());
-				return false;
-			}
+				auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
+				if (!file)
+				{
+					LogError("Error opening model file: %s", fileName.c_str());
+					return false;
+				}
 
-			FileReader reader(*file);
-			if (!read(reader, cache))
+				FileReader reader(*file);
+				if (!read(reader, cache))
+				{
+					LogError("Model::read() failed for: %s!!", fileName.c_str());
+					return false;
+				}
+			}
+			else
 			{
-				LogError("Model::read() failed for: %s!!", fileName.c_str());
+				LogError("Model file '%s' not found", fileName.c_str());
 				return false;
 			}
 		}

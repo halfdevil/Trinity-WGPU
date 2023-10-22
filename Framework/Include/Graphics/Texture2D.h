@@ -28,7 +28,7 @@ namespace Trinity
             return mImage;
         }
 
-		virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual bool write() override;
 
 		virtual bool create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage);

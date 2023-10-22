@@ -18,14 +18,22 @@ namespace Trinity
 		destroy();
 	}
 
-	bool Image::create(const std::string& fileName, ResourceCache& cache)
+	bool Image::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 		mFileName = fileName;
 
-		if (fileSystem.isExist(fileName))
+		if (loadContent)
 		{
-			return load(fileName);
+			if (fileSystem.isExist(fileName))
+			{
+				return load(fileName);
+			}
+			else
+			{
+				LogError("Image file '%s' not found", fileName.c_str());
+				return false;
+			}
 		}
 
 		return true;

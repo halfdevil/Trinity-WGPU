@@ -17,13 +17,13 @@ namespace Trinity
 		return typeid(Resource);
 	}
 
-	bool Resource::create(const std::string& fileName, ResourceCache& cache)
+	bool Resource::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		return false;
+		return true;
 	}
 
 	bool Resource::write()
 	{
-		return false;
+		return true;
 	}
 }

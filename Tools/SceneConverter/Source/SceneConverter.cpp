@@ -381,7 +381,7 @@ namespace Trinity
 	std::unique_ptr<Scene> SceneConverter::loadScene()
 	{
 		auto scene = std::make_unique<Scene>();
-		if (!scene->create(mOutputFileName))
+		if (!scene->create(mOutputFileName, false))
 		{
 			LogError("Scene::create() failed for: %s!!", mOutputFileName.c_str());
 			return nullptr;
@@ -421,7 +421,7 @@ namespace Trinity
 			fileName.replace_extension("ttex");
 
 			auto texture = std::make_unique<Texture2D>();
-			if (!texture->create(FileSystem::get().sanitizePath(fileName.string()), scene->getResourceCache()))
+			if (!texture->create(FileSystem::get().sanitizePath(fileName.string()), scene->getResourceCache(), false))
 			{
 				Exit("Texture2D::create() failed for: %s!!", fileName.string().c_str());
 				return nullptr;
@@ -873,7 +873,7 @@ namespace Trinity
 		fileName.replace_extension("tmesh");
 
 		auto model = std::make_unique<Model>();
-		if (!model->create(FileSystem::get().sanitizePath(fileName.string()), cache))
+		if (!model->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 		{
 			LogError("Model::create() failed for: %s!!", fileName.c_str());
 			return nullptr;
@@ -898,7 +898,7 @@ namespace Trinity
 		fileName.replace_extension("tmat");
 
 		auto material = std::make_unique<PBRMaterial>();
-		if (!material->create(FileSystem::get().sanitizePath(fileName.string()), cache))
+		if (!material->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 		{
 			LogError("PBRMaterial::create() failed for: %s!!", fileName.string().c_str());
 			return nullptr;
@@ -970,7 +970,7 @@ namespace Trinity
 			fileName.replace_extension("png");
 
 			image = std::make_unique<Image>();
-			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache))
+			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 			{
 				LogError("Image::create() failed for: %s!!", fileName.c_str());
 				return nullptr;
@@ -991,7 +991,7 @@ namespace Trinity
 			fileName.replace_extension("png");
 
 			image = std::make_unique<Image>();
-			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache))
+			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 			{
 				LogError("Image::create() failed for: %s!!", fileName.c_str());
 				return nullptr;
@@ -1032,7 +1032,7 @@ namespace Trinity
 		};
 
 		auto sampler = std::make_unique<Sampler>();
-		if (!sampler->create(FileSystem::get().sanitizePath(fileName.string()), cache))
+		if (!sampler->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 		{
 			LogError("Sampler::create() failed!!");
 			return nullptr;
@@ -1053,7 +1053,7 @@ namespace Trinity
 	std::unique_ptr<Material> SceneConverter::createDefaultMaterial(ResourceCache& cache)
 	{		
 		auto material = std::make_unique<PBRMaterial>();
-		if (!material->create(PBRMaterial::kDefault, cache))
+		if (!material->create(PBRMaterial::kDefault, cache, false))
 		{
 			LogError("PBRMaterial::create() failed for: %s!!", PBRMaterial::kDefault);
 			return nullptr;
@@ -1065,7 +1065,7 @@ namespace Trinity
 	std::unique_ptr<Sampler> SceneConverter::createDefaultSampler(ResourceCache& cache)
 	{
 		auto sampler = std::make_unique<Sampler>();
-		if (!sampler->create(Sampler::kDefault, cache))
+		if (!sampler->create(Sampler::kDefault, cache, false))
 		{
 			LogError("Sampler::create() failed for: %s!!", Sampler::kDefault);
 			return nullptr;

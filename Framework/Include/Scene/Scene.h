@@ -62,7 +62,7 @@ namespace Trinity
 			return *mComponentFactory;
 		}
 
-		virtual bool create(const std::string& fileName);
+		virtual bool create(const std::string& fileName, bool loadContent = true);
 		virtual bool write();
 		virtual void registerCreators();
 

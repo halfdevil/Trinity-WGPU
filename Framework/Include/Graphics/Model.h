@@ -46,7 +46,7 @@ namespace Trinity
 			return mMaterials;
 		}
 
-		virtual bool create(const std::string& fileName, ResourceCache& cache) override;
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual bool write() override;
 
 		virtual std::type_index getType() const override;
