@@ -21,8 +21,8 @@ namespace Trinity
 		Image() = default;
 		~Image();
 
-		Image(const Image&) = default;
-		Image& operator = (const Image&) = default;
+		Image(const Image&) = delete;
+		Image& operator = (const Image&) = delete;
 
 		Image(Image&&) = default;
 		Image& operator = (Image&&) = default;

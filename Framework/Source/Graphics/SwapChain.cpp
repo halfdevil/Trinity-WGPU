@@ -19,8 +19,10 @@ namespace Trinity
         mDepthFormat = depthFormat;
 
         const wgpu::Device& device = GraphicsDevice::get();
+        LogError("#### Creating swap chain of size (%d, %d)", mWidth, mHeight);
 
         wgpu::SwapChainDescriptor swapChainDesc = {
+            .label = "SwapChain.Target",
             .usage = wgpu::TextureUsage::RenderAttachment,
             .format = mColorFormat,
             .width = mWidth,
@@ -37,7 +39,10 @@ namespace Trinity
 
         if (mDepthFormat != wgpu::TextureFormat::Undefined)
         {
+            LogError("#### Creating swap chain depth texture of size (%d, %d)", mWidth, mHeight);
+
             wgpu::TextureDescriptor textureDesc = {
+                .label = "SwapChain.DepthTexture",
                 .usage = wgpu::TextureUsage::RenderAttachment,
                 .size = {
                     .width = mWidth,
@@ -47,10 +52,17 @@ namespace Trinity
                 .format = mDepthFormat
             };
 
-            mDepthStencilView = device.CreateTexture(&textureDesc).CreateView();
-            if (!mDepthStencilView)
+            mDepthStencilTexture = device.CreateTexture(&textureDesc);
+            if (!mDepthStencilTexture)
             {
                 LogError("wgpu::Device::CreateTexture() failed!!");
+                return false;
+            }
+
+            mDepthStencilView = mDepthStencilTexture.CreateView();
+            if (!mDepthStencilView)
+            {
+                LogError("wgpu::Texture::CreateView() failed!!");
                 return false;
             }
         }
@@ -61,6 +73,7 @@ namespace Trinity
     void SwapChain::destroy()
     {
         mHandle = nullptr;
+        mDepthStencilTexture = nullptr;
     }
 
     void SwapChain::setClearColor(const wgpu::Color& clearColor)

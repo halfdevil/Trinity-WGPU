@@ -63,8 +63,8 @@ namespace Trinity
 			transform.setRotation(orientation);
 		}
 
-		mTranslation = { 0.0f };
-		mRotation = { 0.0f };
+		mTranslation = glm::vec3{ 0.0f };
+		mRotation = glm::vec3{ 0.0f };
 	}
 
 	void FreeCamera::resize(uint32_t width, uint32_t height)
@@ -77,10 +77,5 @@ namespace Trinity
 				camera->setAspectRatio((float)width / height);
 			}
 		}
-	}
-
-	std::unique_ptr<Component> FreeCamera::createNew()
-	{
-		return std::make_unique<FreeCamera>();
 	}
 }

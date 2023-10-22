@@ -19,8 +19,8 @@ namespace Trinity
 		Font() = default;
 		~Font();
 
-		Font(const Font&) = default;
-		Font& operator = (const Font&) = default;
+		Font(const Font&) = delete;
+		Font& operator = (const Font&) = delete;
 
 		Font(Font&&) noexcept = default;
 		Font& operator = (Font&&) noexcept = default;

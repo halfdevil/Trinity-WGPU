@@ -29,7 +29,7 @@ if (MSVC)
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES Emscripten)
-	set(LINK_OPTIONS ${LINK_OPTIONS} "-sALLOW_MEMORY_GROWTH" "-sUSE_GLFW=3" "-sUSE_WEBGPU" "--bind")
+	set(LINK_OPTIONS ${LINK_OPTIONS} "-sALLOW_MEMORY_GROWTH" "-sUSE_GLFW=3" "-sUSE_WEBGPU" "--bind" "-s EXPORTED_RUNTIME_METHODS=['ccall','cwrap']")
 else()
 	set(LINK_LIBRARIES ${LINK_LIBRARIES} "dawnbuild")
 endif()

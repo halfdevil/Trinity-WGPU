@@ -199,6 +199,11 @@ namespace Trinity
         glfwSetCursor(mHandle, cursorHandle);
     }
 
+    void Window::setSize(const glm::uvec2& size)
+    {
+        glfwSetWindowSize(mHandle, (int)size.x, (int)size.y);
+    }
+
 	float Window::getScaleFactor() const
 	{
         auto fbSize = getFramebufferSize();
@@ -279,6 +284,7 @@ namespace Trinity
 
         glfwWindowHint(GLFW_VISIBLE, false);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         return true;
     }

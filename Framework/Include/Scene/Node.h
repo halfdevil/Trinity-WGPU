@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene/Components/Transform.h"
+#include "Scene/Components/ScriptContainer.h"
 #include <memory>
 #include <string>
 #include <typeindex>
@@ -35,6 +36,11 @@ namespace Trinity
 		Transform& getTransform()
 		{
 			return mTransform;
+		}
+
+		ScriptContainer& getScriptContainer()
+		{
+			return mScriptContainer;
 		}
 
 		Node* getParent() const
@@ -81,6 +87,7 @@ namespace Trinity
 		uint32_t mId{ (uint32_t)-1 };
 		Node* mParent{ nullptr };
 		Transform mTransform;
+		ScriptContainer mScriptContainer;
 		std::vector<Node*> mChildren;
 		std::unordered_map<std::type_index, Component*> mComponents;
 	};

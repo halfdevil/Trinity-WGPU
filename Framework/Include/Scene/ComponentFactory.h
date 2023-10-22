@@ -22,15 +22,15 @@ namespace Trinity
 	public:
 
 		template <typename T>
-		void registerCreator()
+		inline void registerCreator()
 		{
 			registerCreator(typeid(T).hash_code(), []() {
-				return T::createNew();
+				return std::make_unique<T>();
 			});
 		}
 
 		template <typename T>
-		T& getCreator()
+		inline T& getCreator()
 		{
 			return dynamic_cast<T&>(getCreator(typeid(T).hash_code()));
 		}

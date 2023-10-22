@@ -10,7 +10,10 @@ namespace Trinity
 	Node::Node()
 	{
 		mTransform.setNode(*this);
+		mScriptContainer.setNode(*this);
+
 		setComponent(mTransform);
+		setComponent(mScriptContainer);
 	}
 
 	void Node::setName(const std::string& name)
@@ -46,6 +49,12 @@ namespace Trinity
 
 	void Node::setComponent(Component& component)
 	{
+		if (component.getType() == typeid(Script))
+		{
+			mScriptContainer.setScript(dynamic_cast<Script&>(component));
+			return;
+		}
+
 		auto it = mComponents.find(component.getType());
 		if (it != mComponents.end())
 		{
@@ -107,6 +116,12 @@ namespace Trinity
 			return false;
 		}
 
+		if (!mScriptContainer.read(reader, scene))
+		{
+			LogError("ScriptContainer::read() failed!!");
+			return false;
+		}
+
 		uint32_t numComponents{ 0 };
 		reader.read(&numComponents);
 
@@ -148,12 +163,18 @@ namespace Trinity
 			return false;
 		}
 
+		if (!mScriptContainer.write(writer, scene))
+		{
+			LogError("ScriptContainer::write() failed!!");
+			return false;
+		}
+
 		const uint32_t numComponents = (uint32_t)mComponents.size() - 1;
 		writer.write(&numComponents);
 
 		for (auto& it : mComponents)
 		{
-			if (it.first == typeid(Transform))
+			if (it.first == typeid(Transform) || it.first == typeid(ScriptContainer))
 			{
 				continue;
 			}

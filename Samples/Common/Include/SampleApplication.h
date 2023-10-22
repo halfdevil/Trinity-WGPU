@@ -18,8 +18,8 @@ namespace Trinity
 		SampleApplication(const SampleApplication&) = delete;
 		SampleApplication& operator = (const SampleApplication&) = delete;
 
-		SampleApplication(SampleApplication&&) = delete;
-		SampleApplication& operator = (SampleApplication&&) = delete;
+		SampleApplication(SampleApplication&&) = default;
+		SampleApplication& operator = (SampleApplication&&) = default;
 
 		Scene* getScene() const
 		{

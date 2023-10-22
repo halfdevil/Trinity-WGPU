@@ -125,9 +125,4 @@ namespace Trinity
 		writer.writeVector(nodes);
 		return true;
 	}
-
-	std::unique_ptr<Component> Mesh::createNew()
-	{
-		return std::make_unique<Mesh>();
-	}
 }

@@ -80,7 +80,7 @@ namespace Trinity
 		void newFrame(Window& window, float deltaTime);
 		void draw(ImDrawData* drawData, RenderPass& renderPass);
 
-	private:
+	protected:
 
 		void setupCallbacks(Window& window);
 		void updateMouseCursor(Window& window);
@@ -90,8 +90,9 @@ namespace Trinity
 		bool createCommonBindGroup();
 		bool createImageBindGroup(const Texture& texture);
 		bool createBufferData();
+		void onResize();
 
-	private:
+	protected:
 
 		RenderContext mRenderContext;
 		ImageContext mImageContext;

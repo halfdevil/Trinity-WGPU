@@ -63,10 +63,6 @@ namespace Trinity
 		virtual bool read(FileReader& reader, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
-	public:
-		
-		static std::unique_ptr<Component> createNew();
-
 	protected:
 
 		Node* mNode{ nullptr };

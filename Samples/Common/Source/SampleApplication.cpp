@@ -6,6 +6,7 @@
 #include "Scene/Components/Script.h"
 #include "Graphics/RenderPass.h"
 #include "Core/Logger.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {

@@ -28,19 +28,14 @@ namespace Trinity
 	{
 	}
 
-	size_t NodeScript::getHashCode() const
-	{
-		return typeid(NodeScript).hash_code();
-	}
-
-	void NodeScript::setNode(Node& node)
+	void Script::setNode(Node& node)
 	{
 		mNode = &node;
 	}
 
-	bool NodeScript::read(FileReader& reader, Scene& scene)
+	bool Script::read(FileReader& reader, Scene& scene)
 	{
-		if (!Script::read(reader, scene))
+		if (!Component::read(reader, scene))
 		{
 			return false;
 		}
@@ -52,9 +47,9 @@ namespace Trinity
 		return true;
 	}
 
-	bool NodeScript::write(FileWriter& writer, Scene& scene)
+	bool Script::write(FileWriter& writer, Scene& scene)
 	{
-		if (!Script::write(writer, scene))
+		if (!Component::write(writer, scene))
 		{
 			return false;
 		}

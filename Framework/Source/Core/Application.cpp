@@ -15,6 +15,15 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+
+extern "C"
+{
+	void EMSCRIPTEN_KEEPALIVE onCanvasResize(int width, int height)
+	{
+		Trinity::Application::get().getWindow()->setSize(glm::uvec2(width, height));
+	}
+}
+
 #endif
 
 namespace Trinity

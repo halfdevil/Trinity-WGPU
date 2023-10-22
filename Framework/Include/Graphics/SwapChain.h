@@ -24,6 +24,11 @@ namespace Trinity
             return mHandle;
         }
 
+        const wgpu::Texture& getDepthStencilTexture() const
+        {
+            return mDepthStencilTexture;
+        }
+
         const wgpu::TextureView& getDepthStencilView() const
         {
             return mDepthStencilView;
@@ -83,6 +88,7 @@ namespace Trinity
         uint32_t mWidth{ 0 };
         uint32_t mHeight{ 0 };
         wgpu::SwapChain mHandle;
+        wgpu::Texture mDepthStencilTexture;
         wgpu::TextureView mDepthStencilView;
         wgpu::Color mClearColor;
         wgpu::TextureFormat mColorFormat;

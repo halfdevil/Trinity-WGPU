@@ -11,6 +11,7 @@
 #include "Graphics/Texture2D.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
+#include "Scene/ComponentFactory.h"
 #include "Gui/GuiRenderer.h"
 #include "Gui/Font.h"
 #include <glm/glm.hpp>
@@ -43,6 +44,8 @@ namespace Trinity
 
 	void GuiSample::setupInput()
 	{
+		SampleApplication::setupInput();
+
 		mInput->bindAction("exit", InputEvent::Pressed, [this](int32_t key) {
 			exit();
 		});

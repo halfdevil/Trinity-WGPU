@@ -92,7 +92,9 @@ namespace Trinity
         void show(bool visible) const;
         void close();
         void poll();
+
         void setCursor(Cursor cursor) const;
+        void setSize(const glm::uvec2& size);
 
         float getScaleFactor() const;
         glm::uvec2 getSize() const;

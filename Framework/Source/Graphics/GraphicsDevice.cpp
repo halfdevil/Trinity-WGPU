@@ -11,7 +11,6 @@ namespace Trinity
 
     void GraphicsDevice::create(const Window& window)
     {
-#ifndef __EMSCRIPTEN__
         mInstance = wgpu::CreateInstance();
         if (!mInstance)
         {
@@ -19,7 +18,6 @@ namespace Trinity
             onCreated.notify(false);
             return;
         }
-#endif
 
         auto windowSurfaceDesc = window.getSurfaceDescriptor();
         wgpu::SurfaceDescriptor surfaceDesc;

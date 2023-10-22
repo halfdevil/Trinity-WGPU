@@ -64,9 +64,4 @@ namespace Trinity
 	{
 		return typeid(PerspectiveCamera).hash_code();
 	}
-
-	std::unique_ptr<Component> PerspectiveCamera::createNew()
-	{
-		return std::make_unique<PerspectiveCamera>();
-	}
 }

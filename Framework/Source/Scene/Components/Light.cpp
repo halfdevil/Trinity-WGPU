@@ -63,9 +63,4 @@ namespace Trinity
 
 		return true;
 	}
-
-	std::unique_ptr<Component> Light::createNew()
-	{
-		return std::make_unique<Light>();
-	}
 }

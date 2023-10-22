@@ -48,10 +48,6 @@ namespace Trinity
 
 		virtual size_t getHashCode() const override;
 
-	public:
-
-		static std::unique_ptr<Component> createNew();
-
 	protected:
 
 		float mAspectRatio{ 0.0f };

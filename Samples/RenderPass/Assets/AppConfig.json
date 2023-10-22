@@ -74,5 +74,5 @@
       }
     ] 
   },
-  "scene": "/Assets/Scenes/sponza/Sponza.gltf"
+  "scene": "/Assets/Scenes/Sponza/Sponza.tscene"
 }

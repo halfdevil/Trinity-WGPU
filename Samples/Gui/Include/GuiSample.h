@@ -24,7 +24,7 @@ namespace Trinity
 		virtual bool init() override;
 		virtual void render(float deltaTime) override;
 		virtual void onGui() override;
-		virtual void setupInput();
+		virtual void setupInput() override;
 
 	protected:
 

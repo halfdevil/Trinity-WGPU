@@ -25,8 +25,8 @@ namespace Trinity
 		virtual bool init() override;
         virtual void render(float deltaTime) override;
 		virtual void onSceneLoaded() override;
+		virtual void setupInput() override;
 
-		virtual void setupInput();
 		virtual void moveForward(float scale);
 		virtual void moveRight(float scale);
 		virtual void moveUp(float scale);

@@ -11,8 +11,8 @@ namespace Trinity
 		StorageBuffer() = default;
 		~StorageBuffer();
 
-		StorageBuffer(const StorageBuffer&) = default;
-		StorageBuffer& operator = (const StorageBuffer&) = default;
+		StorageBuffer(const StorageBuffer&) = delete;
+		StorageBuffer& operator = (const StorageBuffer&) = delete;
 
 		StorageBuffer(StorageBuffer&&) = default;
 		StorageBuffer& operator = (StorageBuffer&&) = default;

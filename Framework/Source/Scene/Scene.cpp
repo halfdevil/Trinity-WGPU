@@ -3,6 +3,7 @@
 #include "Scene/Component.h"
 #include "Scene/Components/Light.h"
 #include "Scene/Components/Mesh.h"
+#include "Scene/Components/ScriptContainer.h"
 #include "Scene/Components/PerspectiveCamera.h"
 #include "Scene/Components/Scripts/FreeCamera.h"
 #include "Scene/ComponentFactory.h"
@@ -281,8 +282,11 @@ namespace Trinity
 		freeCameraPtr->setNode(*cameraNode);
 		freeCameraPtr->resize(extent.x, extent.y);
 
-		auto& freeCamera = *freeCameraPtr;
-		addComponent(std::move(freeCameraPtr), *cameraNode);
+		auto& freeCamera = *freeCameraPtr;	
+		addComponent(std::move(freeCameraPtr));
+
+		auto& scritpContainer = cameraNode->getScriptContainer();
+		scritpContainer.setScript(freeCamera);
 
 		return freeCamera;
 	}

@@ -19,27 +19,17 @@ namespace Trinity
 		Script(Script&&) = delete;
 		Script& operator = (Script&&) = delete;
 
+		Node* getNode() const
+		{
+			return mNode;
+		}
+
 		virtual std::type_index getType() const override;
 		virtual size_t getHashCode() const override;
 
 		virtual void init();
 		virtual void update(float deltaTime);
 		virtual void resize(uint32_t width, uint32_t height);
-	};
-
-	class NodeScript : public Script
-	{
-	public:
-
-		NodeScript() = default;
-		virtual ~NodeScript() = default;
-
-		Node* getNode() const
-		{
-			return mNode;
-		}
-
-		virtual size_t getHashCode() const override;
 
 		virtual void setNode(Node& node);
 		virtual bool read(FileReader& reader, Scene& scene) override;
