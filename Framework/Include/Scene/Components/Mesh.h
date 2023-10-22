@@ -29,7 +29,7 @@ namespace Trinity
 
 		Model* getModel() const
 		{
-			return mModel;
+			return mGltfModel;
 		}
 
 		const std::vector<SubMesh*>& getSubMeshes() const
@@ -60,7 +60,7 @@ namespace Trinity
 	protected:
 
 		BoundingBox mBounds;
-		Model* mModel{ nullptr };
+		Model* mGltfModel{ nullptr };
 		std::vector<SubMesh*> mSubMeshes;
 		std::vector<Node*> mNodes;
 	};

@@ -36,7 +36,7 @@ namespace Trinity
 
 	void Mesh::setModel(Model& model)
 	{
-		mModel = &model;
+		mGltfModel = &model;
 	}
 
 	bool Mesh::read(FileReader& reader, Scene& scene)
@@ -65,9 +65,9 @@ namespace Trinity
 			cache.addResource(std::move(model));
 		}
 
-		mModel = cache.getResource<Model>(modelFileName);
-		const auto& materials = mModel->getMaterials();
-		const auto& meshes = mModel->getMeshes();
+		mGltfModel = cache.getResource<Model>(modelFileName);
+		const auto& materials = mGltfModel->getMaterials();
+		const auto& meshes = mGltfModel->getMeshes();
 
 		for (const auto& mesh : meshes)
 		{
@@ -108,9 +108,9 @@ namespace Trinity
 			return false;
 		}
 
-		if (mModel != nullptr)
+		if (mGltfModel != nullptr)
 		{
-			auto fileName = fileSystem.relativePath(mModel->getFileName(), writer.getPath());
+			auto fileName = fileSystem.relativePath(mGltfModel->getFileName(), writer.getPath());
 			fileSystem.sanitizePath(fileName);
 
 			writer.writeString(fileName);
