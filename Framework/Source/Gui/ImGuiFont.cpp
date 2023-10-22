@@ -1,16 +1,16 @@
-#include "Gui/Font.h"
+#include "Gui/ImGuiFont.h"
 #include "Graphics/Texture2D.h"
 #include "VFS/FileSystem.h"
 #include "Core/Logger.h"
 
 namespace Trinity
 {
-	Font::~Font()
+	ImGuiFont::~ImGuiFont()
 	{
 		destroy();
 	}
 
-	bool Font::create(const std::string& name, const std::string& filePath, float size)
+	bool ImGuiFont::create(const std::string& name, const std::string& filePath, float size)
 	{
 		auto file = FileSystem::get().openFile(filePath, FileOpenMode::OpenRead);
 		if (!file)
@@ -65,14 +65,14 @@ namespace Trinity
 		return true;
 	}
 
-	void Font::destroy()
+	void ImGuiFont::destroy()
 	{
 		mTexture->destroy();
 		mTexture = nullptr;
 		mHandle = nullptr;
 	}
 
-	void Font::activate()
+	void ImGuiFont::activate()
 	{
 		ImGui::PushFont(mHandle);
 
@@ -80,13 +80,13 @@ namespace Trinity
 		io.Fonts->SetTexID((ImTextureID)&mTexture);
 	}
 
-	void Font::deactivate()
+	void ImGuiFont::deactivate()
 	{
 		ImGui::PopFont();
 	}
 
-	std::type_index Font::getType() const
+	std::type_index ImGuiFont::getType() const
 	{
-		return typeid(Font);
+		return typeid(ImGuiFont);
 	}
 }

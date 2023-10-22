@@ -12,18 +12,18 @@ namespace Trinity
 	class BindGroup;
 	class BindGroupLayout;
 
-	class Font : public Resource
+	class ImGuiFont : public Resource
 	{
 	public:
 
-		Font() = default;
-		~Font();
+		ImGuiFont() = default;
+		~ImGuiFont();
 
-		Font(const Font&) = delete;
-		Font& operator = (const Font&) = delete;
+		ImGuiFont(const ImGuiFont&) = delete;
+		ImGuiFont& operator = (const ImGuiFont&) = delete;
 
-		Font(Font&&) noexcept = default;
-		Font& operator = (Font&&) noexcept = default;
+		ImGuiFont(ImGuiFont&&) noexcept = default;
+		ImGuiFont& operator = (ImGuiFont&&) noexcept = default;
 
 		const std::string& getName() const
 		{

@@ -9,7 +9,7 @@
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/SwapChain.h"
 #include "Graphics/RenderPass.h"
-#include "Gui/GuiRenderer.h"
+#include "Gui/ImGuiRenderer.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene/ComponentFactory.h"

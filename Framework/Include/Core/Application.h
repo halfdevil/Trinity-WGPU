@@ -15,7 +15,7 @@ namespace Trinity
     class Input;
     class GraphicsDevice;
     class RenderPass;
-    class GuiRenderer;
+    class ImGuiRenderer;
 
     struct ApplicationOptions
     {
@@ -91,6 +91,11 @@ namespace Trinity
             return mMainPass.get();
         }
 
+        ImGuiRenderer* getImGuiRenderer() const
+        {
+            return mImGuiRenderer.get();
+        }
+
         virtual void run(const ApplicationOptions& options);
 
     protected:
@@ -118,8 +123,7 @@ namespace Trinity
         std::unique_ptr<FileSystem> mFileSystem{ nullptr };
         std::unique_ptr<Input> mInput{ nullptr };
         std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
-
         std::unique_ptr<RenderPass> mMainPass{ nullptr };
-        std::unique_ptr<GuiRenderer> mGuiRenderer{ nullptr };
+        std::unique_ptr<ImGuiRenderer> mImGuiRenderer{ nullptr };
     };
 }

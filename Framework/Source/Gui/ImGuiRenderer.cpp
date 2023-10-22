@@ -1,5 +1,5 @@
-#include "Gui/GuiRenderer.h"
-#include "Gui/Font.h"
+#include "Gui/ImGuiRenderer.h"
+#include "Gui/ImGuiFont.h"
 #include "Graphics/RenderPass.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Sampler.h"
@@ -161,12 +161,12 @@ namespace Trinity
 		}
 	}
 
-	GuiRenderer::~GuiRenderer()
+	ImGuiRenderer::~ImGuiRenderer()
 	{
 		destroy();
 	}
 
-	bool GuiRenderer::create(Window& window, const std::string& defaultFontPath)
+	bool ImGuiRenderer::create(Window& window, const std::string& defaultFontPath)
 	{
 		ImGui::CreateContext();
 
@@ -185,7 +185,7 @@ namespace Trinity
 		io.BackendRendererName = "TrinityGui";
 		io.BackendPlatformName = "TrinityGui";
 
-		auto font = std::make_unique<Font>();
+		auto font = std::make_unique<ImGuiFont>();
 		if (!font->create("default_font", defaultFontPath))
 		{
 			LogError("Font::create() failed for '%s'", defaultFontPath.c_str());
@@ -206,13 +206,13 @@ namespace Trinity
 		return true;
 	}
 
-	void GuiRenderer::destroy()
+	void ImGuiRenderer::destroy()
 	{
 		mResourceCache->clear();
 		ImGui::DestroyContext();
 	}
 
-	void GuiRenderer::newFrame(Window& window, float deltaTime)
+	void ImGuiRenderer::newFrame(Window& window, float deltaTime)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 
@@ -232,7 +232,7 @@ namespace Trinity
 		ImGui::NewFrame();
 	}
 
-	void GuiRenderer::draw(ImDrawData* drawData, RenderPass& renderPass)
+	void ImGuiRenderer::draw(ImDrawData* drawData, RenderPass& renderPass)
 	{
 		if (drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f)
 		{
@@ -347,7 +347,7 @@ namespace Trinity
 		}
 	}
 
-	void GuiRenderer::setupCallbacks(Window& window)
+	void ImGuiRenderer::setupCallbacks(Window& window)
 	{
 		auto& callbacks = window.getCallbacks();
 
@@ -405,7 +405,7 @@ namespace Trinity
 		});
 	}
 
-	void GuiRenderer::updateMouseCursor(Window& window)
+	void ImGuiRenderer::updateMouseCursor(Window& window)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
@@ -425,7 +425,7 @@ namespace Trinity
 		}
 	}
 
-	bool GuiRenderer::createDeviceObjects()
+	bool ImGuiRenderer::createDeviceObjects()
 	{
 		if (!createBufferData())
 		{
@@ -506,7 +506,7 @@ namespace Trinity
 		return true;
 	}
 
-	void GuiRenderer::setupRenderStates(ImDrawData* drawData, RenderPass& renderPass)
+	void ImGuiRenderer::setupRenderStates(ImDrawData* drawData, RenderPass& renderPass)
 	{
 		float l = drawData->DisplayPos.x;
 		float r = drawData->DisplayPos.x + drawData->DisplaySize.x;
@@ -527,7 +527,7 @@ namespace Trinity
 		renderPass.setBlendConstant(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
-	bool GuiRenderer::createCommonBindGroup()
+	bool ImGuiRenderer::createCommonBindGroup()
 	{
 		auto perFrameBuffer = std::make_unique<UniformBuffer>();
 		if (!perFrameBuffer->create(sizeof(PerFrameData)))
@@ -581,7 +581,7 @@ namespace Trinity
 		return true;
 	}
 
-	bool GuiRenderer::createImageBindGroup(const Texture& texture)
+	bool ImGuiRenderer::createImageBindGroup(const Texture& texture)
 	{
 		if (mImageContext.bindGroupLayout == nullptr)
 		{
@@ -661,7 +661,7 @@ namespace Trinity
 		return true;
 	}
 
-	bool GuiRenderer::createBufferData()
+	bool ImGuiRenderer::createBufferData()
 	{
 		auto vertexLayout = std::make_unique<VertexLayout>();
 		vertexLayout->setAttributes({

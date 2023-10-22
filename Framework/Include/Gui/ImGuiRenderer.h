@@ -9,7 +9,7 @@
 
 namespace Trinity
 {
-	class Font;
+	class ImGuiFont;
 	class RenderPass;
 	class Texture;
 	class Sampler;
@@ -24,7 +24,7 @@ namespace Trinity
 	class IndexBuffer;
 	class Window;
 
-	class GuiRenderer
+	class ImGuiRenderer
 	{
 	public:
 
@@ -51,7 +51,7 @@ namespace Trinity
 
 		struct ImageContext
 		{
-			Font* font{ nullptr };
+			ImGuiFont* font{ nullptr };
 			Sampler* sampler{ nullptr };
 			BindGroupLayout* bindGroupLayout{ nullptr };
 			std::unordered_map<ImGuiID, BindGroup*> bindGroups;
@@ -65,14 +65,14 @@ namespace Trinity
 			std::vector<ImDrawIdx> indices;
 		};
 
-		GuiRenderer() = default;
-		~GuiRenderer();
+		ImGuiRenderer() = default;
+		~ImGuiRenderer();
 
-		GuiRenderer(const GuiRenderer&) = delete;
-		GuiRenderer& operator = (const GuiRenderer&) = delete;
+		ImGuiRenderer(const ImGuiRenderer&) = delete;
+		ImGuiRenderer& operator = (const ImGuiRenderer&) = delete;
 
-		GuiRenderer(GuiRenderer&&) = default;
-		GuiRenderer& operator = (GuiRenderer&&) = default;
+		ImGuiRenderer(ImGuiRenderer&&) = default;
+		ImGuiRenderer& operator = (ImGuiRenderer&&) = default;
 
 		bool create(Window& window, const std::string& defaultFontPath);
 		void destroy();
@@ -90,7 +90,6 @@ namespace Trinity
 		bool createCommonBindGroup();
 		bool createImageBindGroup(const Texture& texture);
 		bool createBufferData();
-		void onResize();
 
 	protected:
 

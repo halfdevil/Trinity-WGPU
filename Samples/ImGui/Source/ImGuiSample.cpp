@@ -1,4 +1,4 @@
-#include "GuiSample.h"
+#include "ImGuiSample.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/Clock.h"
@@ -12,13 +12,12 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene/ComponentFactory.h"
-#include "Gui/GuiRenderer.h"
-#include "Gui/Font.h"
+#include "Gui/ImGuiRenderer.h"
 #include <glm/glm.hpp>
 
 namespace Trinity
 {
-	bool GuiSample::init()
+	bool ImGuiSample::init()
 	{
 		if (!SampleApplication::init())
 		{
@@ -29,20 +28,20 @@ namespace Trinity
 		return true;
 	}
 
-	void GuiSample::render(float deltaTime)
+	void ImGuiSample::render(float deltaTime)
 	{
 		mMainPass->begin();		
 		drawGui(deltaTime);
 		mMainPass->end();
 	}
 
-	void GuiSample::onGui()
+	void ImGuiSample::onGui()
 	{
 		ImGui::ShowDemoWindow();
 		ImGui::Render();
 	}
 
-	void GuiSample::setupInput()
+	void ImGuiSample::setupInput()
 	{
 		SampleApplication::setupInput();
 
@@ -56,7 +55,7 @@ using namespace Trinity;
 
 int main(int argc, char* argv[])
 {
-	static GuiSample app;
+	static ImGuiSample app;
 	app.run({
 		.title = "Trinity - Gui",
 #ifdef __EMSCRIPTEN__

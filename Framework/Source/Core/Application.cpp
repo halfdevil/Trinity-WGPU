@@ -10,7 +10,7 @@
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/SwapChain.h"
 #include "Graphics/RenderPass.h"
-#include "Gui/GuiRenderer.h"
+#include "Gui/ImGuiRenderer.h"
 #include <iostream>
 
 #ifdef __EMSCRIPTEN__
@@ -153,8 +153,8 @@ namespace Trinity
 		mWindow->showMouse(true, false);
 		mMainPass = std::make_unique<RenderPass>();
 
-		mGuiRenderer = std::make_unique<GuiRenderer>();
-		if (!mGuiRenderer->create(*mWindow, "/Assets/Fonts/CascadiaCode.ttf"))
+		mImGuiRenderer = std::make_unique<ImGuiRenderer>();
+		if (!mImGuiRenderer->create(*mWindow, "/Assets/Fonts/CascadiaCode.ttf"))
 		{
 			LogError("Gui::create() failed!!");
 			return false;
@@ -191,9 +191,9 @@ namespace Trinity
 
 	void Application::drawGui(float deltaTime)
 	{
-		mGuiRenderer->newFrame(*mWindow, deltaTime);
+		mImGuiRenderer->newFrame(*mWindow, deltaTime);
 		onGui();
-		mGuiRenderer->draw(ImGui::GetDrawData(), *mMainPass);
+		mImGuiRenderer->draw(ImGui::GetDrawData(), *mMainPass);
 	}
 
 	void Application::onClose()
