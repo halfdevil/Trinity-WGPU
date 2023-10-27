@@ -10,6 +10,7 @@ namespace Trinity
 	class Scene;
 	class FileReader;
 	class FileWriter;
+	class ResourceCache;
 
 	class Component
 	{
@@ -33,7 +34,7 @@ namespace Trinity
 		virtual std::string getTypeStr() const = 0;
 
 		virtual void setName(const std::string& name);
-		virtual bool read(FileReader& reader, Scene& scene);
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene);
 		virtual bool write(FileWriter& writer, Scene& scene);
 
 	protected:

@@ -6,71 +6,20 @@
 
 namespace Trinity
 {
-    Sampler::~Sampler()
-    {
-        destroy();
-	}
-
 	bool Sampler::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		auto& fileSystem = FileSystem::get();
-		mFileName = fileName;
-
-		if (loadContent)
-		{
-			if (fileSystem.isExist(fileName))
-			{
-				auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
-				if (!file)
-				{
-					LogError("Error opening texture file: %s", fileName.c_str());
-					return false;
-				}
-
-				FileReader reader(*file);
-				if (!read(reader, cache))
-				{
-					LogError("Sampler::read() failed for: %s!!", fileName.c_str());
-					return false;
-				}
-			}
-			else
-			{
-				LogError("Sampler file '%s' not found", fileName.c_str());
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool Sampler::write()
-	{
-		if (mFileName.empty())
-		{
-			LogError("Cannot write to file as filename is empty!!");
-			return false;
-		}
-
-		auto file = FileSystem::get().openFile(mFileName, FileOpenMode::OpenWrite);
-		if (!file)
-		{
-			LogError("Error opening sampler file: %s", mFileName.c_str());
-			return false;
-		}
-
-		FileWriter writer(*file);
-		if (!write(writer))
-		{
-			LogError("Sampler::write() failed for: %s!!", mFileName.c_str());
-		}
-
-		return true;
+		return Resource::create(fileName, cache, loadContent);
 	}
 
 	void Sampler::destroy()
 	{
+		Resource::destroy();
 		mHandle = nullptr;
+	}
+
+	bool Sampler::write()
+	{
+		return Resource::write();
 	}
 
 	bool Sampler::load(const SamplerProperties& samplerProps)
@@ -110,8 +59,12 @@ namespace Trinity
 
 	bool Sampler::read(FileReader& reader, ResourceCache& cache)
 	{
-		reader.read(&mProperties);
+		if (!Resource::read(reader, cache))
+		{
+			return false;
+		}
 
+		reader.read(&mProperties);
 		if (!load(mProperties))
 		{
 			LogError("Sampler::load() failed!!");
@@ -123,6 +76,11 @@ namespace Trinity
 
 	bool Sampler::write(FileWriter& writer)
 	{
+		if (!Resource::write(writer))
+		{
+			return false;
+		}
+
 		writer.write(&mProperties);
 		return true;
 	}

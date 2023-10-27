@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Trinity - Model Viewer</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <canvas id="canvas" tabindex="1" width="1024" height="768">
+        Your browser does not support the HTML5 canvas element.
+    </canvas>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+            integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+            crossorigin="anonymous"></script>
+    <script type='text/javascript'>
+        var runtimeInitialized = false;
+
+        var Module = {
+            onRuntimeInitialized: () => {
+                runtimeInitialized = true;
+            },
+            canvas: (() => { return document.getElementById('canvas'); })()
+        };
+
+        var onResize = (width, height) => {
+            if (runtimeInitialized) {
+                Module.ccall('onCanvasResize', null, ['number', 'number'], [width, height]);
+            }
+        }
+
+        var updateSize = () => {
+            var canvas = $('#canvas');
+            canvas.width($(window).innerWidth());
+            canvas.height($(window).innerHeight());
+
+            onResize(canvas.width(), canvas.height());
+        };
+
+        $(document).ready(() => {
+            var canvas = $('#canvas');
+            canvas.on("contextmenu", (e) => {
+                e.preventDefault();
+            });
+
+            updateSize();
+        });
+
+        $(window).resize(() => {
+            updateSize();
+        });
+    </script>
+    <script src="Trinity-ModelViewer.js"></script>
+</body>
+</html>

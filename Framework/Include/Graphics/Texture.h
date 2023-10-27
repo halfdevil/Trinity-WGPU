@@ -5,9 +5,6 @@
 
 namespace Trinity
 {
-    class FileReader;
-    class FileWriter;
-
     enum class TextureType : uint32_t
     {
         Undefined = 0,
@@ -27,7 +24,7 @@ namespace Trinity
         {
         }
 
-        virtual ~Texture() = 0;
+        virtual ~Texture() = default;
 
         Texture(const Texture&) = delete;
         Texture& operator = (const Texture&) = delete;
@@ -55,15 +52,16 @@ namespace Trinity
             return mFormat;
         }
 
-        using Resource::create;
-        using Resource::write;
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
+		virtual bool write() override;
 
         virtual std::type_index getType() const override;
 
     protected:
 
-        virtual bool read(FileReader& reader, ResourceCache& cache);
-        virtual bool write(FileWriter& writer);
+        virtual bool read(FileReader& reader, ResourceCache& cache) override;
+        virtual bool write(FileWriter& writer) override;
 
     protected:
 

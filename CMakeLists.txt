@@ -39,17 +39,25 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_HEADER_ONLY ON CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 
+set(MESHOPT_BUILD_DEMO OFF CACHE BOOL "")
+set(MESHOPT_BUILD_TOOLS OFF CACHE BOOL "")
+set(MESHOPT_BUILD_SHARED_LIBS OFF CACHE BOOL "")
+
 add_subdirectory("ThirdParty/tinygltf")
+add_subdirectory("ThirdParty/meshoptimizer")
 add_subdirectory("ThirdParty/json")
 add_subdirectory("ThirdParty/imguibuild")
 
 set_property(TARGET nlohmann_json PROPERTY FOLDER "ThirdParty")
+set_property(TARGET meshoptimizer PROPERTY FOLDER "ThirdParty")
 
 include_directories("ThirdParty/stb")
 include_directories("ThirdParty/glm")
 include_directories("ThirdParty/tinygltf")
+include_directories("ThirdParty/meshoptimizer/src")
 include_directories("ThirdParty/json/include")
 include_directories("ThirdParty/imgui")
+include_directories("ThirdParty/IconFontCppHeaders")
 
 # Include sub-projects.
 add_subdirectory("Framework")

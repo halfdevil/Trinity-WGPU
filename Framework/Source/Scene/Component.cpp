@@ -10,7 +10,7 @@ namespace Trinity
         mName = name;
     }
 
-	bool Component::read(FileReader& reader, Scene& scene)
+	bool Component::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
 		mName = reader.readString();
 		return true;

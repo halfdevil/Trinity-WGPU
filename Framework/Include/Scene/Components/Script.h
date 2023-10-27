@@ -16,8 +16,8 @@ namespace Trinity
 		Script(const Script&) = delete;
 		Script& operator = (const Script&) = delete;
 
-		Script(Script&&) = delete;
-		Script& operator = (Script&&) = delete;
+		Script(Script&&) = default;
+		Script& operator = (Script&&) = default;
 
 		Node* getNode() const
 		{
@@ -32,7 +32,7 @@ namespace Trinity
 		virtual void resize(uint32_t width, uint32_t height);
 
 		virtual void setNode(Node& node);
-		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	public:

@@ -54,11 +54,10 @@ namespace Trinity
         }
 
         bool create(const std::vector<BindGroupLayoutItem>& items);
-        void destroy();
-
         bool isValid() const;
 
-        virtual std::type_index getType() const override;
+		virtual std::type_index getType() const override;
+		virtual void destroy() override;
 
     private:
 

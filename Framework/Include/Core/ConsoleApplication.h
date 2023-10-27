@@ -12,6 +12,7 @@ namespace Trinity
 	class Debugger;
 	class FileSystem;
 	class GraphicsDevice;
+	class ResourceCache;
 
 	class ConsoleApplication : public Singleton<ConsoleApplication>
 	{
@@ -56,6 +57,11 @@ namespace Trinity
 			return mGraphicsDevice.get();
 		}
 
+		ResourceCache* getResourceCache() const
+		{
+			return mResourceCache.get();
+		}
+
 		virtual bool run(LogLevel logLevel, const std::string& configFile = "");
 
 	protected:
@@ -73,5 +79,6 @@ namespace Trinity
 		std::unique_ptr<Window> mWindow{ nullptr };
 		std::unique_ptr<FileSystem> mFileSystem{ nullptr };
 		std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
+		std::unique_ptr<ResourceCache> mResourceCache{ nullptr };
 	};
 }

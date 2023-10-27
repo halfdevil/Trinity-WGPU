@@ -8,6 +8,8 @@ namespace Trinity
 {
 	class Scene;
 	class Model;
+	class Skeleton;
+	class AnimationClip;
 	class ResourceCache;
 
 	template <typename T, typename Y>
@@ -32,10 +34,16 @@ namespace Trinity
 		GltfImporter(GltfImporter&&) noexcept = default;
 		GltfImporter& operator = (GltfImporter&&) noexcept = default;
 
-		std::unique_ptr<Scene> importScene(const std::string& inputFileName, const std::string& outputFileName, 
-			bool loadContent = true);
+		Scene* importScene(const std::string& inputFileName, const std::string& outputFileName, 
+			ResourceCache& cache, bool loadContent = true);
 
-		std::unique_ptr<Model> importModel(const std::string& inputFileName, const std::string& outputFileName, 
-			ResourceCache& cache, uint32_t meshIndex = 0, bool loadContent = true);
+		Model* importModel(const std::string& inputFileName, const std::string& outputFileName, 
+			ResourceCache& cache, bool animated = false, bool loadContent = true);
+
+		Skeleton* importSkeleton(const std::string& inputFileName, const std::string& outputFileName,
+			ResourceCache& cache, bool loadContent = true);
+
+		AnimationClip* importAnimation(const std::string& inputFileName, const std::string& outputFileName,
+			ResourceCache& cache, bool loadContent = true);
 	};
 }

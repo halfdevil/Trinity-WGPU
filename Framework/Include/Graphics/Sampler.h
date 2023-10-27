@@ -26,7 +26,7 @@ namespace Trinity
         static constexpr const char* kDefault = "/Assets/Framework/Samplers/Default.tsamp";
 
         Sampler() = default;
-        ~Sampler();
+        virtual ~Sampler() = default;
 
         Sampler(const Sampler&) = delete;
         Sampler& operator = (const Sampler&) = delete;
@@ -49,9 +49,9 @@ namespace Trinity
             return mProperties;
         }
 
-        virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
-        virtual bool write() override;
-		virtual void destroy();
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
+		virtual bool write() override;
 
 		virtual bool load(const SamplerProperties& samplerProps);
         virtual void setProperties(SamplerProperties& samplerProps);
@@ -60,8 +60,8 @@ namespace Trinity
 
     protected:
 
-		virtual bool read(FileReader& reader, ResourceCache& cache);
-		virtual bool write(FileWriter& writer);
+		virtual bool read(FileReader& reader, ResourceCache& cache) override;
+		virtual bool write(FileWriter& writer) override;
 
     protected:
 

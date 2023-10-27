@@ -23,12 +23,12 @@ namespace Trinity
         RenderPass(RenderPass&&) = default;
         RenderPass& operator = (RenderPass&&) = default;
 
-        virtual std::type_index getType() const override;
+		virtual std::type_index getType() const override;
+		virtual void destroy() override;
 
         bool begin(const FrameBuffer& frameBuffer);
         bool begin();
         void end();
-        void destroy();
 
         void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
             uint32_t firstInstance = 0) const;

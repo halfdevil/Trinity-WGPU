@@ -1,11 +1,13 @@
 #include "ModelConverter.h"
 #include "Scene/Scene.h"
 #include "Scene/GltfImporter.h"
+#include "Scene/Model.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/PBRMaterial.h"
 #include "Graphics/Sampler.h"
 #include "Graphics/Texture2D.h"
-#include "Graphics/Model.h"
+#include "Animation/Skeleton.h"
+#include "Animation/AnimationClip.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/ResourceCache.h"
@@ -28,9 +30,9 @@ namespace Trinity
 		mOutputFileName = fileName;
 	}
 
-	void ModelConverter::setModelIndex(uint32_t modelIndex)
+	void ModelConverter::setAnimated(bool animated)
 	{
-		mModelIndex = modelIndex;
+		mAnimated = animated;
 	}
 
 	void ModelConverter::execute()
@@ -56,7 +58,7 @@ namespace Trinity
 		}
 
 		auto resourceCache = std::make_unique<ResourceCache>();
-		auto model = GltfImporter().importModel(mFileName, mOutputFileName, *resourceCache, mModelIndex, false);
+		auto model = GltfImporter().importModel(mFileName, mOutputFileName, *resourceCache, mAnimated, false);
 
 		if (!model)
 		{
@@ -69,6 +71,8 @@ namespace Trinity
 		auto samplers = resourceCache->getResources<Sampler>();
 		auto textures = resourceCache->getResources<Texture>();
 		auto materials = resourceCache->getResources<Material>();
+		auto skeletons = resourceCache->getResources<Skeleton>();
+		auto clips = resourceCache->getResources<AnimationClip>();
 
 		for (auto* image : images)
 		{
@@ -110,6 +114,26 @@ namespace Trinity
 			}
 		}
 
+		for (auto* skeleton : skeletons)
+		{
+			if (!skeleton->write())
+			{
+				LogError("Skeleton::write() failed!!");
+				mResult = false;
+				return;
+			}
+		}
+
+		for (auto* clip : clips)
+		{
+			if (!clip->write())
+			{
+				LogError("AnimationClip::write() failed!!");
+				mResult = false;
+				return;
+			}
+		}
+
 		if (!model->write())
 		{
 			LogError("Model::write() failed for: %s!!", mOutputFileName.c_str());
@@ -126,17 +150,17 @@ int main(int argc, char* argv[])
 	CLI::App cliApp{ "Model Converter" };
 	std::string fileName;
 	std::string outputFileName;
-	uint32_t modelIndex{ 0 };
+	bool animated{ false };
 
 	cliApp.add_option<std::string>("-f, --filename, filename", fileName, "Filename")->required();
 	cliApp.add_option<std::string>("-o, --output, output", outputFileName, "Output Filename")->required();
-	cliApp.add_option<uint32_t>("-m, --model, model", modelIndex, "Model Index");
+	cliApp.add_option<bool>("-a, --animated, animated", animated, "Animated?");
 	CLI11_PARSE(cliApp, argc, argv);
 
 	static ModelConverter app;
 	app.setFileName(fileName);
 	app.setOutputFileName(outputFileName);
-	app.setModelIndex(modelIndex);
+	app.setAnimated(animated);
 
 	if (!app.run(LogLevel::Info))
 	{

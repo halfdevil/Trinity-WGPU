@@ -3,6 +3,7 @@
 #include "Scene/Scene.h"
 #include "VFS/FileReader.h"
 #include "VFS/FileWriter.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {
@@ -33,9 +34,9 @@ namespace Trinity
 		mNode = &node;
 	}
 
-	bool Script::read(FileReader& reader, Scene& scene)
+	bool Script::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Component::read(reader, scene))
+		if (!Component::read(reader, cache, scene))
 		{
 			return false;
 		}

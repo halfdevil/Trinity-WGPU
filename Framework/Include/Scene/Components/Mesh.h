@@ -27,9 +27,14 @@ namespace Trinity
 			return mBounds;
 		}
 
+		Node* getNode() const
+		{
+			return mNode;
+		}
+
 		Model* getModel() const
 		{
-			return mGltfModel;
+			return mModel;
 		}
 
 		const std::vector<SubMesh*>& getSubMeshes() const
@@ -37,20 +42,25 @@ namespace Trinity
 			return mSubMeshes;
 		}
 
-		const std::vector<Node*>& getNodes() const
+		std::vector<glm::mat4>& getBindPose()
 		{
-			return mNodes;
+			return mBindPose;
 		}
 
+		const std::vector<glm::mat4>& getInvBindPose() const;
+		const std::vector<glm::mat4>& getBindPose() const;
+
+		virtual bool isAnimated() const;
+		virtual bool load(const std::string& modelFileName, ResourceCache& cache, Scene& scene);
 		virtual std::type_index getType() const override;
 		virtual std::string getTypeStr() const override;
 
+		virtual void setNode(Node& node);
 		virtual void setBounds(const BoundingBox& bounds);
 		virtual void addSubMesh(SubMesh& subMesh);
-		virtual void addNode(Node& node);
 		virtual void setModel(Model& model);
 
-		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	public:
@@ -60,8 +70,9 @@ namespace Trinity
 	protected:
 
 		BoundingBox mBounds;
-		Model* mGltfModel{ nullptr };
+		Node* mNode{ nullptr };
+		Model* mModel{ nullptr };
 		std::vector<SubMesh*> mSubMeshes;
-		std::vector<Node*> mNodes;
+		std::vector<glm::mat4> mBindPose;
 	};
 }

@@ -17,8 +17,8 @@ namespace Trinity
 		SceneConverter(SceneConverter&&) noexcept = default;
 		SceneConverter& operator = (SceneConverter&&) noexcept = default;
 
-		void setFileName(const std::string& fileName);
-		void setOutputFileName(const std::string& fileName);
+		virtual void setFileName(const std::string& fileName);
+		virtual void setOutputFileName(const std::string& fileName);
 
 	protected:
 

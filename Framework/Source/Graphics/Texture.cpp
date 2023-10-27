@@ -5,9 +5,20 @@
 
 namespace Trinity
 {
-    Texture::~Texture()
-    {
-    }
+	bool Texture::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
+	{
+		return Resource::create(fileName, cache, loadContent);
+	}
+
+	void Texture::destroy()
+	{
+		Resource::destroy();
+	}
+
+	bool Texture::write()
+	{
+		return Resource::write();
+	}
 
     std::type_index Texture::getType() const
     {

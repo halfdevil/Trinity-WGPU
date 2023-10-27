@@ -1,11 +1,11 @@
 #include "SceneConverter.h"
 #include "Scene/Scene.h"
+#include "Scene/Model.h"
 #include "Scene/GltfImporter.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/PBRMaterial.h"
 #include "Graphics/Sampler.h"
 #include "Graphics/Texture2D.h"
-#include "Graphics/Model.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/ResourceCache.h"
@@ -50,7 +50,7 @@ namespace Trinity
 			return;
 		}
 
-		auto scene = GltfImporter().importScene(mFileName, mOutputFileName, false);
+		auto scene = GltfImporter().importScene(mFileName, mOutputFileName, *mResourceCache, false);
 		if (!scene)
 		{
 			LogError("GltfImporter::importScene() failed for: %s!!", mFileName.c_str());
@@ -58,12 +58,11 @@ namespace Trinity
 			return;
 		}
 
-		auto& resourceCache = scene->getResourceCache();
-		auto images = resourceCache.getResources<Image>();
-		auto samplers = resourceCache.getResources<Sampler>();
-		auto textures = resourceCache.getResources<Texture>();
-		auto materials = resourceCache.getResources<Material>();
-		auto models = resourceCache.getResources<Model>();
+		auto images = mResourceCache->getResources<Image>();
+		auto samplers = mResourceCache->getResources<Sampler>();
+		auto textures = mResourceCache->getResources<Texture>();
+		auto materials = mResourceCache->getResources<Material>();
+		auto models = mResourceCache->getResources<Model>();
 
 		for (auto* image : images)
 		{

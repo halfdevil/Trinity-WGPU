@@ -8,6 +8,11 @@
 
 namespace Trinity
 {
+	std::string FreeCamera::getTypeStr() const
+	{
+		return getStaticType();
+	}
+
 	void FreeCamera::moveForward(float scale)
 	{
 		mTranslation.z += scale * moveSpeed;
@@ -72,5 +77,10 @@ namespace Trinity
 				camera->setAspectRatio((float)width / height);
 			}
 		}
+	}
+
+	std::string FreeCamera::getStaticType()
+	{
+		return "FreeCamera";
 	}
 }

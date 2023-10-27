@@ -193,6 +193,12 @@ namespace Trinity
 			return false;
 		}
 
+		if (!font->build())
+		{
+			LogError("Font::build() failed for '%s'", defaultFontPath.c_str());
+			return false;
+		}
+
 		mImageContext.font = font.get();
 		mResourceCache = std::make_unique<ResourceCache>();
 		mResourceCache->addResource(std::move(font));
@@ -445,8 +451,9 @@ namespace Trinity
 			createImageBindGroup(*mImageContext.font->getTexture());
 		}
 
+		ShaderPreProcessor processor;
 		auto shader = std::make_unique<Shader>();
-		if (!shader->create(kDefaultShader, *mResourceCache))
+		if (!shader->load(kDefaultShader, processor))
 		{
 			LogError("Shader::create() failed for: %s!!", kDefaultShader);
 			return false;

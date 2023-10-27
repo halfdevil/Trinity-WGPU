@@ -53,6 +53,7 @@ namespace Trinity
 		mInput = std::make_unique<Input>();
 		mWindow = std::make_unique<Window>();
 		mGraphicsDevice = std::make_unique<GraphicsDevice>();
+		mResourceCache = std::make_unique<ResourceCache>();
 
 		if (!Window::initialize())
 		{

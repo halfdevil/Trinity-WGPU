@@ -34,10 +34,10 @@ namespace Trinity
         }
 
         virtual std::type_index getType() const override;
+        virtual void destroy() override;
 
         bool addColorAttachment(const Texture& texture, wgpu::Color clearColor = { 0, 0, 0, 1 });
         bool setDepthAttachment(const Texture& texture, float depthValue = 0.0f);
-        void destroy();
 
     private:
 

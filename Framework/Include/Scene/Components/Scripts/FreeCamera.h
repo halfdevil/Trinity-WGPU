@@ -18,6 +18,8 @@ namespace Trinity
 		FreeCamera(FreeCamera&&) = delete;
 		FreeCamera& operator = (FreeCamera&&) = delete;
 
+		virtual std::string getTypeStr() const override;
+
 		virtual void moveForward(float scale);
 		virtual void moveRight(float scale);
 		virtual void moveUp(float scale);
@@ -27,6 +29,10 @@ namespace Trinity
 		virtual void init() override;
 		virtual void update(float deltaTime) override;
 		virtual void resize(uint32_t width, uint32_t height) override;
+
+	public:
+
+		static std::string getStaticType();
 
 	public:
 

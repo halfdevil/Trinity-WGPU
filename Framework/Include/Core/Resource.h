@@ -8,13 +8,15 @@
 namespace Trinity
 {
 	class ResourceCache;
+	class FileReader;
+	class FileWriter;
 
 	class Resource
 	{
 	public:
 
 		Resource() = default;
-		virtual ~Resource() = default;
+		virtual ~Resource();
 
 		Resource(const Resource&) = delete;
 		Resource& operator = (const Resource&) = delete;
@@ -37,7 +39,13 @@ namespace Trinity
 		virtual std::type_index getType() const = 0;
 
 		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true);
+		virtual void destroy();
 		virtual bool write();
+
+	protected:
+
+		virtual bool read(FileReader& reader, ResourceCache& cache);
+		virtual bool write(FileWriter& writer);
 
 	protected:
 

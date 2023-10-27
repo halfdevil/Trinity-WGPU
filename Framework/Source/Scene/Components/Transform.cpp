@@ -2,6 +2,7 @@
 #include "Scene/Node.h"
 #include "Scene/Scene.h"
 #include "Core/Debugger.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileReader.h"
 #include "VFS/FileWriter.h"
 #include "glm/gtx/matrix_decompose.hpp"
@@ -62,9 +63,9 @@ namespace Trinity
 		mUpdateMatrix = true;
 	}
 
-	bool Transform::read(FileReader& reader, Scene& scene)
+	bool Transform::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Component::read(reader, scene))
+		if (!Component::read(reader, cache, scene))
 		{
 			return false;
 		}

@@ -6,6 +6,7 @@
 namespace Trinity
 {
 	class FreeCamera;
+	class Animator;
 
     class RenderPassSample : public SampleApplication
     {

@@ -15,7 +15,7 @@ namespace Trinity
         {
         }
 
-        ~Texture2D();
+        ~Texture2D() = default;
 
         Texture2D(const Texture2D&) = delete;
         Texture2D& operator = (const Texture2D&) = delete;
@@ -29,11 +29,10 @@ namespace Trinity
         }
 
 		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
 		virtual bool write() override;
 
-		virtual bool create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage);
-		virtual void destroy();
-
+        virtual bool create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage);
 		virtual bool load(Image* image, wgpu::TextureFormat format);
         virtual void upload(uint32_t channels, const void* data, uint32_t size);
         virtual void setImage(Image* image);

@@ -13,6 +13,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
 #include "Scene/ComponentFactory.h"
+#include "Scene/Components/Scripts/FreeCamera.h"
 #include <glm/glm.hpp>
 
 namespace Trinity
@@ -51,8 +52,7 @@ namespace Trinity
 
 		if (mScene != nullptr)
 		{
-			auto& freeCamera = mScene->addFreeCamera("default_camera", mWindow->getSize());
-			mCamera = &freeCamera;
+			mCamera = mScene->addFreeCameraScript("default_camera", mWindow->getSize());
 		}
 	}
 

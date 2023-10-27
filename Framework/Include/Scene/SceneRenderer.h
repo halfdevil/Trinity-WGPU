@@ -17,9 +17,11 @@ namespace Trinity
 	class Scene;
 	class Camera;
 	class Light;
+	class Animator;
 	class RenderPass;
 	class UniformBuffer;
 	class StorageBuffer;
+	class ResourceCache;
 
 	class SceneRenderer
 	{
@@ -62,6 +64,7 @@ namespace Trinity
 		{
 			Scene* scene{ nullptr };
 			Camera* camera{ nullptr };
+			ResourceCache* cache{ nullptr };
 			BindGroup* sceneBindGroup{ nullptr };
 			BindGroupLayout* sceneBindGroupLayout{ nullptr };
 			UniformBuffer* sceneBuffer{ nullptr };
@@ -72,22 +75,33 @@ namespace Trinity
 		{
 			SubMesh* subMesh{ nullptr };
 			Mesh* mesh{ nullptr };
-			Node* node{ nullptr };
 			UniformBuffer* transformBuffer{ nullptr };
 			RenderPipeline* pipeline{ nullptr };
 			BindGroup* materialBindGroup{ nullptr };
-			BindGroup* transformBindGroup{ nullptr };
-			BindGroupLayout* transformBindGroupLayout{ nullptr };
+			BindGroup* meshBindGroup{ nullptr };
+			BindGroupLayout* meshBindGroupLayout{ nullptr };
+			StorageBuffer* meshBindPoseBuffer{ nullptr };
+			StorageBuffer* meshInvBindPoseBuffer{ nullptr };
 		};
 
-		bool prepare(Scene& scene);
+		SceneRenderer() = default;
+		virtual ~SceneRenderer() = default;
+
+		SceneRenderer(const SceneRenderer&) = delete;
+		SceneRenderer& operator = (const SceneRenderer&) = delete;
+
+		SceneRenderer(SceneRenderer&&) = default;
+		SceneRenderer& operator = (SceneRenderer&&) = default;
+
+		bool prepare(Scene& scene, ResourceCache& cache);
 		void setCamera(const std::string& nodeName);
 		void draw(RenderPass& renderPass);
 
 	protected:
 
-		bool setupRenderData(Node* node, Mesh* mesh, SubMesh* subMesh, RenderData& renderData);
-		bool updateTransformData(Node* node, RenderData& renderData);
+		bool setupRenderData(Mesh* mesh, SubMesh* subMesh, RenderData& renderData);
+		bool updateMeshData(Mesh* mesh, Node* node, RenderData& renderData);
+
 		bool updateSceneData();
 		bool setupLights();
 		bool updateLightData(Light* light, uint32_t index);

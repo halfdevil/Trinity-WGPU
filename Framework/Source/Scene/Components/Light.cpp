@@ -31,9 +31,9 @@ namespace Trinity
 		mProperties = properties;
 	}
 
-	bool Light::read(FileReader& reader, Scene& scene)
+	bool Light::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Component::read(reader, scene))
+		if (!Component::read(reader, cache, scene))
 		{
 			return false;
 		}

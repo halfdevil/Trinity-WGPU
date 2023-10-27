@@ -8,67 +8,26 @@
 
 namespace Trinity
 {
-    Texture2D::~Texture2D()
-    {
-        destroy();
-	}
-
 	bool Texture2D::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		auto& fileSystem = FileSystem::get();
-		mFileName = fileName;
+		return Texture::create(fileName, cache, loadContent);
+	}
 
-		if (loadContent)
+	void Texture2D::destroy()
+	{
+		Texture::destroy();
+
+		if (mHandle)
 		{
-			if (fileSystem.isExist(fileName))
-			{
-				auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
-				if (!file)
-				{
-					LogError("Error opening texture file: %s", fileName.c_str());
-					return false;
-				}
-
-				FileReader reader(*file);
-				if (!read(reader, cache))
-				{
-					LogError("Texture2D::read() failed for: %s!!", fileName.c_str());
-					return false;
-				}
-			}
-			else
-			{
-				LogError("Texture2D file '%s' not found", fileName.c_str());
-				return false;
-			}
+			mHandle.Destroy();
+			mHandle = nullptr;
+			mView = nullptr;
 		}
-
-		return true;
 	}
 
 	bool Texture2D::write()
 	{
-		if (mFileName.empty())
-		{
-			LogError("Cannot write to file as filename is empty!!");
-			return false;
-		}
-
-		auto file = FileSystem::get().openFile(mFileName, FileOpenMode::OpenWrite);
-		if(!file)
-		{
-			LogError("Error opening texture file: %s", mFileName.c_str());
-			return false;
-		}
-
-		FileWriter writer(*file);
-		if (!write(writer))
-		{
-			LogError("Texture2D::write() failed for: %s!!", mFileName.c_str());
-			return false;
-		}
-
-		return true;
+		return Texture::write();
 	}
 
 	bool Texture2D::create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage)
@@ -118,16 +77,6 @@ namespace Trinity
 		}
 
 		return true;
-	}
-
-	void Texture2D::destroy()
-	{
-		if (mHandle)
-		{
-			mHandle.Destroy();
-			mHandle = nullptr;
-			mView = nullptr;
-		}
 	}
 
 	bool Texture2D::load(Image* image, wgpu::TextureFormat format)
@@ -215,13 +164,12 @@ namespace Trinity
 
 	bool Texture2D::read(FileReader& reader, ResourceCache& cache)
 	{
-		auto& fileSystem = FileSystem::get();
-
 		if (!Texture::read(reader, cache))
 		{
 			return false;
 		}
 
+		auto& fileSystem = FileSystem::get();
 		auto imageFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
 		imageFileName = fileSystem.canonicalPath(imageFileName);
 		imageFileName = fileSystem.sanitizePath(imageFileName);
@@ -253,8 +201,6 @@ namespace Trinity
 
 	bool Texture2D::write(FileWriter& writer)
 	{
-		auto& fileSystem = FileSystem::get();
-
 		if (!Texture::write(writer))
 		{
 			return false;
@@ -262,6 +208,7 @@ namespace Trinity
 
 		if (mImage != nullptr)
 		{
+			auto& fileSystem = FileSystem::get();
 			auto fileName = fileSystem.relativePath(mImage->getFileName(), writer.getPath());
 			fileName = fileSystem.sanitizePath(fileName);
 

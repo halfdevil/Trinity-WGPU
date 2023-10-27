@@ -19,7 +19,7 @@ namespace Trinity
 	public:
 
 		Image() = default;
-		~Image();
+		~Image() = default;
 
 		Image(const Image&) = delete;
 		Image& operator = (const Image&) = delete;
@@ -58,8 +58,8 @@ namespace Trinity
 		}
 
 		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
 		virtual bool write() override;
-		virtual void destroy();
 
 		virtual std::type_index getType() const override;
 
@@ -68,18 +68,20 @@ namespace Trinity
 		virtual bool load(uint32_t width, uint32_t height, uint32_t depth, uint32_t channels,
 			ImageType type, const uint8_t* data = nullptr);
 
-		glm::vec4 getPixel(uint32_t x, uint32_t y) const;
-		uint32_t getPixelAsRGBA(uint32_t x, uint32_t y) const;
+		virtual glm::vec4 getPixel(uint32_t x, uint32_t y) const;
+		virtual uint32_t getPixelAsRGBA(uint32_t x, uint32_t y) const;
 
-		void setPixel(uint32_t x, uint32_t y, const glm::vec4& c);
-		void convertToCube();
+		virtual void setPixel(uint32_t x, uint32_t y, const glm::vec4& c);
+		virtual void convertToCube();
 
-	private:
+	protected:
 
-		void convertToVerticalCross();
-		void convertToCubeMapFaces();
+		virtual void convertToVerticalCross();
+		virtual void convertToCubeMapFaces();
+		virtual bool read(FileReader& reader, ResourceCache& cache) override;
+		virtual bool write(FileWriter& writer) override;
 
-	private:
+	protected:
 
 		ImageType mImageType{ ImageType::TwoD };
 		uint32_t mWidth{ 0 };

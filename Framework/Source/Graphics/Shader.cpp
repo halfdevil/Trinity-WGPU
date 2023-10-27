@@ -30,6 +30,22 @@ namespace Trinity
 		return processFile(fileName);
 	}
 
+	std::string ShaderPreProcessor::processSource(const std::string& fileName, const std::string& source)
+	{
+		fs::path dir{ fileName };
+		dir.remove_filename();
+
+		std::istringstream input(source);
+		std::string output;
+
+		for (std::string line; std::getline(input, line);)
+		{
+			output.append(processLine(input, dir.string(), line));
+		}
+
+		return output;
+	}
+
 	std::string ShaderPreProcessor::processDefines(const std::string& line)
 	{
 		std::string newLine;
@@ -186,34 +202,16 @@ namespace Trinity
 		return output;
 	}
 
-	Shader::~Shader()
-	{
-		destroy();
-	}
-
 	bool Shader::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
 		mFileName = fileName;
 
 		if (loadContent)
 		{
-			if (FileSystem::get().isExist(fileName))
-			{
-				ShaderPreProcessor processor;
-				return load(fileName, processor);
-			}
-			else
-			{
-				LogError("Shader file '%s' not found", fileName.c_str());
-				return false;
-			}
+			ShaderPreProcessor processor;
+			return load(fileName, processor);
 		}
 
-		return true;
-	}
-
-	bool Shader::write()
-	{
 		return true;
 	}
 
@@ -222,9 +220,9 @@ namespace Trinity
 		mHandle = nullptr;
 	}
 
-	std::type_index Shader::getType() const
+	bool Shader::write()
 	{
-		return typeid(Shader);
+		return true;
 	}
 
 	bool Shader::load(const std::string& fileName, ShaderPreProcessor& processor)
@@ -257,5 +255,10 @@ namespace Trinity
 		}
 
 		return true;
+	}
+
+	std::type_index Shader::getType() const
+	{
+		return typeid(Shader);
 	}
 }

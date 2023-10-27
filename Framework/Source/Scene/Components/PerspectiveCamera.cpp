@@ -1,5 +1,6 @@
 #include "Scene/Components/PerspectiveCamera.h"
 #include "Scene/ComponentFactory.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileReader.h"
 #include "VFS/FileWriter.h"
 
@@ -30,9 +31,9 @@ namespace Trinity
 		mNearPlane = nearPlane;
 	}
 
-	bool PerspectiveCamera::read(FileReader& reader, Scene& scene)
+	bool PerspectiveCamera::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Camera::read(reader, scene))
+		if (!Camera::read(reader, cache, scene))
 		{
 			return false;
 		}

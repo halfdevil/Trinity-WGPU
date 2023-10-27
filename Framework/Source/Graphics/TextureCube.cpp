@@ -8,77 +8,26 @@
 
 namespace Trinity
 {
-    TextureCube::~TextureCube()
-    {
-        destroy();
-	}
-
 	bool TextureCube::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		auto& fileSystem = FileSystem::get();
-		mFileName = fileName;
-
-		if (loadContent)
-		{
-			if (fileSystem.isExist(fileName))
-			{
-				auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
-				if (!file)
-				{
-					LogError("Error opening texture file: %s", fileName.c_str());
-					return false;
-				}
-
-				FileReader reader(*file);
-				if (!read(reader, cache))
-				{
-					LogError("TextureCube::read() failed for: %s!!", fileName.c_str());
-					return false;
-				}
-			}
-			else
-			{
-				LogError("TextureCube file '%s' not found", fileName.c_str());
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	bool TextureCube::write()
-	{
-		if (mFileName.empty())
-		{
-			LogError("Cannot write to file as filename is empty!!");
-			return false;
-		}
-
-		auto file = FileSystem::get().openFile(mFileName, FileOpenMode::OpenWrite);
-		if (!file)
-		{
-			LogError("Error opening texture file: %s", mFileName.c_str());
-			return false;
-		}
-
-		FileWriter writer(*file);
-		if (!write(writer))
-		{
-			LogError("TextureCube::write() failed for: %s!!", mFileName.c_str());
-			return false;
-		}
-
-		return true;
+		return Texture::create(fileName, cache, loadContent);
 	}
 
 	void TextureCube::destroy()
 	{
+		Texture::destroy();
+
 		if (mHandle)
 		{
 			mHandle.Destroy();
 			mHandle = nullptr;
 			mView = nullptr;
 		}
+	}
+
+	bool TextureCube::write()
+	{
+		return Texture::write();
 	}
 
 	bool TextureCube::load(const std::vector<Image*>& images, wgpu::TextureFormat format)
@@ -249,12 +198,12 @@ namespace Trinity
 
 	bool TextureCube::read(FileReader& reader, ResourceCache& cache)
 	{
-		auto& fileSystem = FileSystem::get();
-
 		if (!Texture::read(reader, cache))
 		{
 			return false;
 		}
+
+		auto& fileSystem = FileSystem::get();
 
         uint32_t numImages{ 0 };
         reader.read(&numImages);
@@ -301,13 +250,12 @@ namespace Trinity
 
 	bool TextureCube::write(FileWriter& writer)
 	{
-		auto& fileSystem = FileSystem::get();
-
 		if (!Texture::write(writer))
 		{
 			return false;
 		}
-        
+
+		auto& fileSystem = FileSystem::get();        
         const uint32_t numImages = (uint32_t)mImages.size();
         writer.write((uint32_t*)&numImages);
 

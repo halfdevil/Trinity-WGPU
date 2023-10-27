@@ -20,6 +20,7 @@ namespace Trinity
         void addDefines(const std::vector<std::string>& defines);
 
         std::string process(const std::string& fileName);
+        std::string processSource(const std::string& fileName, const std::string& source);
 
     private:
 
@@ -40,7 +41,7 @@ namespace Trinity
     public:
 
         Shader() = default;
-        ~Shader();
+        virtual ~Shader() = default;
 
         Shader(const Shader&) = delete;
         Shader& operator = (const Shader&) = delete;
@@ -59,10 +60,10 @@ namespace Trinity
         }
 
 		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
 		virtual bool write() override;
-        virtual void destroy();
 
-        virtual bool load(const std::string& fileName, ShaderPreProcessor& processor);
+		virtual bool load(const std::string& fileName, ShaderPreProcessor& processor);
 		virtual bool loadFromSource(const std::string& source);
 
         virtual std::type_index getType() const override;

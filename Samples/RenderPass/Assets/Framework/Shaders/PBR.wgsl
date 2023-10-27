@@ -79,11 +79,25 @@ var metallic_roughness_texture: texture_2d<f32>;
 @binding(0)
 var<uniform> transform: Transform;
 
+#ifdef HAS_SKIN
+@group(2)
+@binding(1)
+var<storage, read> invBindPose: array<mat4x4<f32>>;
+
+@group(2)
+@binding(2)
+var<storage, read> bindPose: array<mat4x4<f32>>;
+#endif
+
 struct VertexInput
 {
   @location(0) position: vec3<f32>,
   @location(1) normal: vec3<f32>,
-  @location(2) uv: vec2<f32>
+  @location(2) uv: vec2<f32>,
+#ifdef HAS_SKIN
+  @location(3) joints: vec4<f32>,
+  @location(4) weights: vec4<f32>
+#endif
 };
 
 struct FragmentInput
@@ -221,9 +235,19 @@ fn get_light_direction(light: Light, in_pos: vec3<f32>) -> vec3<f32>
 @vertex
 fn vs_main(in: VertexInput) -> FragmentInput
 {
+#ifdef HAS_SKIN
+  var skin = (bindPose[i32(in.joints.x)] * invBindPose[i32(in.joints.x)]) * in.weights.x;
+    skin += (bindPose[i32(in.joints.y)] * invBindPose[i32(in.joints.y)]) * in.weights.y;
+    skin += (bindPose[i32(in.joints.z)] * invBindPose[i32(in.joints.z)]) * in.weights.z;
+    skin += (bindPose[i32(in.joints.w)] * invBindPose[i32(in.joints.w)]) * in.weights.w;
+#else
+  var skin = mat4x4<f32>(vec4<f32>(1.0, 0.0, 0.0, 0.0), vec4<f32>(0.0, 1.0, 0.0, 0.0),
+    vec4<f32>(0.0, 0.0, 1.0, 0.0), vec4<f32>(0.0, 0.0, 0.0, 1.0));
+#endif
+ 
   var out: FragmentInput;
-  var local_pos = transform.model * vec4<f32>(in.position, 1.0);
-    
+  var local_pos = transform.model * skin * vec4<f32>(in.position, 1.0);
+
   out.uv = in.uv;  
   out.normal = (transform.rotation * vec4<f32>(in.normal, 0.0)).xyz;
   out.clip_position = per_frame_data.proj * per_frame_data.view * local_pos;

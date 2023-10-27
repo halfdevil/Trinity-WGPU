@@ -32,9 +32,9 @@ namespace Trinity
 		mNode = &node;
 	}
 
-	bool Camera::read(FileReader& reader, Scene& scene)
+	bool Camera::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Component::read(reader, scene))
+		if (!Component::read(reader, cache, scene))
 		{
 			return false;
 		}

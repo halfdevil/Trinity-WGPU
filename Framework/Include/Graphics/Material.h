@@ -90,6 +90,10 @@ namespace Trinity
 			return mShaderDefines;
 		}
 
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
+		virtual bool write() override;
+
 		MaterialTexture* getTexture(const std::string& name);
 		virtual std::type_index getType() const override;
 
@@ -109,13 +113,10 @@ namespace Trinity
 
 		virtual bool compile() = 0;
 
-		using Resource::create;
-		using Resource::write;
-
 	protected:
 
-		virtual bool read(FileReader& reader, ResourceCache& cache);
-		virtual bool write(FileWriter& writer);
+		virtual bool read(FileReader& reader, ResourceCache& cache) override;
+		virtual bool write(FileWriter& writer) override;
 
 	protected:
 

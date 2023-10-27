@@ -22,7 +22,28 @@ namespace Trinity
 			std::string sceneFile = mConfig["scene"].get<std::string>();
 
 			SceneLoader sceneLoader;
-			mScene = sceneLoader.loadScene(sceneFile);
+			mScene = sceneLoader.loadScene(sceneFile, *mResourceCache);
+
+			if (!mScene)
+			{
+				LogError("SceneLoader::loadScene() failed for '%s'", sceneFile.c_str());
+				return false;
+			}
+
+			onSceneLoaded();
+		}
+		else if (mConfig.contains("model"))
+		{
+			std::string modelFile = mConfig["model"].get<std::string>();
+
+			SceneLoader sceneLoader;
+			mScene = sceneLoader.loadSceneWithModel(modelFile, *mResourceCache);
+
+			if (!mScene)
+			{
+				LogError("SceneLoader::loadScene() failed for model '%s'", modelFile.c_str());
+				return false;
+			}
 
 			onSceneLoaded();
 		}
@@ -36,7 +57,7 @@ namespace Trinity
 			}
 
 			mSceneRenderer = std::make_unique<SceneRenderer>();
-			if (!mSceneRenderer->prepare(*mScene))
+			if (!mSceneRenderer->prepare(*mScene, *mResourceCache))
 			{
 				LogError("SceneRenderer::prepare() failed!!");
 				return false;

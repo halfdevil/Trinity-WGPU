@@ -6,6 +6,7 @@
 namespace Trinity
 {
 	class Scene;
+	class ResourceCache;
 
 	template <typename T, typename Y>
 	struct TypeCast
@@ -29,6 +30,7 @@ namespace Trinity
 		SceneLoader(SceneLoader&&) = default;
 		SceneLoader& operator = (SceneLoader&&) = default;
 
-		std::unique_ptr<Scene> loadScene(const std::string& fileName);
+		std::unique_ptr<Scene> loadScene(const std::string& fileName, ResourceCache& cache);
+		std::unique_ptr<Scene> loadSceneWithModel(const std::string& fileName, ResourceCache& cache);
 	};
 }

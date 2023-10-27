@@ -6,6 +6,7 @@
 #include "Scene/Components/ScriptContainer.h"
 #include "Scene/Components/PerspectiveCamera.h"
 #include "Scene/Components/Scripts/FreeCamera.h"
+#include "Scene/Components/Scripts/Animator.h"
 #include "Scene/ComponentFactory.h"
 #include "VFS/FileSystem.h"
 #include "Core/ResourceCache.h"
@@ -14,109 +15,33 @@
 
 namespace Trinity
 {
-	bool Scene::create(const std::string& fileName, bool loadContent)
+	bool Scene::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		auto& fileSystem = FileSystem::get();
-
-		mFileName = fileName;
-		mResourceCache = std::make_unique<ResourceCache>();
 		mComponentFactory = std::make_unique<ComponentFactory>();
+		registerDefaultComponents();
 
-		registerCreators();
-
-		if (loadContent)
-		{
-			if (fileSystem.isExist(fileName))
-			{
-				auto file = fileSystem.openFile(fileName, FileOpenMode::OpenRead);
-				if (!file)
-				{
-					LogError("Error opening scene file: %s", fileName.c_str());
-					return false;
-				}
-
-				FileReader reader(*file);
-				if (!read(reader))
-				{
-					LogError("Scene::read() failed for: %s!!", fileName.c_str());
-					return false;
-				}
-			}
-			else
-			{
-				LogError("Scene file '%s' not found", fileName.c_str());
-				return false;
-			}
-		}
-
-		return true;
+		return Resource::create(fileName, cache, loadContent);
 	}
 
-	bool Scene::read(FileReader& reader)
+	void Scene::destroy()
 	{
+		Resource::destroy();
+
 		mNodes.clear();
 		mComponents.clear();
-
-		auto root = std::make_unique<Node>();
-		mRoot = root.get();
-
-		addNode(std::move(root));
-
-		if (!mRoot->read(reader, *this))
-		{
-			LogError("Node::read() failed for root!!");
-			return false;
-		}
-
-		if (!mRoot->readComponents(reader, *this))
-		{
-			LogError("Node::readComponents() failed for root!!");
-			return false;
-		}
-
-		return true;
 	}
 
 	bool Scene::write()
 	{
-		if (mRoot != nullptr)
-		{
-			auto file = FileSystem::get().openFile(mFileName, FileOpenMode::OpenWrite);
-			if (!file)
-			{
-				LogError("Error opening scene file: %s", mFileName.c_str());
-				return false;
-			}
-
-			FileWriter writer(*file);
-			if (!write(writer))
-			{
-				LogError("Scene::write() failed for: %s!!", mFileName.c_str());
-				return false;
-			}
-		}
-
-		return true;
+		return Resource::write();
 	}
 
-	bool Scene::write(FileWriter& writer)
+	std::type_index Scene::getType() const
 	{
-		if (!mRoot->write(writer, *this))
-		{
-			LogError("Node::write() failed for root!!");
-			return false;
-		}
-
-		if (!mRoot->writeComponents(writer, *this))
-		{
-			LogError("Node::write() failed for root!!");
-			return false;
-		}
-
-		return true;
+		return typeid(Scene);
 	}
 
-	void Scene::registerCreators()
+	void Scene::registerDefaultComponents()
 	{
 		mComponentFactory->registerCreator<Light>();
 		mComponentFactory->registerCreator<Mesh>();
@@ -171,11 +96,6 @@ namespace Trinity
 		return mComponents.at(type);
 	}
 
-	void Scene::setName(const std::string& name)
-	{
-		mName = name;
-	}
-
 	void Scene::addNode(std::unique_ptr<Node> node)
 	{
 		node->setId((uint32_t)mNodes.size());
@@ -206,11 +126,6 @@ namespace Trinity
 		mRoot = &node;
 	}
 
-	void Scene::setResourceCache(std::unique_ptr<ResourceCache> resourceCache)
-	{
-		mResourceCache = std::move(resourceCache);
-	}
-
 	void Scene::addComponent(std::unique_ptr<Component> component)
 	{
 		mComponents[component->getType()].push_back(std::move(component));
@@ -227,7 +142,43 @@ namespace Trinity
 		mComponents[type] = std::move(components);
 	}
 
-	Light& Scene::addLight(LightType type, const glm::vec3& position, const glm::quat& rotation, 
+	Mesh* Scene::addMesh(const std::string& nodeName, const std::string& modelFileName, ResourceCache& cache, const glm::vec3& position,
+		const glm::quat& rotation, const glm::vec3& scale, Node* parent)
+	{
+		auto meshPtr = std::make_unique<Mesh>();
+		auto meshNode = std::make_unique<Node>();
+
+		if (parent != nullptr)
+		{
+			meshNode->setParent(*parent);
+		}
+
+		if (!meshPtr->load(modelFileName, cache, *this))
+		{
+			LogError("Mesh::load() failed for: %s!!", modelFileName.c_str());
+			return nullptr;
+		}
+
+		meshPtr->setName("mesh");
+		meshPtr->setNode(*meshNode);
+		meshNode->setName(nodeName);
+
+		auto& transform = meshNode->getTransform();
+		transform.setTranslation(position);
+		transform.setRotation(rotation);
+		transform.setScale(scale);
+
+		auto* mesh = meshPtr.get();
+		meshNode->setComponent(*mesh);
+
+		addChild(*meshNode);
+		addComponent(std::move(meshPtr), *meshNode);
+		addNode(std::move(meshNode));
+
+		return mesh;
+	}
+
+	Light* Scene::addLight(LightType type, const glm::vec3& position, const glm::quat& rotation,
 		const LightProperties& properties, Node* parent)
 	{
 		auto lightPtr = std::make_unique<Light>();
@@ -249,8 +200,8 @@ namespace Trinity
 		transform.setTranslation(position);
 		transform.setRotation(rotation);
 
-		auto& light = *lightPtr;
-		lightNode->setComponent(*lightPtr);
+		auto* light = lightPtr.get();
+		lightNode->setComponent(*light);
 
 		addChild(*lightNode);
 		addComponent(std::move(lightPtr), *lightNode);
@@ -259,25 +210,59 @@ namespace Trinity
 		return light;
 	}
 
-	Light& Scene::addPointLight(const glm::vec3& position, const LightProperties& properties,
+	Light* Scene::addPointLight(const glm::vec3& position, const LightProperties& properties,
 		Node* parent)
 	{
 		return addLight(LightType::Point, position, {}, properties, parent);
 	}
 
-	Light& Scene::addDirectionalLight(const glm::quat& rotation, const LightProperties& properties,
+	Light* Scene::addDirectionalLight(const glm::quat& rotation, const LightProperties& properties,
 		Node* parent)
 	{
 		return addLight(LightType::Directional, {}, rotation, properties, parent);
 	}
 
-	Light& Scene::addSpotLight(const glm::vec3& position, const glm::quat& rotation,
+	Light* Scene::addSpotLight(const glm::vec3& position, const glm::quat& rotation,
 		const LightProperties& properties, Node* parent)
 	{
 		return addLight(LightType::Spot, position, rotation, properties, parent);
 	}
 
-	FreeCamera& Scene::addFreeCamera(const std::string& nodeName, const glm::uvec2& extent)
+	PerspectiveCamera* Scene::addPerspectiveCamera(const std::string& nodeName, float aspectRatio, float fov, float nearPlane, 
+		float farPlane, const glm::vec3& position,	const glm::quat& rotation, Node* parent)
+	{
+		auto cameraPtr = std::make_unique<PerspectiveCamera>();
+		auto cameraNode = std::make_unique<Node>();
+
+		if (parent != nullptr)
+		{
+			cameraNode->setParent(*parent);
+		}
+
+		cameraPtr->setName("camera");
+		cameraNode->setName(nodeName);
+
+		cameraPtr->setNode(*cameraNode);
+		cameraPtr->setAspectRatio(aspectRatio);
+		cameraPtr->setFOV(fov);
+		cameraPtr->setNearPlane(nearPlane);
+		cameraPtr->setFarPlane(farPlane);
+
+		auto& transform = cameraNode->getTransform();
+		transform.setTranslation(position);
+		transform.setRotation(rotation);
+
+		auto* camera = cameraPtr.get();
+		cameraNode->setComponent(*camera);
+
+		addChild(*cameraNode);
+		addComponent(std::move(cameraPtr), *cameraNode);
+		addNode(std::move(cameraNode));
+
+		return camera;
+	}
+
+	FreeCamera* Scene::addFreeCameraScript(const std::string& nodeName, const glm::uvec2& extent)
 	{
 		auto cameraNode = findNode(nodeName);
 		if (!cameraNode)
@@ -286,16 +271,104 @@ namespace Trinity
 			cameraNode = findNode("default_camera");
 		}
 
+		if (!cameraNode)
+		{
+			LogError("Default camera node 'default_camera' not found.");
+			return nullptr;
+		}
+
 		auto freeCameraPtr = std::make_unique<FreeCamera>();
 		freeCameraPtr->setNode(*cameraNode);
 		freeCameraPtr->resize(extent.x, extent.y);
 
-		auto& freeCamera = *freeCameraPtr;	
+		auto* freeCamera = freeCameraPtr.get();	
 		addComponent(std::move(freeCameraPtr));
 
 		auto& scritpContainer = cameraNode->getScriptContainer();
-		scritpContainer.setScript(freeCamera);
+		scritpContainer.setScript(*freeCamera);
 
 		return freeCamera;
+	}
+
+	Animator* Scene::addAnimatorScript(const std::string& nodeName)
+	{
+		auto meshNode = findNode(nodeName);
+		if (!meshNode)
+		{
+			LogError("Mesh node '%s' not foud. Adding new node", nodeName.c_str());
+			return nullptr;
+		}
+
+		auto animatorPtr = std::make_unique<Animator>();
+		animatorPtr->setNode(*meshNode);
+
+		if (meshNode->hasComponent<Mesh>())
+		{
+			auto& mesh = meshNode->getComponent<Mesh>();
+			if (mesh.isAnimated())
+			{
+				animatorPtr->setMesh(mesh);
+			}
+			else
+			{
+				LogError("Mesh node '%s' don't have a animated mesh component attached", nodeName.c_str());
+				return nullptr;
+			}
+		}
+		else
+		{
+			LogError("Mesh node '%s' don't have a mesh component attached", nodeName.c_str());
+			return nullptr;
+		}
+
+		auto* animator = animatorPtr.get();
+		addComponent(std::move(animatorPtr));
+
+		auto& scritpContainer = meshNode->getScriptContainer();
+		scritpContainer.setScript(*animator);
+
+		return animator;
+	}
+
+	bool Scene::read(FileReader& reader, ResourceCache& cache)
+	{
+		mNodes.clear();
+		mComponents.clear();
+
+		auto root = std::make_unique<Node>();
+		mRoot = root.get();
+
+		addNode(std::move(root));
+
+		if (!mRoot->read(reader, cache, *this))
+		{
+			LogError("Node::read() failed for root!!");
+			return false;
+		}
+
+		if (!mRoot->readComponents(reader, cache, *this))
+		{
+			LogError("Node::readComponents() failed for root!!");
+			return false;
+		}
+
+		return true;
+	}
+
+	bool Scene::write(FileWriter& writer)
+	{
+		if (!mRoot->write(writer, *this))
+		{
+			LogError("Node::write() failed for root!!");
+			return false;
+		}
+
+		if (!mRoot->writeComponents(writer, *this))
+		{
+			LogError("Node::write() failed for root!!");
+			return false;
+		}
+
+		return true;
 	}
 }

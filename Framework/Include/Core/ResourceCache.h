@@ -26,7 +26,7 @@ namespace Trinity
 		bool hasResource(const std::type_index& type) const;
 		bool isLoaded(const std::type_index& type, const std::string& fileName) const;
 
-		Resource* getResource(const std::type_index& type, uint32_t id) const;
+		Resource* getResource(const std::type_index& type, uint32_t id = 0) const;
 		Resource* getResource(const std::type_index& type, const std::string& fileName) const;
 
 		const std::vector<std::unique_ptr<Resource>>& getResources(const std::type_index& type) const;
@@ -44,7 +44,7 @@ namespace Trinity
 		}
 
 		template <typename T>
-		T* getResource(uint32_t id) const
+		T* getResource(uint32_t id = 0) const
 		{
 			return dynamic_cast<T*>(getResource(typeid(T), id));
 		}

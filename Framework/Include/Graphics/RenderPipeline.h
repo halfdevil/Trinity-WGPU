@@ -83,9 +83,9 @@ namespace Trinity
         }
 
         bool create(const RenderPipelineProperties& renderProps);
-        void destroy();
 
-        virtual std::type_index getType() const override;
+		virtual std::type_index getType() const override;
+		virtual void destroy() override;
 
     private:
 

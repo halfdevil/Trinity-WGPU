@@ -62,9 +62,10 @@ namespace Trinity
 		virtual bool hasComponent(const std::type_index& type);
 		virtual void setComponent(Component& component);
 
-		virtual bool read(FileReader& reader, Scene& scene);
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene);
 		virtual bool write(FileWriter& writer, Scene& scene);
-		virtual bool readComponents(FileReader& reader, Scene& scene);
+
+		virtual bool readComponents(FileReader& reader, ResourceCache& cache, Scene& scene);
 		virtual bool writeComponents(FileWriter& writer, Scene& scene);
 
 	public:

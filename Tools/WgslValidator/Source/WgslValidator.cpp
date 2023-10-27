@@ -1,6 +1,7 @@
 #include "WgslValidator.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 #include "VFS/DiskFile.h"
 #include "Graphics/GraphicsDevice.h"

@@ -2,6 +2,7 @@
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/Window.h"
+#include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 #include "VFS/DiskFile.h"
 #include "Graphics/GraphicsDevice.h"
@@ -23,6 +24,7 @@ namespace Trinity
 		mFileSystem = std::make_unique<FileSystem>();
 		mWindow = std::make_unique<Window>();
 		mGraphicsDevice = std::make_unique<GraphicsDevice>();
+		mResourceCache = std::make_unique<ResourceCache>();
 
 		if (!configFile.empty())
 		{

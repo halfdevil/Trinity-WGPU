@@ -33,7 +33,7 @@ namespace Trinity
 		virtual glm::mat4 getProjection() const = 0;
 		virtual void setNode(Node& node);
 
-		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	public:

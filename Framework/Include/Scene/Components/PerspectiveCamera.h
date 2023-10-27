@@ -43,7 +43,7 @@ namespace Trinity
 		virtual void setFarPlane(float farPlane);
 		virtual void setNearPlane(float nearPlane);
 
-		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 		virtual std::string getTypeStr() const override;

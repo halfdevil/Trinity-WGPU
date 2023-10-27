@@ -1,9 +1,11 @@
 #include "Scene/Node.h"
 #include "Scene/ComponentFactory.h"
 #include "Scene/Scene.h"
+#include "Scene/Components/Script.h"
 #include "VFS/FileReader.h"
 #include "VFS/FileWriter.h"
 #include "Core/Logger.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {
@@ -66,7 +68,7 @@ namespace Trinity
 		}
 	}
 
-	bool Node::read(FileReader& reader, Scene& scene)
+	bool Node::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
 		mName = reader.readString();
 
@@ -76,7 +78,7 @@ namespace Trinity
 		for (uint32_t idx = 0; idx < numChildren; idx++)
 		{
 			auto child = std::make_unique<Node>();
-			if (!child->read(reader, scene))
+			if (!child->read(reader, cache, scene))
 			{
 				LogError("Node::read() failed for child: %d!!", idx);
 				return false;
@@ -108,15 +110,15 @@ namespace Trinity
 		return true;
 	}
 
-	bool Node::readComponents(FileReader& reader, Scene& scene)
+	bool Node::readComponents(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!mTransform.read(reader, scene))
+		if (!mTransform.read(reader, cache, scene))
 		{
 			LogError("Transform::read() failed!!");
 			return false;
 		}
 
-		if (!mScriptContainer.read(reader, scene))
+		if (!mScriptContainer.read(reader, cache, scene))
 		{
 			LogError("ScriptContainer::read() failed!!");
 			return false;
@@ -136,7 +138,7 @@ namespace Trinity
 				return false;
 			}
 
-			if (!component->read(reader, scene))
+			if (!component->read(reader, cache, scene))
 			{
 				LogError("Component::read() failed for type: %s!!", type.c_str());
 				return false;
@@ -148,7 +150,7 @@ namespace Trinity
 
 		for (auto* child : mChildren)
 		{
-			child->readComponents(reader, scene);
+			child->readComponents(reader, cache, scene);
 		}
 
 		return true;

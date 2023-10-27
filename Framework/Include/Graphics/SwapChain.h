@@ -77,11 +77,11 @@ namespace Trinity
         bool create(uint32_t width, uint32_t height, const wgpu::Surface& surface,
             wgpu::PresentMode presentMode, wgpu::TextureFormat depthFormat);
 
-        void destroy();
         void setClearColor(const wgpu::Color& clearColor);
         void present();
 
-        virtual std::type_index getType() const override;
+		virtual std::type_index getType() const override;
+		virtual void destroy() override;
 
     private:
 

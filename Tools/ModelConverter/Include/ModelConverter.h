@@ -19,7 +19,7 @@ namespace Trinity
 
 		void setFileName(const std::string& fileName);
 		void setOutputFileName(const std::string& fileName);
-		void setModelIndex(uint32_t modelIndex);
+		void setAnimated(bool animated);
 
 	protected:
 
@@ -29,6 +29,6 @@ namespace Trinity
 
 		std::string mFileName;
 		std::string mOutputFileName;
-		uint32_t mModelIndex{ 0 };
+		bool mAnimated{ false };
 	};
 }

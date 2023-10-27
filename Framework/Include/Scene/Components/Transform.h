@@ -59,7 +59,7 @@ namespace Trinity
 		void setScale(const glm::vec3& scale);
 		void invalidateWorldMatrix();
 
-		virtual bool read(FileReader& reader, Scene& scene) override;
+		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
 	public:

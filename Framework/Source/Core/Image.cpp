@@ -13,73 +13,31 @@
 
 namespace Trinity
 {
-	Image::~Image()
-	{
-		destroy();
-	}
-
 	bool Image::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		auto& fileSystem = FileSystem::get();
-		mFileName = fileName;
+		return Resource::create(fileName, cache, loadContent);
+	}
 
-		if (loadContent)
-		{
-			if (fileSystem.isExist(fileName))
-			{
-				return load(fileName);
-			}
-			else
-			{
-				LogError("Image file '%s' not found", fileName.c_str());
-				return false;
-			}
-		}
-
-		return true;
+	void Image::destroy()
+	{
+		Resource::destroy();
+		mData.clear();
 	}
 
 	bool Image::write()
 	{
-		if (mFileName.empty())
+		if (FileSystem::get().isExist(mFileName))
 		{
-			LogError("Cannot write to file as filename is empty!!");
-			return false;
-		}
-
-		auto& fileSystem = FileSystem::get();
-		if (fileSystem.isExist(mFileName))
-		{
-			LogWarning("Image file '%s' already exists!!", mFileName.c_str());
+			LogWarning("Image file '%s' already exists, skipping re-write!!", mFileName.c_str());
 			return true;
 		}
 
-		auto writePng = [](void* context, void* data, int len) {
-			FileWriter* writer = (FileWriter*)context;
+		return Resource::write();
+	}
 
-			if (writer)
-			{
-				writer->write((uint8_t*)data, len);
-			}
-		};
-
-		auto file = fileSystem.openFile(mFileName, FileOpenMode::OpenWrite);
-		if (!file)
-		{
-			LogError("FileSystem::openFile() failed for: %s", mFileName.c_str());
-			return false;
-		}
-
-		FileWriter writer(*file);
-
-		if (!stbi_write_png_to_func(writePng, &writer, mWidth, mHeight, mChannels,
-			mData.data(), mWidth * mChannels))
-		{
-			LogError("stbi_write_png_to_func() failed for: %s!!", mFileName.c_str());
-			return false;
-		}
-
-		return true;
+	std::type_index Image::getType() const
+	{
+		return typeid(Image);
 	}
 
 	bool Image::load(const std::string& filePath)
@@ -143,16 +101,6 @@ namespace Trinity
 		}
 
 		return true;
-	}
-
-	std::type_index Image::getType() const
-	{
-		return typeid(Image);
-	}
-
-	void Image::destroy()
-	{
-		mData.clear();
 	}
 
 	glm::vec4 Image::getPixel(uint32_t x, uint32_t y) const
@@ -340,4 +288,34 @@ namespace Trinity
 
 		load(faceWidth, faceHeight, 6, mChannels, mImageType, result.getData().data());
 	}
+
+	bool Image::read(FileReader& reader, ResourceCache& cache)
+	{
+		std::vector<uint8_t> buffer(reader.getSize());
+		reader.read(buffer.data(), reader.getSize());
+
+		return load(buffer);
+	}
+
+	bool Image::write(FileWriter& writer)
+	{
+		auto writePng = [](void* context, void* data, int len) {
+			FileWriter* writer = (FileWriter*)context;
+
+			if (writer)
+			{
+				writer->write((uint8_t*)data, len);
+			}
+		};
+
+		if (!stbi_write_png_to_func(writePng, &writer, mWidth, mHeight, mChannels,
+			mData.data(), mWidth * mChannels))
+		{
+			LogError("stbi_write_png_to_func() failed for: %s!!", mFileName.c_str());
+			return false;
+		}
+
+		return true;
+	}
+
 }

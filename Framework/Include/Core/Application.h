@@ -16,6 +16,7 @@ namespace Trinity
     class GraphicsDevice;
     class RenderPass;
     class ImGuiRenderer;
+    class ResourceCache;
 
     struct ApplicationOptions
     {
@@ -86,6 +87,11 @@ namespace Trinity
             return mGraphicsDevice.get();
         }
 
+        ResourceCache* getResourceCache() const
+        {
+            return mResourceCache.get();
+        }
+
         RenderPass* getMainPass() const
         {
             return mMainPass.get();
@@ -123,6 +129,7 @@ namespace Trinity
         std::unique_ptr<FileSystem> mFileSystem{ nullptr };
         std::unique_ptr<Input> mInput{ nullptr };
         std::unique_ptr<GraphicsDevice> mGraphicsDevice{ nullptr };
+        std::unique_ptr<ResourceCache> mResourceCache{ nullptr };
         std::unique_ptr<RenderPass> mMainPass{ nullptr };
         std::unique_ptr<ImGuiRenderer> mImGuiRenderer{ nullptr };
     };

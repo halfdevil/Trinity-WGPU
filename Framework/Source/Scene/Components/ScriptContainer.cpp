@@ -6,6 +6,7 @@
 #include "VFS/FileReader.h"
 #include "VFS/FileWriter.h"
 #include "Core/Logger.h"
+#include "Core/ResourceCache.h"
 
 namespace Trinity
 {
@@ -76,9 +77,9 @@ namespace Trinity
 		}
 	}
 
-	bool ScriptContainer::read(FileReader& reader, Scene& scene)
+	bool ScriptContainer::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
-		if (!Component::read(reader, scene))
+		if (!Component::read(reader, cache, scene))
 		{
 			return false;
 		}
@@ -97,7 +98,7 @@ namespace Trinity
 				return false;
 			}
 
-			if (!component->read(reader, scene))
+			if (!component->read(reader, cache, scene))
 			{
 				LogError("Component::read() failed for type: %s!!", type.c_str());
 				return false;

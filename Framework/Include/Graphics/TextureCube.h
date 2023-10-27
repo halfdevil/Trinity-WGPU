@@ -18,7 +18,7 @@ namespace Trinity
         {
         }
 
-        ~TextureCube();
+        ~TextureCube() = default;
 
         TextureCube(const TextureCube&) = delete;
         TextureCube& operator = (const TextureCube&) = delete;
@@ -36,13 +36,14 @@ namespace Trinity
             return mImages;
         }
 
-        virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
-		virtual bool write() override;        
-		virtual void destroy();
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
+		virtual bool write() override;
 
 		virtual bool load(Image* image, wgpu::TextureFormat format);
 		virtual bool load(const std::vector<Image*>& images, wgpu::TextureFormat format);
-		virtual void upload(uint32_t channels, uint32_t face, const void* data, uint32_t size);
+		
+        virtual void upload(uint32_t channels, uint32_t face, const void* data, uint32_t size);
         virtual void setImages(std::vector<Image*>&& images);
 
     protected:

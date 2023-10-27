@@ -5,6 +5,7 @@
 #include "Scene/Components/Light.h"
 #include "Scene/Node.h"
 #include "Scene/Scene.h"
+#include "Scene/Model.h"
 #include "Graphics/PBRMaterial.h"
 #include "Graphics/RenderPipeline.h"
 #include "Graphics/Material.h"
@@ -15,16 +16,18 @@
 #include "Graphics/SwapChain.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/RenderPass.h"
+#include "Animation/Skeleton.h"
+#include "Animation/AnimationPose.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/ResourceCache.h"
 
 namespace Trinity
 {
-	bool SceneRenderer::prepare(Scene& scene)
+	bool SceneRenderer::prepare(Scene& scene, ResourceCache& cache)
 	{
 		mSceneData.scene = &scene;
-		Assert(mSceneData.scene != nullptr, "Scene cannot be null here!!");
+		mSceneData.cache = &cache;
 
 		if (!updateSceneData())
 		{
@@ -36,21 +39,16 @@ namespace Trinity
 		for (auto& mesh : meshes)
 		{
 			const auto& subMeshes = mesh->getSubMeshes();
-			const auto& nodes = mesh->getNodes();
-
-			for (auto* node : nodes)
+			for (auto* subMesh : subMeshes)
 			{
-				for (auto* subMesh : subMeshes)
+				RenderData renderData{};
+				if (!setupRenderData(mesh, subMesh, renderData))
 				{
-					RenderData renderData{};
-					if (!setupRenderData(node, mesh, subMesh, renderData))
-					{
-						LogError("setupRenderData() failed!!");
-						return false;
-					}
-
-					mRenderers.push_back(std::move(renderData));
+					LogError("setupRenderData() failed!!");
+					return false;
 				}
+
+				mRenderers.push_back(std::move(renderData));
 			}
 		}
 
@@ -99,9 +97,12 @@ namespace Trinity
 		}
 	}
 
-	bool SceneRenderer::setupRenderData(Node* node, Mesh* mesh, SubMesh* subMesh, RenderData& renderData)
+	bool SceneRenderer::setupRenderData(Mesh* mesh, SubMesh* subMesh, RenderData& renderData)
 	{
-		if (!updateTransformData(node, renderData))
+		renderData.subMesh = subMesh;
+		renderData.mesh = mesh;
+
+		if (!updateMeshData(mesh, mesh->getNode(), renderData))
 		{
 			LogError("updateTransformData() failed!!");
 			return false;
@@ -111,14 +112,14 @@ namespace Trinity
 		const SwapChain& swapChain = graphics.getSwapChain();
 		const Material* material = subMesh->getMaterial();
 		const BindGroupLayout* materialLayout = material->getBindGroupLayout();
-		const BindGroupLayout* transformLayout = renderData.transformBindGroupLayout;
+		const BindGroupLayout* meshLayout = renderData.meshBindGroupLayout;
 
 		RenderPipelineProperties renderProps = {
 			.shader = material->getShader(),
 			.bindGroupLayouts = {
 				mSceneData.sceneBindGroupLayout,
 				materialLayout,
-				transformLayout
+				meshLayout
 			},
 			.vertexBuffers = { subMesh->getVertexBuffer() },
 			.primitive = {
@@ -166,17 +167,14 @@ namespace Trinity
 			return false;
 		}
 
-		renderData.subMesh = subMesh;
-		renderData.mesh = mesh;
-		renderData.node = node;
 		renderData.pipeline = pipeline.get();
 		renderData.materialBindGroup = material->getBindGroup();
-		mSceneData.scene->getResourceCache().addResource(std::move(pipeline));
+		mSceneData.cache->addResource(std::move(pipeline));
 
 		return true;
 	}
 
-	bool SceneRenderer::updateTransformData(Node* node, RenderData& renderData)
+	bool SceneRenderer::updateMeshData(Mesh* mesh, Node* node, RenderData& renderData)
 	{
 		if (renderData.transformBuffer == nullptr)
 		{
@@ -194,7 +192,7 @@ namespace Trinity
 				return false;
 			}
 
-			const std::vector<BindGroupLayoutItem> transformLayoutItems = {
+			std::vector<BindGroupLayoutItem> meshLayoutItems = {
 				{
 					.binding = 0,
 					.shaderStages = wgpu::ShaderStage::Vertex,
@@ -205,7 +203,7 @@ namespace Trinity
 				}
 			};
 
-			std::vector<BindGroupItem> transformItems = {
+			std::vector<BindGroupItem> meshItems = {
 				{
 					.binding = 0,
 					.size = sizeof(TransformBufferData),
@@ -213,30 +211,92 @@ namespace Trinity
 				}
 			};
 
+			if (renderData.mesh->isAnimated())
+			{
+				const auto& invBindPose = renderData.mesh->getInvBindPose();
+				const auto& bindPose = renderData.mesh->getBindPose();
+
+				auto invBindPoseBuffer = std::make_unique<StorageBuffer>();
+				if (!invBindPoseBuffer->create(sizeof(glm::mat4) * (uint32_t)invBindPose.size(), invBindPose.data()))
+				{
+					LogError("StorageBuffer::create() failed");
+					return false;
+				}
+
+				auto bindPoseBuffer = std::make_unique<StorageBuffer>();
+				if (!bindPoseBuffer->create(sizeof(glm::mat4) * (uint32_t)bindPose.size(), bindPose.data()))
+				{
+					LogError("StorageBuffer::create() failed");
+					return false;
+				}
+
+				meshLayoutItems.push_back({
+					.binding = 1,
+					.shaderStages = wgpu::ShaderStage::Vertex,
+					.bindingLayout = BufferBindingLayout {
+						.type = wgpu::BufferBindingType::ReadOnlyStorage,
+						.minBindingSize = (uint32_t)invBindPose.size() * sizeof(glm::mat4)
+					}
+				});
+
+				meshLayoutItems.push_back({
+					.binding = 2,
+					.shaderStages = wgpu::ShaderStage::Vertex,
+					.bindingLayout = BufferBindingLayout {
+						.type = wgpu::BufferBindingType::ReadOnlyStorage,
+						.minBindingSize = (uint32_t)bindPose.size() * sizeof(glm::mat4)
+					}
+				});
+
+				meshItems.push_back({
+					.binding = 1,
+					.size = (uint32_t)invBindPose.size() * sizeof(glm::mat4),
+					.resource = BufferBindingResource(*invBindPoseBuffer)
+				});
+
+				meshItems.push_back({
+					.binding = 2,
+					.size = (uint32_t)invBindPose.size() * sizeof(glm::mat4),
+					.resource = BufferBindingResource(*bindPoseBuffer)
+				});
+
+				renderData.meshInvBindPoseBuffer = invBindPoseBuffer.get();
+				renderData.meshBindPoseBuffer = bindPoseBuffer.get();
+				mSceneData.cache->addResource(std::move(invBindPoseBuffer));
+				mSceneData.cache->addResource(std::move(bindPoseBuffer));
+			}
+
 			auto bindGroupLayout = std::make_unique<BindGroupLayout>();
-			if (!bindGroupLayout->create(transformLayoutItems))
+			if (!bindGroupLayout->create(meshLayoutItems))
 			{
 				LogError("BindGroupLayout::create() failed!!");
 				return false;
 			}
 
 			auto bindGroup = std::make_unique<BindGroup>();
-			if (!bindGroup->create(*bindGroupLayout, transformItems))
+			if (!bindGroup->create(*bindGroupLayout, meshItems))
 			{
 				LogError("BindGroup::create() failed!!");
 				return false;
 			}
 
 			renderData.transformBuffer = transformBuffer.get();
-			renderData.transformBindGroup = bindGroup.get();
-			renderData.transformBindGroupLayout = bindGroupLayout.get();
+			renderData.meshBindGroup = bindGroup.get();
+			renderData.meshBindGroupLayout = bindGroupLayout.get();
 
-			mSceneData.scene->getResourceCache().addResource(std::move(transformBuffer));
-			mSceneData.scene->getResourceCache().addResource(std::move(bindGroupLayout));
-			mSceneData.scene->getResourceCache().addResource(std::move(bindGroup));
+			mSceneData.cache->addResource(std::move(transformBuffer));
+			mSceneData.cache->addResource(std::move(bindGroupLayout));
+			mSceneData.cache->addResource(std::move(bindGroup));
 		}
 		else 
 		{
+			if (renderData.mesh->isAnimated())
+			{
+				auto& bindPose = renderData.mesh->getBindPose();
+				renderData.meshBindPoseBuffer->write(0, (uint32_t)bindPose.size() *
+					sizeof(glm::mat4), bindPose.data());
+			}
+
 			TransformBufferData transformData{};
 			if (node != nullptr)
 			{
@@ -324,9 +384,9 @@ namespace Trinity
 			mSceneData.sceneBindGroup = bindGroup.get();
 			mSceneData.sceneBindGroupLayout = bindGroupLayout.get();
 
-			mSceneData.scene->getResourceCache().addResource(std::move(sceneBuffer));
-			mSceneData.scene->getResourceCache().addResource(std::move(bindGroup));
-			mSceneData.scene->getResourceCache().addResource(std::move(bindGroupLayout));
+			mSceneData.cache->addResource(std::move(sceneBuffer));
+			mSceneData.cache->addResource(std::move(bindGroup));
+			mSceneData.cache->addResource(std::move(bindGroupLayout));
 		}
 		else
 		{
@@ -376,7 +436,7 @@ namespace Trinity
 			}
 
 			mSceneData.lightsBuffer = lightsBuffer.get();
-			mSceneData.scene->getResourceCache().addResource(std::move(lightsBuffer));
+			mSceneData.cache->addResource(std::move(lightsBuffer));
 		}		
 
 		return true;
@@ -402,7 +462,7 @@ namespace Trinity
 
 	void SceneRenderer::draw(RenderPass& renderPass, RenderData& renderer)
 	{
-		if (!updateTransformData(renderer.node, renderer))
+		if (!updateMeshData(renderer.mesh, renderer.mesh->getNode(), renderer))
 		{
 			LogError("updateTransformData() failed!!");
 			return;
@@ -410,7 +470,7 @@ namespace Trinity
 
 		renderPass.setPipeline(*renderer.pipeline);
 		renderPass.setBindGroup(kMaterialBindGroupIndex, *renderer.materialBindGroup);
-		renderPass.setBindGroup(kTransformBindGroupIndex, *renderer.transformBindGroup);
+		renderPass.setBindGroup(kTransformBindGroupIndex, *renderer.meshBindGroup);
 		renderPass.setVertexBuffer(0, *renderer.subMesh->getVertexBuffer());
 
 		if (renderer.subMesh->hasIndexBuffer())
@@ -431,7 +491,8 @@ namespace Trinity
 		for (auto& renderData : mRenderers)
 		{
 			const auto& bounds = renderData.mesh->getBounds();
-			auto transform = renderData.node->getTransform().getWorldMatrix();
+			auto* node = renderData.mesh->getNode();
+			auto transform = node->getTransform().getWorldMatrix();
 
 			BoundingBox worldBounds{ bounds.min, bounds.max };
 			worldBounds.transform(transform);

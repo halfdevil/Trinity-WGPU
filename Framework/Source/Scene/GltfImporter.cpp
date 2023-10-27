@@ -7,6 +7,7 @@
 #include "Scene/Components/Mesh.h"
 #include "Scene/Components/SubMesh.h"
 #include "Scene/Components/PerspectiveCamera.h"
+#include "Scene/Model.h"
 #include "Graphics/GraphicsDevice.h"
 #include "Graphics/PBRMaterial.h"
 #include "Graphics/Sampler.h"
@@ -15,7 +16,10 @@
 #include "Graphics/UniformBuffer.h"
 #include "Graphics/BindGroup.h"
 #include "Graphics/BindGroupLayout.h"
-#include "Graphics/Model.h"
+#include "Animation/AnimationTransform.h"
+#include "Animation/AnimationClip.h"
+#include "Animation/AnimationPose.h"
+#include "Animation/Skeleton.h"
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/Image.h"
@@ -36,6 +40,13 @@
 
 namespace Trinity
 {
+	struct AnimationSampler
+	{
+		Interpolation type{ Interpolation::Linear };
+		std::vector<float> inputs;
+		std::vector<float> outputs;
+	};
+
 	bool fileExists(const std::string& fileName, void* userData)
 	{
 		auto& fileSystem = FileSystem::get();
@@ -206,6 +217,258 @@ namespace Trinity
 		return result;
 	}
 
+	std::unordered_map<int32_t, int32_t> getParentMap(const tinygltf::Model& gltfModel, const tinygltf::Scene& gltfScene)
+	{
+		std::unordered_map<int32_t, int32_t> parentMap;
+		std::queue<int> traverseNodes;
+		int32_t rootNode = -1;
+
+		for (auto node : gltfScene.nodes)
+		{
+			parentMap.insert(std::make_pair(node, -1));
+			traverseNodes.push(node);
+		}
+
+		while (!traverseNodes.empty())
+		{
+			auto currentNode = traverseNodes.front();
+			traverseNodes.pop();
+
+			for (auto childNode : gltfModel.nodes[currentNode].children)
+			{
+				parentMap.insert(std::make_pair(childNode, currentNode));
+				traverseNodes.push(childNode);
+			}
+		}
+
+		return parentMap;
+	}
+
+	std::vector<std::string> parseJointNames(const tinygltf::Model& gltfModel)
+	{
+		uint32_t nodeCount = (uint32_t)gltfModel.nodes.size();
+		std::vector<std::string> names(nodeCount);
+
+		for (uint32_t idx = 0; idx < nodeCount; idx++)
+		{
+			auto& node = gltfModel.nodes[idx];
+			if (node.name.empty())
+			{
+				names[idx] = "EMPTY NODE";
+			}
+			else
+			{
+				names[idx] = node.name;
+			}
+		}
+
+		return names;
+	}
+
+	AnimationTransform parseAnimTransform(const tinygltf::Node& gltfNode)
+	{
+		AnimationTransform transform;
+
+		if (!gltfNode.translation.empty())
+		{
+			glm::vec3 translation;
+			std::transform(gltfNode.translation.begin(), gltfNode.translation.end(),
+				glm::value_ptr(translation), TypeCast<double, float>{});
+
+			transform.translation = translation;
+		}
+
+		if (!gltfNode.rotation.empty())
+		{
+			glm::quat rotation;
+			std::transform(gltfNode.rotation.begin(), gltfNode.rotation.end(),
+				glm::value_ptr(rotation), TypeCast<double, float>{});
+
+			transform.rotation = rotation;
+		}
+
+		if (!gltfNode.scale.empty())
+		{
+			glm::vec3 scale;
+			std::transform(gltfNode.scale.begin(), gltfNode.scale.end(),
+				glm::value_ptr(scale), TypeCast<double, float>{});
+
+			transform.scale = scale;
+		}
+
+		if (!gltfNode.matrix.empty())
+		{
+			glm::mat4 matrix;
+			std::transform(gltfNode.matrix.begin(), gltfNode.matrix.end(),
+				glm::value_ptr(matrix), TypeCast<double, float>{});
+
+			transform.fromMatrix(matrix);
+		}
+
+		return transform;
+	}
+
+	std::unique_ptr<AnimationPose> parseRestPose(const tinygltf::Model& gltfModel, const std::unordered_map<int32_t, int32_t>& parentMap)
+	{
+		uint32_t nodeCount = (uint32_t)gltfModel.nodes.size();
+		auto pose = std::make_unique<AnimationPose>(nodeCount);
+
+		for (uint32_t idx = 0; idx < nodeCount; idx++)
+		{
+			auto& node = gltfModel.nodes[idx];
+
+			AnimationTransform transform = parseAnimTransform(node);
+			pose->setLocalTransform(idx, transform);
+			pose->setParent(idx, parentMap.at((int32_t)idx));
+		}
+
+		return pose;
+	}
+
+	std::unique_ptr<AnimationPose> parseBindPose(const tinygltf::Model& gltfModel, const std::unordered_map<int32_t, int32_t>& parentMap)
+	{
+		auto restPose = parseRestPose(gltfModel, parentMap);
+
+		uint32_t numJoints = restPose->getNumJoints();
+		std::vector<glm::mat4> worldBindPose(numJoints);
+
+		restPose->getMatrixPalette(worldBindPose);
+
+		uint32_t numSkins = (uint32_t)gltfModel.skins.size();
+		for (uint32_t idx = 0; idx < numSkins; idx++)
+		{
+			auto& gltfSkin = gltfModel.skins[idx];
+			auto matricesData = getAttributeData(gltfModel, gltfSkin.inverseBindMatrices);
+			const float* invBindAccessor = (const float*)matricesData.data();
+			
+			uint32_t numSkinJoints = (uint32_t)gltfSkin.joints.size();
+			for (uint32_t jdx = 0; jdx < numSkinJoints; jdx++)
+			{
+				const float* matrix = &(invBindAccessor[jdx * 16]);
+				auto invBindMatrix = glm::make_mat4(matrix);
+				auto bindMatrix = glm::inverse(invBindMatrix);
+
+				worldBindPose[gltfSkin.joints[jdx]] = bindMatrix;
+			}
+		}
+
+		auto bindPose = std::make_unique<AnimationPose>(*restPose);
+		for (uint32_t idx = 0; idx < numJoints; idx++)
+		{
+			auto current = worldBindPose[idx];
+			auto p = bindPose->getParent(idx);
+
+			if (p >= 0)
+			{
+				auto parent = worldBindPose[p];
+				current = glm::inverse(parent) * current;
+			}
+
+			bindPose->setLocalTransform(idx, AnimationTransform(current));
+		}
+
+		return bindPose;
+	}
+
+	std::vector<AnimationSampler> getAnimationSamplers(const tinygltf::Model& gltfModel, const tinygltf::Animation& gltfAnim)
+	{
+		std::vector<AnimationSampler> samplers;
+
+		for (const auto& gltfSampler : gltfAnim.samplers)
+		{
+			AnimationSampler sampler;
+			if (gltfSampler.interpolation == "LINEAR")
+			{
+				sampler.type = Interpolation::Linear;
+			}
+			else if (gltfSampler.interpolation == "STEP")
+			{
+				sampler.type = Interpolation::Constant;
+			}
+			else if (gltfSampler.interpolation == "CUBICSPLINE")
+			{
+				sampler.type = Interpolation::Cubic;
+			}
+
+			const auto& inputAccessor = gltfModel.accessors[gltfSampler.input];
+			auto inputAccessorData = getAttributeData(gltfModel, gltfSampler.input);
+
+			const float* inData = (const float*)inputAccessorData.data();
+			for (size_t idx = 0; idx < inputAccessor.count; idx++)
+			{
+				sampler.inputs.push_back(inData[idx]);
+			}
+
+			const auto& outputAccessor = gltfModel.accessors[gltfSampler.output];
+			auto outputAccessorData = getAttributeData(gltfModel, gltfSampler.output);
+
+			size_t outCount{ 0 };
+			switch (outputAccessor.type)
+			{
+			case TINYGLTF_TYPE_VEC3:
+				outCount = outputAccessor.count * 3;
+				break;
+
+			case TINYGLTF_TYPE_VEC4:
+				outCount = outputAccessor.count * 4;
+				break;
+			}
+
+			const float* outData = (const float*)outputAccessorData.data();
+			for (size_t idx = 0; idx < outCount; idx++)
+			{
+				sampler.outputs.push_back(outData[idx]);
+			}
+
+			samplers.push_back(std::move(sampler));
+		}
+
+		return samplers;
+	}
+
+	template <typename T, int N>
+	void getTrackFromChannel(Track<T>& inOutTrack, const tinygltf::AnimationChannel& gltfChannel, 
+		const std::vector<AnimationSampler>& samplers)
+	{
+		auto& sampler = samplers[gltfChannel.sampler];
+		bool isSamplerCubic = sampler.type == Interpolation::Cubic;
+
+		uint32_t numFrames = (uint32_t)sampler.inputs.size();
+		uint32_t numValuesPerFrame = (uint32_t)sampler.outputs.size() / numFrames;
+
+		inOutTrack.setInterpolation(sampler.type);
+		inOutTrack.resize(numFrames);
+
+		for (uint32_t idx = 0; idx < numFrames; idx++)
+		{
+			uint32_t baseIndex = idx * numValuesPerFrame;
+			uint32_t offset = 0;
+
+			Frame<T>& frame = inOutTrack[idx];
+			frame.time = sampler.inputs[idx];
+
+			for (int c = 0; c < N; c++)
+			{
+				frame.in[c] = isSamplerCubic ? sampler.outputs[baseIndex + offset++] : 0.0f;
+			}
+
+			for (int c = 0; c < N; c++)
+			{
+				frame.value[c] = sampler.outputs[baseIndex + offset++];
+			}
+
+			for (int c = 0; c < N; c++)
+			{
+				frame.out[c] = isSamplerCubic ? sampler.outputs[baseIndex + offset++] : 0.0f;
+			}
+
+			if (offset != numValuesPerFrame)
+			{
+				LogWarning("Wrong number of frame components");
+			}
+		}
+	}
+
 	std::vector<std::unique_ptr<Light>> parseLights(const tinygltf::Model& gltfModel)
 	{
 		if (gltfModel.extensions.find(KHR_LIGHTS_PUNCTUAL_EXTENSION) == gltfModel.extensions.end() ||
@@ -331,7 +594,7 @@ namespace Trinity
 			std::transform(gltfNode.scale.begin(), gltfNode.scale.end(),
 				glm::value_ptr(scale), TypeCast<double, float>{});
 
-			transform.setTranslation(scale);
+			transform.setScale(scale);
 		}
 
 		if (!gltfNode.matrix.empty())
@@ -483,7 +746,7 @@ namespace Trinity
 			fileName.replace_extension("png");
 
 			image = std::make_unique<Image>();
-			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, loadContent))
+			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 			{
 				LogError("Image::create() failed for: %s!!", fileName.c_str());
 				return nullptr;
@@ -504,7 +767,7 @@ namespace Trinity
 			fileName.replace_extension("png");
 
 			image = std::make_unique<Image>();
-			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, loadContent))
+			if (!image->create(FileSystem::get().sanitizePath(fileName.string()), cache, false))
 			{
 				LogError("Image::create() failed for: %s!!", fileName.c_str());
 				return nullptr;
@@ -556,12 +819,25 @@ namespace Trinity
 		return sampler;
 	}
 
-	std::unique_ptr<Shader> createDefaultShader(ResourceCache& cache, bool loadContent = true)
+	std::unique_ptr<Shader> createDefaultShader(ResourceCache& cache, const std::vector<std::string>& defines, bool loadContent = true)
 	{
 		auto shader = std::make_unique<Shader>();
-		if (!shader->create(PBRMaterial::kDefaultShader, cache, loadContent))
+		if (!shader->create(PBRMaterial::kDefaultShader, cache, false))
 		{
 			LogError("Shader::create() failed for: %s!!", PBRMaterial::kDefaultShader);
+			return nullptr;
+		}
+
+		if (loadContent)
+		{
+			ShaderPreProcessor processor;
+			processor.addDefines(defines);
+
+			if (!shader->load(PBRMaterial::kDefaultShader, processor))
+			{
+				LogError("Shader::load() failed for: %s!!", PBRMaterial::kDefaultShader);
+				return nullptr;
+			}
 		}
 
 		return shader;
@@ -570,7 +846,7 @@ namespace Trinity
 	std::unique_ptr<Material> createDefaultMaterial(ResourceCache& cache, bool loadContent = true)
 	{
 		auto material = std::make_unique<PBRMaterial>();
-		if (!material->create(PBRMaterial::kDefault, cache, true))
+		if (!material->create(PBRMaterial::kDefault, cache, loadContent))
 		{
 			LogError("PBRMaterial::create() failed for: %s!!", PBRMaterial::kDefault);
 			return nullptr;
@@ -605,11 +881,18 @@ namespace Trinity
 		return parseCamera(gltfCamera);
 	}
 
-	bool loadMaterials(const tinygltf::Model& gltfModel, ResourceCache& cache, const std::string& inputPath, 
-		const std::string& materialsPath, const std::string& imagesPath, const std::string& texturesPath, 
-		const std::string& samplersPath, bool loadContent = true)
+	bool loadMaterials(
+		const tinygltf::Model& gltfModel, 
+		ResourceCache& cache, 
+		const std::string& inputPath, 
+		const std::string& materialsPath, 
+		const std::string& imagesPath, 
+		const std::string& texturesPath, 
+		const std::string& samplersPath, 
+		bool hasSkin = false,
+		bool loadContent = true)
 	{
-		auto defaultSampler = createDefaultSampler(cache);
+		auto defaultSampler = createDefaultSampler(cache, loadContent);
 		cache.addResource(std::move(defaultSampler));
 
 		for (const auto& gltfSampler : gltfModel.samplers)
@@ -674,6 +957,10 @@ namespace Trinity
 		for (const auto& gltfMaterial : gltfModel.materials)
 		{
 			std::vector<std::string> shaderDefines;
+			if (hasSkin)
+			{
+				shaderDefines.push_back("has_skin");
+			}
 
 			auto material = parseMaterial(gltfMaterial, cache, materialsPath, loadContent);
 			for (const auto& gltfValue : gltfMaterial.values)
@@ -702,7 +989,7 @@ namespace Trinity
 				}
 			}
 
-			auto shader = createDefaultShader(cache);
+			auto shader = createDefaultShader(cache, shaderDefines, loadContent);
 			material->setShader(*shader);
 			material->setShaderDefines(std::move(shaderDefines));
 
@@ -710,8 +997,8 @@ namespace Trinity
 			cache.addResource(std::move(material));
 		}
 
-		auto defaultShader = createDefaultShader(cache);
-		auto defaultMaterial = createDefaultMaterial(cache);
+		auto defaultShader = createDefaultShader(cache, {}, loadContent);
+		auto defaultMaterial = createDefaultMaterial(cache, loadContent);
 		defaultMaterial->setShader(*defaultShader);
 
 		cache.addResource(std::move(defaultShader));
@@ -719,13 +1006,109 @@ namespace Trinity
 
 		return true;
 	}
+	
+	bool loadSkeleton(const tinygltf::Model& gltfModel, const tinygltf::Scene& gltfScene, const std::string& outputFileName,
+		ResourceCache& cache, bool loadContent = true)
+	{
+		auto jointNames = parseJointNames(gltfModel);
+		auto parentMap = getParentMap(gltfModel, gltfScene);
+		auto restPose = parseRestPose(gltfModel, parentMap);
+		auto bindPose = parseBindPose(gltfModel, parentMap);
 
-	std::unique_ptr<Scene> loadScene(tinygltf::Model& gltfModel, const std::string& outputFileName, const std::string& inputPath, 
-		const std::string& materialsPath, const std::string& modelsPath, const std::string& imagesPath, 
-		const std::string& texturesPath, const std::string& samplersPath, bool loadContent = true)
+		auto fileName = fs::path(outputFileName);
+		fileName.replace_extension("tskel");
+
+		auto skeleton = std::make_unique<Skeleton>();
+		if (!skeleton->create(FileSystem::get().sanitizePath(fileName.string()), cache, loadContent))
+		{
+			LogError("Skeleton::create() failed for: %s!!", fileName.string().c_str());
+			return false;
+		}
+
+		skeleton->setJointNames(std::move(jointNames));
+		skeleton->setRestPose(std::move(restPose));
+		skeleton->setBindPose(std::move(bindPose));
+
+		if (loadContent)
+		{
+			skeleton->updateInvBindPose();
+		}
+
+		cache.addResource(std::move(skeleton));
+		return true;
+	}
+
+	bool loadAnimationClips(const tinygltf::Model& gltfModel, const std::string& animationsPath,
+		ResourceCache& cache, bool loadContent = true)
+	{
+		uint32_t animCount = (uint32_t)gltfModel.animations.size();
+		std::vector<std::unique_ptr<AnimationClip>> clips(animCount);
+
+		for (uint32_t idx = 0; idx < animCount; idx++)
+		{
+			auto& gltfAnim = gltfModel.animations[idx];
+			auto samplers = getAnimationSamplers(gltfModel, gltfAnim);
+
+			auto fileName = fs::path(animationsPath);
+			if (!gltfAnim.name.empty())
+			{
+				fileName.append(gltfAnim.name);
+			}
+			else
+			{
+				auto animations = cache.getResources<AnimationClip>();
+				fileName.append(std::format("Animation_{}", animations.size()));
+			}
+
+			auto clip = std::make_unique<AnimationClip>();
+			if (!clip->create(FileSystem::get().sanitizePath(fileName.string()), cache, loadContent))
+			{
+				LogError("AnimationClip::create() failed for: %s!!", fileName.string().c_str());
+				return false;
+			}
+
+			for (auto& channel : gltfAnim.channels)
+			{
+				auto& transformTrack = (*clip)[(uint32_t)channel.target_node];
+				if (channel.target_path == "translation")
+				{
+					TrackVector& track = transformTrack.getPosition();
+					getTrackFromChannel<glm::vec3, 3>(track, channel, samplers);
+				}
+				else if (channel.target_path == "rotation")
+				{
+					TrackQuaternion& track = transformTrack.getRotation();
+					getTrackFromChannel<glm::quat, 4>(track, channel, samplers);
+				}
+				else if (channel.target_path == "scale")
+				{
+					TrackVector& track = transformTrack.getScale();
+					getTrackFromChannel<glm::vec3, 3>(track, channel, samplers);
+				}
+			}
+
+			clip->recalculateDuration();
+			clips[idx] = std::move(clip);
+		}
+
+		cache.setResources(std::move(clips));
+		return true;
+	}
+
+	Scene* loadScene(
+		tinygltf::Model& gltfModel, 
+		ResourceCache& cache,
+		const std::string& outputFileName, 
+		const std::string& inputPath, 
+		const std::string& materialsPath, 
+		const std::string& modelsPath, 
+		const std::string& imagesPath, 
+		const std::string& texturesPath, 
+		const std::string& samplersPath, 
+		bool loadContent = true)
 	{
 		auto scene = std::make_unique<Scene>();
-		if (!scene->create(outputFileName, loadContent))
+		if (!scene->create(outputFileName, cache, loadContent))
 		{
 			LogError("Scene::create() failed for: %s!!", outputFileName.c_str());
 			return nullptr;
@@ -734,17 +1117,17 @@ namespace Trinity
 		auto lights = parseLights(gltfModel);
 		scene->setComponents(std::move(lights));
 
-		if (!loadMaterials(gltfModel, scene->getResourceCache(), inputPath, materialsPath, imagesPath, 
-			texturesPath, samplersPath, loadContent))
+		if (!loadMaterials(gltfModel, cache, inputPath, materialsPath, imagesPath, 
+			texturesPath, samplersPath, false, loadContent))
 		{
 			LogError("GltfImporter::loadMaterials() faile for: %s!!", outputFileName.c_str());
 			return nullptr;
 		}
 
-		auto materials = scene->getResourceCache().getResources<Material>();
+		auto materials = cache.getResources<Material>();
 		for (const auto& gltfMesh : gltfModel.meshes)
 		{
-			auto model = parseMesh(gltfMesh, scene->getResourceCache(), modelsPath, loadContent);
+			auto model = parseMesh(gltfMesh, cache, modelsPath, loadContent);
 			auto mesh = std::make_unique<Mesh>();
 
 			std::vector<Model::Mesh> modelMeshes;
@@ -781,7 +1164,7 @@ namespace Trinity
 					uvs = reinterpret_cast<const float*>(&(gltfModel.buffers[bufferView.buffer].
 						data[accessor.byteOffset + bufferView.byteOffset]));
 				}
-
+								
 				std::vector<Scene::Vertex> vertexData;
 				for (size_t v = 0; v < numVertices; v++)
 				{
@@ -794,10 +1177,11 @@ namespace Trinity
 				}
 
 				const uint32_t numFloats = sizeof(Scene::Vertex) / sizeof(float);
+				const uint32_t totalSize = sizeof(Scene::Vertex) * (uint32_t)vertexData.size();
+				auto& vertices = modelMesh.vertexData;
 
-				modelMesh.vertexData.resize(vertexData.size() * numFloats);
-				std::memcpy(modelMesh.vertexData.data(), vertexData.data(),
-					modelMesh.vertexData.size() * sizeof(float));
+				vertices.resize(totalSize);
+				std::memcpy(vertices.data(), vertexData.data(), totalSize);
 
 				modelMesh.numVertices = (uint32_t)numVertices;
 				modelMesh.vertexSize = sizeof(Scene::Vertex);
@@ -814,11 +1198,14 @@ namespace Trinity
 						indexData = convertDataStride(indexData, 2, 4);
 					}
 
-					modelMesh.indexData.resize(numIndices);
-					std::memcpy(modelMesh.indexData.data(), indexData.data(),
-						numIndices * sizeof(uint32_t));
+					const uint32_t totalSize = sizeof(uint32_t) * (uint32_t)numIndices;
+					auto& indices = modelMesh.indexData;
+
+					indices.resize(totalSize);
+					std::memcpy(indices.data(), indexData.data(), totalSize);
 
 					modelMesh.numIndices = (uint32_t)numIndices;
+					modelMesh.indexSize = sizeof(uint32_t);
 				}
 
 				if (gltfPrimitive.material < 0)
@@ -837,7 +1224,7 @@ namespace Trinity
 			model->setMaterials(std::move(materials));
 			mesh->setModel(*model);
 
-			scene->getResourceCache().addResource(std::move(model));
+			cache.addResource(std::move(model));
 			scene->addComponent(std::move(mesh));
 		}
 
@@ -860,7 +1247,7 @@ namespace Trinity
 				auto mesh = meshes[gltfNode.mesh];
 
 				node->setComponent(*mesh);
-				mesh->addNode(*node);
+				mesh->setNode(*node);
 			}
 
 			if (gltfNode.camera >= 0)
@@ -935,29 +1322,81 @@ namespace Trinity
 			scene->addDirectionalLight(glm::quat({ glm::radians(-90.0f), 0.0f, glm::radians(30.0f) }));
 		}
 
-		return scene;
+		auto* scenePtr = scene.get();
+		cache.addResource(std::move(scene));
+
+		return scenePtr;
 	}
 
-	std::unique_ptr<Model> loadModel(tinygltf::Model& gltfModel, ResourceCache& cache, const std::string& outputFileName, 
-		const std::string& inputPath, const std::string& materialsPath, const std::string& modelsPath, 
-		const std::string& imagesPath, const std::string& texturesPath, const std::string& samplersPath, 
-		uint32_t meshIndex, bool loadContent = true)
+	Model* loadModel(
+		tinygltf::Model& gltfModel, 
+		ResourceCache& cache, 
+		const std::string& outputFileName, 
+		const std::string& inputPath, 
+		const std::string& materialsPath, 
+		const std::string& imagesPath, 
+		const std::string& texturesPath, 
+		const std::string& samplersPath, 
+		const std::string& animationsPath = "", 
+		bool animated = false, 
+		bool loadContent = true)
 	{
-		if (!loadMaterials(gltfModel, cache, inputPath, materialsPath, imagesPath, texturesPath, samplersPath, loadContent))
+		if (!loadMaterials(gltfModel, cache, inputPath, materialsPath, imagesPath, 
+			texturesPath, samplersPath, animated, loadContent))
 		{
 			LogError("GltfImporter::loadMaterials() failed for: %s", outputFileName.c_str());
 			return nullptr;
 		}
 
-		auto materials = cache.getResources<Material>();
-		std::unique_ptr<Model> model{ nullptr };
-
-		if (meshIndex < gltfModel.meshes.size())
+		if (animated)
 		{
-			auto& gltfMesh = gltfModel.meshes.at(meshIndex);
-			model = parseMesh(gltfMesh, cache, modelsPath, loadContent);
+			tinygltf::Scene* gltfScene{ nullptr };
+			if (gltfModel.defaultScene >= 0 && gltfModel.defaultScene < (int)gltfModel.scenes.size())
+			{
+				gltfScene = &gltfModel.scenes[gltfModel.defaultScene];
+			}
+			else
+			{
+				gltfScene = &gltfModel.scenes[0];
+			}
 
-			std::vector<Model::Mesh> modelMeshes;
+			if (!gltfScene)
+			{
+				LogError("No scene found!!");
+				return nullptr;
+			}
+
+			if (!loadSkeleton(gltfModel, *gltfScene, outputFileName, cache, loadContent))
+			{
+				LogError("loadSkeleton() failed for: %s!!", outputFileName.c_str());
+				return nullptr;
+			}
+
+			if (!loadAnimationClips(gltfModel, animationsPath, cache, loadContent))
+			{
+				LogError("loadAnimationClips() failed for: %s!!", outputFileName.c_str());
+				return nullptr;
+			}
+		}
+
+		auto materials = cache.getResources<Material>();
+		auto model = std::make_unique<Model>();
+
+		if (!model->create(FileSystem::get().sanitizePath(outputFileName), cache, loadContent))
+		{
+			LogError("Model::create() failed for: %s!!", outputFileName.c_str());
+			return nullptr;
+		}
+
+		std::vector<Model::Mesh> modelMeshes;
+		for (auto& gltfNode : gltfModel.nodes)
+		{
+			if (gltfNode.mesh == -1)
+			{
+				continue;
+			}
+
+			auto& gltfMesh = gltfModel.meshes[gltfNode.mesh];
 			for (size_t idx = 0; idx < gltfMesh.primitives.size(); idx++)
 			{
 				Model::Mesh modelMesh{};
@@ -968,6 +1407,8 @@ namespace Trinity
 				const float* positions = nullptr;
 				const float* normals = nullptr;
 				const float* uvs = nullptr;
+				const uint16_t* joints = nullptr;
+				const float* weights = nullptr;
 
 				auto& accessor = gltfModel.accessors[gltfPrimitive.attributes.find("POSITION")->second];
 				auto& bufferView = gltfModel.bufferViews[accessor.bufferView];
@@ -992,25 +1433,82 @@ namespace Trinity
 						data[accessor.byteOffset + bufferView.byteOffset]));
 				}
 
-				std::vector<Scene::Vertex> vertexData;
-				for (size_t v = 0; v < numVertices; v++)
+				if (animated && gltfNode.skin != -1)
 				{
-					Scene::Vertex vertex{};
-					vertex.position = glm::make_vec3(&positions[v * 3]);
-					vertex.normal = normals ? glm::normalize(glm::make_vec3(&normals[v * 3])) : glm::vec3(0.0f);
-					vertex.uv = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec2(0.0f);
+					if (gltfPrimitive.attributes.find("JOINTS_0") != gltfPrimitive.attributes.end())
+					{
+						accessor = gltfModel.accessors[gltfPrimitive.attributes.find("JOINTS_0")->second];
+						bufferView = gltfModel.bufferViews[accessor.bufferView];
+						joints = reinterpret_cast<const uint16_t*>(&(gltfModel.buffers[bufferView.buffer].
+							data[accessor.byteOffset + bufferView.byteOffset]));
+					}
 
-					vertexData.push_back(vertex);
+					if (gltfPrimitive.attributes.find("WEIGHTS_0") != gltfPrimitive.attributes.end())
+					{
+						accessor = gltfModel.accessors[gltfPrimitive.attributes.find("WEIGHTS_0")->second];
+						bufferView = gltfModel.bufferViews[accessor.bufferView];
+						weights = reinterpret_cast<const float*>(&(gltfModel.buffers[bufferView.buffer].
+							data[accessor.byteOffset + bufferView.byteOffset]));
+					}
+
+					auto& gltfSkin = gltfModel.skins[gltfNode.skin];
+					std::vector<Scene::VertexSkinned> vertexData;
+
+					for (size_t v = 0; v < numVertices; v++)
+					{
+						glm::ivec4 joint(
+							joints[v * 4 + 0],
+							joints[v * 4 + 1],
+							joints[v * 4 + 2],
+							joints[v * 4 + 3]
+						);
+
+						joint.x = joint.x < 0 ? 0 : gltfSkin.joints[joint.x];
+						joint.y = joint.y < 0 ? 0 : gltfSkin.joints[joint.y];
+						joint.z = joint.z < 0 ? 0 : gltfSkin.joints[joint.z];
+						joint.w = joint.w < 0 ? 0 : gltfSkin.joints[joint.w];
+
+						Scene::VertexSkinned vertex{};
+						vertex.position = glm::make_vec3(&positions[v * 3]);
+						vertex.normal = normals ? glm::normalize(glm::make_vec3(&normals[v * 3])) : glm::vec3(0.0f);
+						vertex.uv = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec2(0.0f);
+						vertex.joint = joints ? glm::vec4(glm::make_vec4(&joint.x)) : glm::vec4(0.0f);
+						vertex.weight = weights ? glm::make_vec4(&weights[v * 4]) : glm::vec4(0.0f);
+
+						vertexData.push_back(vertex);
+					}
+
+					const uint32_t totalSize = sizeof(Scene::VertexSkinned) * (uint32_t)vertexData.size();
+					auto& vertices = modelMesh.vertexData;
+
+					vertices.resize(totalSize);
+					std::memcpy(vertices.data(), vertexData.data(), totalSize);
+
+					modelMesh.numVertices = (uint32_t)numVertices;
+					modelMesh.vertexSize = sizeof(Scene::VertexSkinned);
 				}
+				else
+				{
+					std::vector<Scene::Vertex> vertexData;
+					for (size_t v = 0; v < numVertices; v++)
+					{
+						Scene::Vertex vertex{};
+						vertex.position = glm::make_vec3(&positions[v * 3]);
+						vertex.normal = normals ? glm::normalize(glm::make_vec3(&normals[v * 3])) : glm::vec3(0.0f);
+						vertex.uv = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec2(0.0f);
 
-				const uint32_t numFloats = sizeof(Scene::Vertex) / sizeof(float);
+						vertexData.push_back(vertex);
+					}
 
-				modelMesh.vertexData.resize(vertexData.size() * numFloats);
-				std::memcpy(modelMesh.vertexData.data(), vertexData.data(),
-					modelMesh.vertexData.size() * sizeof(float));
+					const uint32_t totalSize = sizeof(Scene::Vertex) * (uint32_t)vertexData.size();
+					auto& vertices = modelMesh.vertexData;
 
-				modelMesh.numVertices = (uint32_t)numVertices;
-				modelMesh.vertexSize = sizeof(Scene::Vertex);
+					vertices.resize(totalSize);
+					std::memcpy(vertices.data(), vertexData.data(), totalSize);
+
+					modelMesh.numVertices = (uint32_t)numVertices;
+					modelMesh.vertexSize = sizeof(Scene::Vertex);
+				}
 
 				if (gltfPrimitive.indices >= 0)
 				{
@@ -1024,11 +1522,14 @@ namespace Trinity
 						indexData = convertDataStride(indexData, 2, 4);
 					}
 
-					modelMesh.indexData.resize(numIndices);
-					std::memcpy(modelMesh.indexData.data(), indexData.data(),
-						numIndices * sizeof(uint32_t));
+					const uint32_t totalSize = sizeof(uint32_t) * (uint32_t)numIndices;
+					auto& indices = modelMesh.indexData;
+
+					indices.resize(totalSize);
+					std::memcpy(indices.data(), indexData.data(), totalSize);
 
 					modelMesh.numIndices = (uint32_t)numIndices;
+					modelMesh.indexSize = sizeof(uint32_t);
 				}
 
 				if (gltfPrimitive.material < 0)
@@ -1042,16 +1543,28 @@ namespace Trinity
 
 				modelMeshes.push_back(std::move(modelMesh));
 			}
-
-			model->setMeshes(std::move(modelMeshes));
-			model->setMaterials(std::move(materials));
 		}
 
-		return model;
+		model->setMeshes(std::move(modelMeshes));
+		model->setMaterials(std::move(materials));
+
+		if (animated)
+		{
+			auto* skeleton = cache.getResource<Skeleton>();
+			auto clips = cache.getResources<AnimationClip>();
+
+			model->setSkeleton(*skeleton);
+			model->setClips(std::move(clips));
+		}
+
+		auto* modelPtr = model.get();
+		cache.addResource(std::move(model));
+
+		return modelPtr;
 	}
 
-	std::unique_ptr<Scene> GltfImporter::importScene(const std::string& inputFileName, const std::string& outputFileName,
-		bool loadContent)
+	Scene* GltfImporter::importScene(const std::string& inputFileName, const std::string& outputFileName, 
+		ResourceCache& cache, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 		if (!fileSystem.isExist(inputFileName))
@@ -1125,9 +1638,17 @@ namespace Trinity
 		fileSystem.createDirs(samplersPath.string());
 		fileSystem.createDirs(materialsPath.string());
 
-		auto scene = loadScene(gltfModel, outputFileName, inputPath.string(), materialsPath.string(),
-			modelsPath.string(), imagesPath.string(), texturesPath.string(),
-			samplersPath.string(), loadContent);
+		auto* scene = loadScene(
+			gltfModel, 
+			cache,
+			outputFileName,
+			inputPath.string(), 
+			materialsPath.string(),
+			modelsPath.string(), 
+			imagesPath.string(), 
+			texturesPath.string(),
+			samplersPath.string(), 
+			loadContent);
 
 		if (!scene)
 		{
@@ -1138,8 +1659,8 @@ namespace Trinity
 		return scene;
 	}
 
-	std::unique_ptr<Model> GltfImporter::importModel(const std::string& inputFileName, const std::string& outputFileName,
-		ResourceCache& cache, uint32_t meshIndex, bool loadContent)
+	Model* GltfImporter::importModel(const std::string& inputFileName, const std::string& outputFileName,
+		ResourceCache& cache, bool animated, bool loadContent)
 	{
 		auto& fileSystem = FileSystem::get();
 		if (!fileSystem.isExist(inputFileName))
@@ -1194,9 +1715,6 @@ namespace Trinity
 		auto texturesPath = outputPath;
 		texturesPath.append("Textures");
 
-		auto modelsPath = outputPath;
-		modelsPath.append("Meshes");
-
 		auto imagesPath = outputPath;
 		imagesPath.append("Images");
 
@@ -1206,16 +1724,28 @@ namespace Trinity
 		auto materialsPath = outputPath;
 		materialsPath.append("Materials");
 
+		auto animationsPath = outputPath;
+		animationsPath.append("Animations");
+
 		fileSystem.createDirs(outputPath.string());
 		fileSystem.createDirs(texturesPath.string());
-		fileSystem.createDirs(modelsPath.string());
 		fileSystem.createDirs(imagesPath.string());
 		fileSystem.createDirs(samplersPath.string());
 		fileSystem.createDirs(materialsPath.string());
+		fileSystem.createDirs(animationsPath.string());
 
-		auto model = loadModel(gltfModel, cache, outputFileName, inputPath.string(), materialsPath.string(),
-			modelsPath.string(), imagesPath.string(), texturesPath.string(), samplersPath.string(),
-			meshIndex, loadContent);
+		auto* model = loadModel(
+			gltfModel, 
+			cache, 
+			outputFileName, 
+			inputPath.string(), 
+			materialsPath.string(),
+			imagesPath.string(), 
+			texturesPath.string(), 
+			samplersPath.string(),
+			animationsPath.string(), 
+			animated, 
+			loadContent);
 
 		if (!model)
 		{
@@ -1224,5 +1754,168 @@ namespace Trinity
 		}
 
 		return model;
+	}
+
+	Skeleton* GltfImporter::importSkeleton(const std::string& inputFileName, const std::string& outputFileName, 
+		ResourceCache& cache, bool loadContent)
+	{
+		auto& fileSystem = FileSystem::get();
+		if (!fileSystem.isExist(inputFileName))
+		{
+			LogError("Input file doesn't exists: %s!!", inputFileName.c_str());
+			return nullptr;
+		}
+
+		auto file = fileSystem.openFile(inputFileName, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for: %s", inputFileName.c_str());
+			return nullptr;
+		}
+
+		fs::path inputPath{ inputFileName };
+		inputPath.remove_filename();
+
+		FileReader reader{ *file };
+		std::string source = reader.readAsString();
+
+		std::string err;
+		std::string warn;
+
+		tinygltf::TinyGLTF gltfLoader;
+		gltfLoader.SetFsCallbacks({
+			.FileExists = &fileExists,
+			.ExpandFilePath = &expandFilePath,
+			.ReadWholeFile = &readWholeFile,
+			.WriteWholeFile = &writeWholeFile,
+			.GetFileSizeInBytes = &getFileSizeInBytes
+		});
+
+		tinygltf::Model gltfModel;
+		gltfLoader.LoadASCIIFromString(&gltfModel, &err, &warn, source.c_str(),
+			(uint32_t)source.length(), inputPath.string());
+
+		if (!err.empty())
+		{
+			LogError("Error loading GLTF file: '%s', with error: %s", inputFileName.c_str(), err.c_str());
+			return nullptr;
+		}
+
+		if (!warn.empty())
+		{
+			LogWarning("Warning loading GLTF file: %s", warn.c_str());
+		}
+
+		auto outputPath = fs::path(outputFileName);
+		outputPath.remove_filename();
+		fileSystem.createDirs(outputPath.string());
+
+		tinygltf::Scene* gltfScene{ nullptr };
+		if (gltfModel.defaultScene >= 0 && gltfModel.defaultScene < (int)gltfModel.scenes.size())
+		{
+			gltfScene = &gltfModel.scenes[gltfModel.defaultScene];
+		}
+		else
+		{
+			gltfScene = &gltfModel.scenes[0];
+		}
+
+		if (!gltfScene)
+		{
+			LogError("No scene found!!");
+			return nullptr;
+		}
+
+		if (!loadSkeleton(gltfModel, *gltfScene, outputFileName, cache, loadContent))
+		{
+			LogError("loadSkeleton() failed for: %s!!", outputFileName.c_str());
+			return nullptr;
+		}
+
+		return cache.getResource<Skeleton>();
+	}
+
+	AnimationClip* GltfImporter::importAnimation(const std::string& inputFileName, const std::string& outputFileName, 
+		ResourceCache& cache, bool loadContent)
+	{
+		auto& fileSystem = FileSystem::get();
+		if (!fileSystem.isExist(inputFileName))
+		{
+			LogError("Input file doesn't exists: %s!!", inputFileName.c_str());
+			return nullptr;
+		}
+
+		auto file = fileSystem.openFile(inputFileName, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for: %s", inputFileName.c_str());
+			return nullptr;
+		}
+
+		fs::path inputPath{ inputFileName };
+		inputPath.remove_filename();
+
+		FileReader reader{ *file };
+		std::string source = reader.readAsString();
+
+		std::string err;
+		std::string warn;
+
+		tinygltf::TinyGLTF gltfLoader;
+		gltfLoader.SetFsCallbacks({
+			.FileExists = &fileExists,
+			.ExpandFilePath = &expandFilePath,
+			.ReadWholeFile = &readWholeFile,
+			.WriteWholeFile = &writeWholeFile,
+			.GetFileSizeInBytes = &getFileSizeInBytes
+		});
+
+		tinygltf::Model gltfModel;
+		gltfLoader.LoadASCIIFromString(&gltfModel, &err, &warn, source.c_str(),
+			(uint32_t)source.length(), inputPath.string());
+
+		if (!err.empty())
+		{
+			LogError("Error loading GLTF file: '%s', with error: %s", inputFileName.c_str(), err.c_str());
+			return nullptr;
+		}
+
+		if (!warn.empty())
+		{
+			LogWarning("Warning loading GLTF file: %s", warn.c_str());
+		}
+
+		auto outputPath = fs::path(outputFileName);
+		outputPath.remove_filename();
+
+		auto animationsPath = outputPath;
+		animationsPath.append("Animations");
+
+		fileSystem.createDirs(outputPath.string());
+		fileSystem.createDirs(animationsPath.string());
+
+		tinygltf::Scene* gltfScene{ nullptr };
+		if (gltfModel.defaultScene >= 0 && gltfModel.defaultScene < (int)gltfModel.scenes.size())
+		{
+			gltfScene = &gltfModel.scenes[gltfModel.defaultScene];
+		}
+		else
+		{
+			gltfScene = &gltfModel.scenes[0];
+		}
+
+		if (!gltfScene)
+		{
+			LogError("No scene found!!");
+			return nullptr;
+		}
+
+		if (!loadAnimationClips(gltfModel, animationsPath.string(), cache, loadContent))
+		{
+			LogError("loadAnimationClips() failed for: %s!!", outputFileName.c_str());
+			return nullptr;
+		}
+
+		return cache.getResource<AnimationClip>();
 	}
 }

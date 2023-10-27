@@ -11,6 +11,28 @@
 
 namespace Trinity
 {
+	bool Material::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
+	{
+		return Resource::create(fileName, cache, loadContent);
+	}
+
+	void Material::destroy()
+	{
+		Resource::destroy();
+
+		mShader = nullptr;
+		mBindGroup = nullptr;
+		mBindGroupLayout = nullptr;
+		mParamsBuffer = nullptr;
+		mTextures.clear();
+		mShaderDefines.clear();
+	}
+
+	bool Material::write()
+	{
+		return Resource::write();
+	}
+
 	MaterialTexture* Material::getTexture(const std::string& name)
 	{
 		return &mTextures.at(name);
@@ -128,6 +150,11 @@ namespace Trinity
 
 	bool Material::read(FileReader& reader, ResourceCache& cache)
 	{
+		if (!Resource::read(reader, cache))
+		{
+			return false;
+		}
+
 		auto& fileSystem = FileSystem::get();
 
 		reader.read(&mEmissive);
@@ -186,6 +213,11 @@ namespace Trinity
 
 	bool Material::write(FileWriter& writer)
 	{
+		if (!Resource::write(writer))
+		{
+			return false;
+		}
+
 		auto& fileSystem = FileSystem::get();
 
 		writer.write(&mEmissive);
