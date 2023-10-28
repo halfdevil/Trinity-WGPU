@@ -51,11 +51,11 @@
         "keyboardKeys": [
           {
             "type": 262,
-            "scale": -1.0
+            "scale": 1.0
           },
           {
             "type": 263,
-            "scale": 1.0
+            "scale": -1.0
           }
         ]
       },

@@ -46,6 +46,8 @@ namespace Trinity
 		mComponentFactory->registerCreator<Light>();
 		mComponentFactory->registerCreator<Mesh>();
 		mComponentFactory->registerCreator<PerspectiveCamera>();
+		mComponentFactory->registerCreator<FreeCamera>();
+		mComponentFactory->registerCreator<Animator>();
 	}
 
 	bool Scene::hasComponent(const std::type_index& type) const

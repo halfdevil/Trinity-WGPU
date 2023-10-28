@@ -167,7 +167,7 @@ namespace Trinity
 				{ wgpu::VertexFormat::Float32x3, 0, 0 },
 				{ wgpu::VertexFormat::Float32x3, 12, 1 },
 				{ wgpu::VertexFormat::Float32x2, 24, 2 },
-				{ wgpu::VertexFormat::Float32x4, 32, 3 },
+				{ wgpu::VertexFormat::Uint32x4, 32, 3 },
 				{ wgpu::VertexFormat::Float32x4, 48, 4 }
 			});
 		}

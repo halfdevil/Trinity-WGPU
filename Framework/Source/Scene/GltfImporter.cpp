@@ -843,42 +843,25 @@ namespace Trinity
 		return shader;
 	}
 
-	std::unique_ptr<Material> createDefaultMaterial(ResourceCache& cache, bool loadContent = true)
+	std::unique_ptr<Material> createDefaultMaterial(ResourceCache& cache, const std::string& materialsPath, bool loadContent = true)
 	{
-		auto material = std::make_unique<PBRMaterial>();
-		if (!material->create(PBRMaterial::kDefault, cache, loadContent))
-		{
-			LogError("PBRMaterial::create() failed for: %s!!", PBRMaterial::kDefault);
-			return nullptr;
-		}
+		tinygltf::Material gltfMaterial;
+		gltfMaterial.name = "default";
 
-		return material;
+		return parseMaterial(gltfMaterial, cache, materialsPath, loadContent);
 	}
 
-	std::unique_ptr<Sampler> createDefaultSampler(ResourceCache& cache, bool loadContent = true)
+	std::unique_ptr<Sampler> createDefaultSampler(ResourceCache& cache, const std::string& samplersPath, bool loadContent = true)
 	{
-		auto sampler = std::make_unique<Sampler>();
-		if (!sampler->create(Sampler::kDefault, cache, loadContent))
-		{
-			LogError("Sampler::create() failed for: %s!!", Sampler::kDefault);
-			return nullptr;
-		}
+		tinygltf::Sampler gltfSampler;
 
-		return sampler;
-	}
+		gltfSampler.name = "default";
+		gltfSampler.minFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+		gltfSampler.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+		gltfSampler.wrapS = TINYGLTF_TEXTURE_WRAP_REPEAT;
+		gltfSampler.wrapT = TINYGLTF_TEXTURE_WRAP_REPEAT;
 
-	std::unique_ptr<Camera> createDefaultCamera()
-	{
-		tinygltf::Camera gltfCamera;
-
-		gltfCamera.name = "default_camera";
-		gltfCamera.type = "perspective";
-		gltfCamera.perspective.aspectRatio = 1.77f;
-		gltfCamera.perspective.yfov = 1.0f;
-		gltfCamera.perspective.znear = 0.1f;
-		gltfCamera.perspective.zfar = 10000.0f;
-
-		return parseCamera(gltfCamera);
+		return parseSampler(gltfSampler, cache, samplersPath, loadContent);
 	}
 
 	bool loadMaterials(
@@ -892,7 +875,7 @@ namespace Trinity
 		bool hasSkin = false,
 		bool loadContent = true)
 	{
-		auto defaultSampler = createDefaultSampler(cache, loadContent);
+		auto defaultSampler = createDefaultSampler(cache, samplersPath, loadContent);
 		cache.addResource(std::move(defaultSampler));
 
 		for (const auto& gltfSampler : gltfModel.samplers)
@@ -998,7 +981,7 @@ namespace Trinity
 		}
 
 		auto defaultShader = createDefaultShader(cache, {}, loadContent);
-		auto defaultMaterial = createDefaultMaterial(cache, loadContent);
+		auto defaultMaterial = createDefaultMaterial(cache, materialsPath, loadContent);
 		defaultMaterial->setShader(*defaultShader);
 
 		cache.addResource(std::move(defaultShader));
@@ -1306,22 +1289,6 @@ namespace Trinity
 		nodes.push_back(std::move(rootNode));
 		scene->setNodes(std::move(nodes));
 
-		auto cameraNode = std::make_unique<Node>();
-		cameraNode->setName("default_camera");
-
-		auto defaultCamera = createDefaultCamera();
-		defaultCamera->setNode(*cameraNode);
-		cameraNode->setComponent(*defaultCamera);
-		scene->addComponent(std::move(defaultCamera));
-
-		scene->getRoot()->addChild(*cameraNode);
-		scene->addNode(std::move(cameraNode));
-
-		if (!scene->hasComponent<Light>())
-		{
-			scene->addDirectionalLight(glm::quat({ glm::radians(-90.0f), 0.0f, glm::radians(30.0f) }));
-		}
-
 		auto* scenePtr = scene.get();
 		cache.addResource(std::move(scene));
 
@@ -1456,23 +1423,22 @@ namespace Trinity
 
 					for (size_t v = 0; v < numVertices; v++)
 					{
-						glm::ivec4 joint(
-							joints[v * 4 + 0],
-							joints[v * 4 + 1],
-							joints[v * 4 + 2],
-							joints[v * 4 + 3]
-						);
-
-						joint.x = joint.x < 0 ? 0 : gltfSkin.joints[joint.x];
-						joint.y = joint.y < 0 ? 0 : gltfSkin.joints[joint.y];
-						joint.z = joint.z < 0 ? 0 : gltfSkin.joints[joint.z];
-						joint.w = joint.w < 0 ? 0 : gltfSkin.joints[joint.w];
+						glm::uvec4 joint{ 0 };
+						if (joints != nullptr)
+						{
+							joint = glm::uvec4 {
+								gltfSkin.joints[joints[v * 4 + 0]],
+								gltfSkin.joints[joints[v * 4 + 1]],
+								gltfSkin.joints[joints[v * 4 + 2]],
+								gltfSkin.joints[joints[v * 4 + 3]]
+							};
+						}
 
 						Scene::VertexSkinned vertex{};
 						vertex.position = glm::make_vec3(&positions[v * 3]);
 						vertex.normal = normals ? glm::normalize(glm::make_vec3(&normals[v * 3])) : glm::vec3(0.0f);
 						vertex.uv = uvs ? glm::make_vec2(&uvs[v * 2]) : glm::vec2(0.0f);
-						vertex.joint = joints ? glm::vec4(glm::make_vec4(&joint.x)) : glm::vec4(0.0f);
+						vertex.joint = joint;
 						vertex.weight = weights ? glm::make_vec4(&weights[v * 4]) : glm::vec4(0.0f);
 
 						vertexData.push_back(vertex);

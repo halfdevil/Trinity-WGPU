@@ -52,7 +52,22 @@ namespace Trinity
 
 		if (mScene != nullptr)
 		{
+			mScene->addPerspectiveCamera("default_camera", 1.77f, 1.0f, 0.1f, 10000.0f, glm::vec3(0.0f));
+			mScene->addDirectionalLight(glm::quat({ glm::radians(0.0f), 0.0f, glm::radians(0.0f) }));
+
 			mCamera = mScene->addFreeCameraScript("default_camera", mWindow->getSize());
+			if (mCamera != nullptr)
+			{
+				auto& transform = mCamera->getNode()->getTransform();
+
+				glm::vec3 translation{ 0.0f, 500.0f, 1000.0f };
+				glm::quat qx = glm::angleAxis(glm::radians(135.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+				glm::quat qy = glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				glm::quat orientation = glm::normalize(qy * qx);
+
+				transform.setTranslation(transform.getTranslation() + translation * glm::conjugate(orientation));
+				transform.setRotation(orientation);
+			}
 		}
 	}
 

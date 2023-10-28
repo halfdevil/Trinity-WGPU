@@ -43,9 +43,6 @@ namespace Trinity
 			return nullptr;
 		}
 
-		scene->addPerspectiveCamera("default_camera", 1.77f, 1.0f, 0.1f, 10000.0f, glm::vec3(0.0f));
-		scene->addDirectionalLight(glm::quat({ glm::radians(0.0f), 0.0f, glm::radians(0.0f) }));
-
 		return scene;
 	}
 }

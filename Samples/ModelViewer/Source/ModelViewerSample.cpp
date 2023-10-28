@@ -53,6 +53,9 @@ namespace Trinity
 
 		if (mScene != nullptr)
 		{
+			mScene->addPerspectiveCamera("default_camera", 1.77f, 1.0f, 0.1f, 10000.0f, glm::vec3(0.0f));
+			mScene->addDirectionalLight(glm::quat({ glm::radians(0.0f), 0.0f, glm::radians(0.0f) }));
+
 			auto* meshNode = mScene->findNode("mesh_node");
 			if (meshNode != nullptr)
 			{

@@ -95,7 +95,7 @@ struct VertexInput
   @location(1) normal: vec3<f32>,
   @location(2) uv: vec2<f32>,
 #ifdef HAS_SKIN
-  @location(3) joints: vec4<f32>,
+  @location(3) joints: vec4<u32>,
   @location(4) weights: vec4<f32>
 #endif
 };
@@ -236,10 +236,10 @@ fn get_light_direction(light: Light, in_pos: vec3<f32>) -> vec3<f32>
 fn vs_main(in: VertexInput) -> FragmentInput
 {
 #ifdef HAS_SKIN
-  var skin = (bindPose[i32(in.joints.x)] * invBindPose[i32(in.joints.x)]) * in.weights.x;
-    skin += (bindPose[i32(in.joints.y)] * invBindPose[i32(in.joints.y)]) * in.weights.y;
-    skin += (bindPose[i32(in.joints.z)] * invBindPose[i32(in.joints.z)]) * in.weights.z;
-    skin += (bindPose[i32(in.joints.w)] * invBindPose[i32(in.joints.w)]) * in.weights.w;
+  var skin = (bindPose[in.joints.x] * invBindPose[in.joints.x]) * in.weights.x;
+    skin += (bindPose[in.joints.y] * invBindPose[in.joints.y]) * in.weights.y;
+    skin += (bindPose[in.joints.z] * invBindPose[in.joints.z]) * in.weights.z;
+    skin += (bindPose[in.joints.w] * invBindPose[in.joints.w]) * in.weights.w;
 #else
   var skin = mat4x4<f32>(vec4<f32>(1.0, 0.0, 0.0, 0.0), vec4<f32>(0.0, 1.0, 0.0, 0.0),
     vec4<f32>(0.0, 0.0, 1.0, 0.0), vec4<f32>(0.0, 0.0, 0.0, 1.0));
