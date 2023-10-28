@@ -29,6 +29,7 @@ namespace Trinity
 
 		void fromPoints(const std::vector<glm::vec3>& points);
 		void combinePoint(const glm::vec3& p);
+		void combineBox(const BoundingBox& other);
 
 		bool isPointInside(const glm::vec3& p) const;
 		bool isIntersecting(const BoundingBox& other) const;

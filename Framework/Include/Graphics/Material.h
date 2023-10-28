@@ -72,17 +72,17 @@ namespace Trinity
 
 		BindGroup* getBindGroup() const
 		{
-			return mBindGroup.get();
+			return mBindGroup;
 		}
 
 		BindGroupLayout* getBindGroupLayout() const
 		{
-			return mBindGroupLayout.get();
+			return mBindGroupLayout;
 		}
 
 		UniformBuffer* getParamsBuffer() const
 		{
-			return mParamsBuffer.get();
+			return mParamsBuffer;
 		}
 
 		const std::vector<std::string>& getShaderDefines() const
@@ -111,7 +111,7 @@ namespace Trinity
 		virtual bool load(const std::string& shaderFileName, const std::vector<std::string>& defines, 
 			ResourceCache& cache);
 
-		virtual bool compile() = 0;
+		virtual bool compile(ResourceCache& cache) = 0;
 
 	protected:
 
@@ -126,9 +126,9 @@ namespace Trinity
 		AlphaMode mAlphaMode{ AlphaMode::Opaque };
 		Shader* mShader{ nullptr };
 		std::vector<std::string> mShaderDefines;
-		std::unique_ptr<BindGroup> mBindGroup{ nullptr };
-		std::unique_ptr<BindGroupLayout> mBindGroupLayout{ nullptr };
-		std::unique_ptr<UniformBuffer> mParamsBuffer{ nullptr };
+		BindGroup* mBindGroup{ nullptr };
+		BindGroupLayout* mBindGroupLayout{ nullptr };
+		UniformBuffer* mParamsBuffer{ nullptr };
 		std::unordered_map<std::string, MaterialTexture> mTextures;
 	};
 }

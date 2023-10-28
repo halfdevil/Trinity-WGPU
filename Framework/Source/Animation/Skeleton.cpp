@@ -6,12 +6,22 @@
 
 namespace Trinity
 {
+	bool Skeleton::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
+	{
+		return Resource::create(fileName, cache, loadContent);
+	}
+
 	void Skeleton::destroy()
 	{
 		mRestPose = nullptr;
 		mBindPose = nullptr;
 		mJointNames.clear();
 		mInvBindPose.clear();
+	}
+
+	bool Skeleton::write()
+	{
+		return Resource::write();
 	}
 
 	std::type_index Skeleton::getType() const

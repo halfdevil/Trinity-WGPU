@@ -92,7 +92,7 @@ namespace Trinity
 					return false;
 				}
 
-				if (!material->compile())
+				if (!material->compile(cache))
 				{
 					LogError("PBRMaterial::compile() failed for: %s!!", materialFileName.c_str());
 					return false;

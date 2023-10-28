@@ -42,7 +42,10 @@ namespace Trinity
 			return mInvBindPose;
 		}
 
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual void destroy() override;
+		virtual bool write() override;
+
 		virtual std::type_index getType() const override;
 
 		virtual void setRestPose(std::unique_ptr<AnimationPose>&& restPose);
@@ -50,9 +53,6 @@ namespace Trinity
 		virtual void setInvBindPose(std::vector<glm::mat4>&& invBindPose);
 		virtual void setJointNames(std::vector<std::string>&& jointNames);
 		virtual void updateInvBindPose();
-
-		using Resource::create;
-		using Resource::write;
 
 	protected:
 

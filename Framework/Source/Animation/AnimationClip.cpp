@@ -5,9 +5,19 @@
 
 namespace Trinity
 {
+	bool AnimationClip::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
+	{
+		return Resource::create(fileName, cache, loadContent);
+	}
+
 	void AnimationClip::destroy()
 	{
 		mTracks.clear();
+	}
+
+	bool AnimationClip::write()
+	{
+		return Resource::write();
 	}
 
 	std::type_index AnimationClip::getType() const

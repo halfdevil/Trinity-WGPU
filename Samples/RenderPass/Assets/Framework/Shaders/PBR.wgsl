@@ -43,7 +43,7 @@ var<storage, read> lights: array<Light>;
 
 @group(1)
 @binding(0)
-var<uniform> pbr_material: PBRMaterial;
+var<uniform> material: PBRMaterial;
 
 #ifdef HAS_BASE_COLOR_TEXTURE
 @group(1)
@@ -267,15 +267,15 @@ fn fs_main(in: FragmentInput) -> FragmentOutput
 #ifdef HAS_BASE_COLOR_TEXTURE
   base_color = textureSample(base_color_texture, base_color_sampler, in.uv);
 #else
-  base_color = pbr_material.base_color_factor;
+  base_color = material.base_color_factor;
 #endif
 
 #ifdef HAS_METALLIC_ROUGHNESS_TEXTURE
   var roughness = f_saturate(textureSample(metallic_roughness_texture, metallic_roughness_sampler, in.uv).g);
   var metallic = f_saturate(textureSample(metallic_roughness_texture, metallic_roughness_sampler, in.uv).b);
 #else
-  var roughness = pbr_material.roughness_factor;
-  var metallic = pbr_material.metallic_factor;
+  var roughness = material.roughness_factor;
+  var metallic = material.metallic_factor;
 #endif
 
   var n = normal(in.position, in.normal, in.uv);

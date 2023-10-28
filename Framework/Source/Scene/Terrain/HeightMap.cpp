@@ -5,12 +5,23 @@
 
 namespace Trinity
 {
-	HeightMap::~HeightMap()
+	bool HeightMap::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
 	{
-		destroy();
+		return Resource::create(fileName, cache, loadContent);
 	}
 
-	bool HeightMap::create(const std::string& fileName, float heightScale)
+	void HeightMap::destroy()
+	{
+		Resource::destroy();
+		mData.clear();
+	}
+
+	bool HeightMap::write()
+	{
+		return Resource::write();
+	}
+
+	bool HeightMap::load(const std::string& fileName, float heightScale)
 	{
 		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
 		if (!file)
@@ -49,7 +60,7 @@ namespace Trinity
 		return true;
 	}
 
-	bool HeightMap::create(const std::string& fileName, uint32_t width, uint32_t height, float heightScale)
+	bool HeightMap::load(const std::string& fileName, uint32_t width, uint32_t height, float heightScale)
 	{
 		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
 		if (!file)
@@ -69,12 +80,10 @@ namespace Trinity
 			mData[idx] = (buffer[idx] / 255.0f) * heightScale;
 		}
 
-		return true;
-	}
+		mWidth = width;
+		mHeight = height;
 
-	void HeightMap::destroy()
-	{
-		mData.clear();
+		return true;
 	}
 
 	void HeightMap::smooth()
@@ -115,5 +124,33 @@ namespace Trinity
 		}
 
 		mData = std::move(dest);
+	}
+
+	std::type_index HeightMap::getType() const
+	{
+		return typeid(HeightMap);
+	}
+
+	bool HeightMap::read(FileReader& reader, ResourceCache& cache)
+	{
+		if (!Resource::read(reader, cache))
+		{
+			return false;
+		}
+
+		reader.read(&mWidth);
+		reader.read(&mHeight);
+		reader.readVector(mData);
+		
+		return true;
+	}
+
+	bool HeightMap::write(FileWriter& writer)
+	{
+		writer.write(&mWidth);
+		writer.write(&mHeight);
+		writer.writeVector(mData);
+
+		return true;
 	}
 }

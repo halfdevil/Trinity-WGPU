@@ -9,6 +9,21 @@
 
 namespace Trinity
 {
+	bool PBRMaterial::create(const std::string& fileName, ResourceCache& cache, bool loadContent)
+	{
+		return Material::create(fileName, cache, loadContent);
+	}
+
+	void PBRMaterial::destroy()
+	{
+		Material::destroy();
+	}
+
+	bool PBRMaterial::write()
+	{
+		return Material::write();
+	}
+
 	void PBRMaterial::setBaseColorFactor(const glm::vec4& baseColorFactor)
 	{
 		mBaseColorFactor = baseColorFactor;
@@ -24,7 +39,7 @@ namespace Trinity
 		mRoughnessFactor = roughnessFactor;
 	}
 
-	bool PBRMaterial::compile()
+	bool PBRMaterial::compile(ResourceCache& cache)
 	{
 		struct MaterialParams
 		{
@@ -42,8 +57,8 @@ namespace Trinity
 			.roughness = mRoughnessFactor
 		};
 
-		mParamsBuffer = std::make_unique<UniformBuffer>();
-		if (!mParamsBuffer->create(sizeof(MaterialParams), &params))
+		auto paramsBuffer = std::make_unique<UniformBuffer>();
+		if (!paramsBuffer->create(sizeof(MaterialParams), &params))
 		{
 			LogError("UniformBuffer::create() failed!!");
 			return false;
@@ -66,7 +81,7 @@ namespace Trinity
 			{			
 				.binding = 0,
 				.size = sizeof(MaterialParams),
-				.resource = BufferBindingResource(*mParamsBuffer)			
+				.resource = BufferBindingResource(*paramsBuffer)			
 			}
 		};
 
@@ -160,19 +175,27 @@ namespace Trinity
 			});
 		}
 
-		mBindGroupLayout = std::make_unique<BindGroupLayout>();
+		auto bindGroupLayout = std::make_unique<BindGroupLayout>();
 		if (!mBindGroupLayout->create(std::move(layoutItems)))
 		{
 			LogError("BindGroupLayout::create() failed!!");
 			return false;
 		}
 
-		mBindGroup = std::make_unique<BindGroup>();
+		auto bindGroup = std::make_unique<BindGroup>();
 		if (!mBindGroup->create(*mBindGroupLayout, std::move(items)))
 		{
 			LogError("BindGroup::create() failed!!");
 			return false;
 		}
+
+		mParamsBuffer = paramsBuffer.get();
+		mBindGroupLayout = bindGroupLayout.get();
+		mBindGroup = bindGroup.get();
+
+		cache.addResource(std::move(paramsBuffer));
+		cache.addResource(std::move(bindGroupLayout));
+		cache.addResource(std::move(bindGroup));
 
 		return true;
 	}

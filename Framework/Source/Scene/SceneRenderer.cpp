@@ -31,7 +31,7 @@ namespace Trinity
 
 		if (!updateSceneData())
 		{
-			LogError("updateSceneData() failed!!");
+			LogError("SceneRenderer::updateSceneData() failed!!");
 			return false;
 		}
 
@@ -401,6 +401,11 @@ namespace Trinity
 				};
 
 				mSceneData.sceneBuffer->write(0, sizeof(SceneBufferData), &bufferData);
+			}
+
+			for (auto& lightData : mLights)
+			{
+				updateLightData(lightData.light, lightData.storageIndex);
 			}
 		}
 

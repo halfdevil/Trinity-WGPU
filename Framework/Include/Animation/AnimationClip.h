@@ -44,7 +44,10 @@ namespace Trinity
 			return mEndTime - mStartTime;
 		}
 
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual void destroy() override;
+		virtual bool write() override;
+
 		virtual std::type_index getType() const override;
 
 		virtual void setTicksPerSecond(float ticksPerSecond);
@@ -53,9 +56,6 @@ namespace Trinity
 		virtual float sample(float time, bool looping, AnimationPose& pose) const;
 
 		TransformTrack& operator[](uint32_t index);
-
-		using Resource::create;
-		using Resource::write;
 
 	protected:
 

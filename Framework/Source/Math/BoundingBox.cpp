@@ -54,8 +54,13 @@ namespace Trinity
 
 		for (uint32_t i = 0; i < (uint32_t)points.size(); i++)
 		{
-			vmin = glm::min(vmin, points[i]);
-			vmax = glm::max(vmax, points[i]);
+			if (points[i].x > vmax.x) vmax.x = points[i].x;
+			if (points[i].y > vmax.y) vmax.y = points[i].y;
+			if (points[i].z > vmax.z) vmax.z = points[i].z;
+
+			if (points[i].x < vmin.x) vmin.x = points[i].x;
+			if (points[i].y < vmin.y) vmin.y = points[i].y;
+			if (points[i].z < vmin.z) vmin.z = points[i].z;
 		}
 
 		min = vmin;
@@ -64,8 +69,19 @@ namespace Trinity
 
 	void BoundingBox::combinePoint(const glm::vec3& p)
 	{
-		min = glm::min(min, p);
-		max = glm::max(max, p);
+		if (p.x > max.x) max.x = p.x;
+		if (p.y > max.y) max.y = p.y;
+		if (p.z > max.z) max.z = p.z;
+
+		if (p.x < min.x) min.x = p.x;
+		if (p.y < min.y) min.y = p.y;
+		if (p.z < min.z) min.z = p.z;
+	}
+
+	void BoundingBox::combineBox(const BoundingBox& other)
+	{
+		combinePoint(other.min);
+		combinePoint(other.max);
 	}
 
 	bool BoundingBox::isPointInside(const glm::vec3& p) const
@@ -89,15 +105,8 @@ namespace Trinity
 
 		for (const auto& box : boxes)
 		{
-			allPoints.emplace_back(box.min.x, box.min.y, box.min.z);
-			allPoints.emplace_back(box.min.x, box.min.y, box.max.z);
-			allPoints.emplace_back(box.min.x, box.max.y, box.min.z);
-			allPoints.emplace_back(box.min.x, box.max.y, box.max.z);
-
-			allPoints.emplace_back(box.max.x, box.min.y, box.min.z);
-			allPoints.emplace_back(box.max.x, box.min.y, box.max.z);
-			allPoints.emplace_back(box.max.x, box.max.y, box.min.z);
-			allPoints.emplace_back(box.max.x, box.max.y, box.max.z);
+			allPoints.emplace_back(box.min);
+			allPoints.emplace_back(box.max);
 		}
 
 		return { allPoints };

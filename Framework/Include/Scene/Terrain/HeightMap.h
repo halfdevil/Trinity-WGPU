@@ -1,16 +1,17 @@
 #pragma once
 
+#include "Core/Resource.h"
 #include <vector>
 #include <string>
 
 namespace Trinity
 {
-	class HeightMap
+	class HeightMap : public Resource
 	{
 	public:
 
 		HeightMap() = default;
-		virtual ~HeightMap();
+		virtual ~HeightMap() = default;
 
 		HeightMap(const HeightMap&) = delete;
 		HeightMap& operator = (const HeightMap&) = delete;
@@ -33,10 +34,20 @@ namespace Trinity
 			return mData;
 		}
 
-		virtual bool create(const std::string& fileName, float heightScale);
-		virtual bool create(const std::string& fileName, uint32_t width, uint32_t height, float heightScale);
-		virtual void destroy();
+		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
+		virtual void destroy() override;
+		virtual bool write() override;
+
+		virtual bool load(const std::string& fileName, float heightScale);
+		virtual bool load(const std::string& fileName, uint32_t width, uint32_t height, float heightScale);
 		virtual void smooth();
+
+		virtual std::type_index getType() const override;
+
+	protected:
+
+		virtual bool read(FileReader& reader, ResourceCache& cache) override;
+		virtual bool write(FileWriter& writer) override;
 
 	protected:
 
