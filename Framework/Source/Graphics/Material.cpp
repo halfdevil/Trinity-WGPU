@@ -171,10 +171,7 @@ namespace Trinity
 			defines.push_back(reader.readString());
 		}
 
-		auto shaderFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-		shaderFileName = fileSystem.canonicalPath(shaderFileName);
-		shaderFileName = fileSystem.sanitizePath(shaderFileName);
-
+		auto shaderFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 		if (!shaderFileName.empty())
 		{
 			if (!load(shaderFileName, defines, cache))
@@ -190,16 +187,8 @@ namespace Trinity
 		for (uint32_t idx = 0; idx < numTextures; idx++)
 		{
 			auto key = reader.readString();
-			auto textureFileName = reader.readString();
-			auto samplerFileName = reader.readString();
-
-			textureFileName = fileSystem.combinePath(reader.getPath(), textureFileName);
-			textureFileName = fileSystem.canonicalPath(textureFileName);
-			textureFileName = fileSystem.sanitizePath(textureFileName);
-
-			samplerFileName = fileSystem.combinePath(reader.getPath(), samplerFileName);
-			samplerFileName = fileSystem.canonicalPath(samplerFileName);
-			samplerFileName = fileSystem.sanitizePath(samplerFileName);
+			auto textureFileName = Resource::getReadPath(reader.getPath(), reader.readString());
+			auto samplerFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 
 			if (!addTexture(key, textureFileName, samplerFileName, cache))
 			{
@@ -235,9 +224,7 @@ namespace Trinity
 
 		if (mShader != nullptr)
 		{
-			auto fileName = fileSystem.relativePath(mShader->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), mShader->getFileName());
 			writer.writeString(fileName);
 		}
 
@@ -250,11 +237,8 @@ namespace Trinity
 			auto textureFileName = it.second.texture->getFileName();
 			auto samplerFileName = it.second.sampler->getFileName();
 
-			textureFileName = fileSystem.relativePath(textureFileName, writer.getPath());
-			textureFileName = fileSystem.sanitizePath(textureFileName);
-
-			samplerFileName = fileSystem.relativePath(samplerFileName, writer.getPath());
-			samplerFileName = fileSystem.sanitizePath(samplerFileName);
+			textureFileName = Resource::getWritePath(writer.getPath(), textureFileName);
+			samplerFileName = Resource::getWritePath(writer.getPath(), samplerFileName);
 
 			writer.writeString(key);
 			writer.writeString(textureFileName);

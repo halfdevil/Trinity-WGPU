@@ -61,6 +61,6 @@ namespace Trinity
 
     private:
 
-        wgpu::BindGroupLayout mHandle;
+        wgpu::BindGroupLayout mHandle{ nullptr };
     };
 }

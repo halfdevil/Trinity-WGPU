@@ -98,4 +98,33 @@ namespace Trinity
 		writer.writeString(mName);
 		return true;
 	}
+
+	std::string Resource::getReadPath(const std::string& basePath, const std::string& fileName)
+	{
+		if (fileName.starts_with("/Framework"))
+		{
+			return fileName;
+		}
+
+		auto& fileSystem = FileSystem::get();
+		auto readPath = fileSystem.combinePath(basePath, fileName);
+		readPath = fileSystem.canonicalPath(readPath);
+		readPath = fileSystem.sanitizePath(readPath);
+
+		return readPath;
+	}
+
+	std::string Resource::getWritePath(const std::string& basePath, const std::string& fileName)
+	{
+		if (fileName.starts_with("/Framework"))
+		{
+			return fileName;
+		}
+
+		auto& fileSystem = FileSystem::get();
+		auto writePath = fileSystem.relativePath(fileName, basePath);
+		writePath = fileSystem.sanitizePath(writePath);
+
+		return writePath;
+	}
 }

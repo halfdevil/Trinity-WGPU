@@ -211,10 +211,7 @@ namespace Trinity
 		std::vector<std::string> imageFileNames;
         for (uint32_t idx = 0; idx < numImages; idx++)
         {
-			auto fileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-			fileName = fileSystem.canonicalPath(fileName);
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getReadPath(reader.getPath(), reader.readString());
             imageFileNames.push_back(fileName);
         }
 
@@ -261,9 +258,7 @@ namespace Trinity
 
 		for (auto* image : mImages)
 		{
-			auto fileName = fileSystem.relativePath(image->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), image->getFileName());
 			writer.writeString(fileName);
 		}
 

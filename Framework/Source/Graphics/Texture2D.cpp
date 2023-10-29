@@ -170,9 +170,7 @@ namespace Trinity
 		}
 
 		auto& fileSystem = FileSystem::get();
-		auto imageFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-		imageFileName = fileSystem.canonicalPath(imageFileName);
-		imageFileName = fileSystem.sanitizePath(imageFileName);
+		auto imageFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 
 		if (!imageFileName.empty())
 		{
@@ -208,10 +206,7 @@ namespace Trinity
 
 		if (mImage != nullptr)
 		{
-			auto& fileSystem = FileSystem::get();
-			auto fileName = fileSystem.relativePath(mImage->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), mImage->getFileName());
 			writer.writeString(fileName);
 		}
 

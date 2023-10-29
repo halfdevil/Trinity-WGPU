@@ -74,10 +74,7 @@ namespace Trinity
 		std::vector<std::string> materialFileNames;
 		for (uint32_t idx = 0; idx < numMaterials; idx++)
 		{
-			auto fileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-			fileName = fileSystem.canonicalPath(fileName);
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getReadPath(reader.getPath(), reader.readString());
 			materialFileNames.push_back(fileName);
 		}
 
@@ -110,10 +107,7 @@ namespace Trinity
 
 		if (hasSkeleton)
 		{
-			auto skeletonFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-			skeletonFileName = fileSystem.canonicalPath(skeletonFileName);
-			skeletonFileName = fileSystem.sanitizePath(skeletonFileName);
-
+			auto skeletonFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 			if (!cache.isLoaded<Skeleton>(skeletonFileName))
 			{
 				auto skeleton = std::make_unique<Skeleton>();
@@ -132,10 +126,7 @@ namespace Trinity
 			std::vector<std::string> clipFileNames(numClips);
 			for (uint32_t idx = 0; idx < numClips; idx++)
 			{
-				auto fileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-				fileName = fileSystem.canonicalPath(fileName);
-				fileName = fileSystem.sanitizePath(fileName);
-
+				auto fileName = Resource::getReadPath(reader.getPath(), reader.readString());
 				clipFileNames[idx] = fileName;
 			}
 
@@ -254,9 +245,7 @@ namespace Trinity
 
 		for (auto* material : mMaterials)
 		{
-			auto fileName = fileSystem.relativePath(material->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), material->getFileName());
 			writer.writeString(fileName);
 		}
 
@@ -267,9 +256,7 @@ namespace Trinity
 		{
 			if (mSkeleton != nullptr)
 			{
-				auto fileName = fileSystem.relativePath(mSkeleton->getFileName(), writer.getPath());
-				fileName = fileSystem.sanitizePath(fileName);
-
+				auto fileName = Resource::getWritePath(writer.getPath(), mSkeleton->getFileName());
 				writer.writeString(fileName);
 			}
 
@@ -278,9 +265,7 @@ namespace Trinity
 
 			for (auto* clip : mClips)
 			{
-				auto fileName = fileSystem.relativePath(clip->getFileName(), writer.getPath());
-				fileName = fileSystem.sanitizePath(fileName);
-
+				auto fileName = Resource::getWritePath(writer.getPath(), clip->getFileName());
 				writer.writeString(fileName);
 			}
 		}

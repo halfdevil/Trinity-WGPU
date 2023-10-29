@@ -506,10 +506,7 @@ namespace Trinity
 
 		auto& fileSystem = FileSystem::get();
 
-		auto heightMapFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-		heightMapFileName = fileSystem.canonicalPath(heightMapFileName);
-		heightMapFileName = fileSystem.sanitizePath(heightMapFileName);
-
+		auto heightMapFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 		if (!cache.isLoaded<HeightMap>(heightMapFileName))
 		{
 			auto heightMap = std::make_unique<HeightMap>();
@@ -522,10 +519,7 @@ namespace Trinity
 			cache.addResource(std::move(heightMap));
 		}
 
-		auto materialFileName = fileSystem.combinePath(reader.getPath(), reader.readString());
-		materialFileName = fileSystem.canonicalPath(materialFileName);
-		materialFileName = fileSystem.sanitizePath(materialFileName);
-
+		auto materialFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 		if (!cache.isLoaded<Material>(materialFileName))
 		{
 			auto material = std::make_unique<TerrainMaterial>();
@@ -565,17 +559,13 @@ namespace Trinity
 
 		if (mHeightMap != nullptr)
 		{
-			auto fileName = fileSystem.relativePath(mHeightMap->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), mHeightMap->getFileName());
 			writer.writeString(fileName);
 		}
 
 		if (mMaterial != nullptr)
 		{
-			auto fileName = fileSystem.relativePath(mMaterial->getFileName(), writer.getPath());
-			fileName = fileSystem.sanitizePath(fileName);
-
+			auto fileName = Resource::getWritePath(writer.getPath(), mMaterial->getFileName());
 			writer.writeString(fileName);
 		}
 

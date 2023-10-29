@@ -47,6 +47,11 @@ namespace Trinity
 		virtual bool read(FileReader& reader, ResourceCache& cache);
 		virtual bool write(FileWriter& writer);
 
+	public:
+
+		static std::string getReadPath(const std::string& basePath, const std::string& fileName);
+		static std::string getWritePath(const std::string& basePath, const std::string& fileName);
+
 	protected:
 
 		std::string mName;

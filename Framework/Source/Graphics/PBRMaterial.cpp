@@ -176,14 +176,14 @@ namespace Trinity
 		}
 
 		auto bindGroupLayout = std::make_unique<BindGroupLayout>();
-		if (!mBindGroupLayout->create(std::move(layoutItems)))
+		if (!bindGroupLayout->create(std::move(layoutItems)))
 		{
 			LogError("BindGroupLayout::create() failed!!");
 			return false;
 		}
 
 		auto bindGroup = std::make_unique<BindGroup>();
-		if (!mBindGroup->create(*mBindGroupLayout, std::move(items)))
+		if (!bindGroup->create(*bindGroupLayout, std::move(items)))
 		{
 			LogError("BindGroup::create() failed!!");
 			return false;
