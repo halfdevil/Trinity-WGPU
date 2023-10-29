@@ -18,7 +18,6 @@ namespace Trinity
 		TerrainTool& operator = (TerrainTool&&) noexcept = default;
 
 		void setSize(uint32_t size);
-		void setMaxLOD(uint32_t maxLOD);
 		void setPatchSize(uint32_t patchSize);
 		void setHeightScale(float heightScale);
 		void setCellSpacing(float cellSpacing);
@@ -34,7 +33,6 @@ namespace Trinity
 	private:
 
 		uint32_t mSize{ 0 };
-		uint32_t mMaxLOD{ 0 };
 		uint32_t mPatchSize{ 0 };
 		float mHeightScale{ 0.0f };
 		float mCellSpacing{ 0.0f };

@@ -25,11 +25,6 @@ namespace Trinity
 		mSize = size;
 	}
 
-	void TerrainTool::setMaxLOD(uint32_t maxLOD)
-	{
-		mMaxLOD = maxLOD;
-	}
-
 	void TerrainTool::setPatchSize(uint32_t patchSize)
 	{
 		mPatchSize = patchSize;
@@ -76,7 +71,6 @@ namespace Trinity
 		auto terrain = TerrainImporter().importTerrain(
 			mOutputFileName,
 			mSize,
-			mMaxLOD,
 			mPatchSize,
 			mHeightScale,
 			mCellSpacing,
@@ -165,7 +159,6 @@ int main(int argc, char* argv[])
 {
 	CLI::App cliApp{ "Model Converter" };
 	uint32_t size{ 0 };
-	uint32_t maxLOD{ 0 };
 	uint32_t patchSize{ 0 };
 	float heightScale{ 0.0f };
 	float cellSpacing{ 0.0f };
@@ -175,20 +168,18 @@ int main(int argc, char* argv[])
 	std::vector<std::string> layerFileNames;
 
 	cliApp.add_option<uint32_t>("-s, --size, size", size, "Size")->required();
-	cliApp.add_option<uint32_t>("-l, --maxLOD, maxLOD", maxLOD, "Size")->required();
 	cliApp.add_option<uint32_t>("-p, --patchSize, patchSize", patchSize, "Size")->required();
-	cliApp.add_option<float>("-h, --heightScale, heightScale", heightScale, "Height Scale")->required();
+	cliApp.add_option<float>("-t, --heightScale, heightScale", heightScale, "Height Scale")->required();
 	cliApp.add_option<float>("-c, --cellSpacing, cellSpacing", cellSpacing, "Cell Spacing")->required();
 	cliApp.add_option<std::string>("-o, --output, output", outputFileName, "Output Filename")->required();
-	cliApp.add_option<std::string>("-t, --heightMap, heightMap", heightMapFileName, "HeightMap Filename")->required();
+	cliApp.add_option<std::string>("-m, --heightMap, heightMap", heightMapFileName, "HeightMap Filename")->required();
 	cliApp.add_option<std::string>("-b, --blendMap, blendMap", blendMapFileName, "BlendMap Filename")->required();
-	cliApp.add_option<std::vector<std::string>>("-r, --layers, layers", layerFileNames, "Layers Filename")->required();
+	cliApp.add_option<std::vector<std::string>>("-l, --layers, layers", layerFileNames, "Layers Filename")->required();
 
 	CLI11_PARSE(cliApp, argc, argv);
 
 	static TerrainTool app;
 	app.setSize(size);
-	app.setMaxLOD(maxLOD);
 	app.setPatchSize(patchSize);
 	app.setHeightScale(heightScale);
 	app.setCellSpacing(cellSpacing);

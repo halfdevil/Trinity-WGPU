@@ -235,7 +235,7 @@ namespace Trinity
 					.shaderStages = wgpu::ShaderStage::Vertex,
 					.bindingLayout = BufferBindingLayout {
 						.type = wgpu::BufferBindingType::ReadOnlyStorage,
-						.minBindingSize = (uint32_t)invBindPose.size() * sizeof(glm::mat4)
+						.minBindingSize = (uint32_t)invBindPose.size() * (uint32_t)sizeof(glm::mat4)
 					}
 				});
 
@@ -244,7 +244,7 @@ namespace Trinity
 					.shaderStages = wgpu::ShaderStage::Vertex,
 					.bindingLayout = BufferBindingLayout {
 						.type = wgpu::BufferBindingType::ReadOnlyStorage,
-						.minBindingSize = (uint32_t)bindPose.size() * sizeof(glm::mat4)
+						.minBindingSize = (uint32_t)bindPose.size() * (uint32_t)sizeof(glm::mat4)
 					}
 				});
 
@@ -355,7 +355,7 @@ namespace Trinity
 					.shaderStages = wgpu::ShaderStage::Fragment,
 					.bindingLayout = BufferBindingLayout {
 						.type = wgpu::BufferBindingType::ReadOnlyStorage,
-						.minBindingSize = (uint32_t)mLights.size() * sizeof(LightBufferData)
+						.minBindingSize = (uint32_t)mLights.size() * (uint32_t)sizeof(LightBufferData)
 					}
 				});
 

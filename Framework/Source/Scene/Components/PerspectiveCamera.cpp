@@ -6,11 +6,6 @@
 
 namespace Trinity
 {
-	glm::mat4 PerspectiveCamera::getProjection() const
-	{
-		return glm::perspective(mFOV, mAspectRatio, mNearPlane, mFarPlane);
-	}
-
 	void PerspectiveCamera::setAspectRatio(float aspectRatio)
 	{
 		mAspectRatio = aspectRatio;
@@ -31,6 +26,11 @@ namespace Trinity
 		mNearPlane = nearPlane;
 	}
 
+	void PerspectiveCamera::updateProjection()
+	{
+		mProjection = glm::perspective(mFOV, mAspectRatio, mNearPlane, mFarPlane);
+	}
+
 	bool PerspectiveCamera::read(FileReader& reader, ResourceCache& cache, Scene& scene)
 	{
 		if (!Camera::read(reader, cache, scene))
@@ -42,6 +42,8 @@ namespace Trinity
 		reader.read(&mAspectRatio);
 		reader.read(&mFarPlane);
 		reader.read(&mNearPlane);
+
+		updateProjection();
 
 		return true;
 	}

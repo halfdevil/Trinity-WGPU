@@ -79,15 +79,22 @@ namespace Trinity
 		return true;
 	}
 
-	bool Texture2D::load(Image* image, wgpu::TextureFormat format)
+	bool Texture2D::load(Image* image, wgpu::TextureFormat format, bool hasMipmaps)
 	{
 		const wgpu::Device& device = GraphicsDevice::get();
 		const wgpu::Queue& queue = GraphicsDevice::get().getQueue();
 
 		mImage = image;
 		mFormat = format;
+		mHasMipmaps = hasMipmaps;
 		mWidth = image->getWidth();
 		mHeight = image->getHeight();
+
+		std::vector<Mipmap> mipmaps{};
+		if (hasMipmaps)
+		{
+			mipmaps = image->generateMipmaps();
+		}
 
 		wgpu::Extent3D size = {
 			.width = mWidth,
@@ -100,7 +107,7 @@ namespace Trinity
 			.dimension = wgpu::TextureDimension::e2D,
 			.size = size,
 			.format = mFormat,
-			.mipLevelCount = 1,
+			.mipLevelCount = mHasMipmaps ? (uint32_t)mipmaps.size() : 1,
 			.sampleCount = 1
 		};
 
@@ -111,8 +118,19 @@ namespace Trinity
 			return false;
 		}
 
-		const auto& imageData = image->getData();
-		upload(image->getChannels(), imageData.data(), (uint32_t)imageData.size());
+		if (mHasMipmaps)
+		{
+			for (auto& mipmap : mipmaps)
+			{
+				upload(mipmap.level, mipmap.width, mipmap.height, image->getChannels(), 
+					mipmap.data.data(), mipmap.data.size());
+			}
+		}
+		else
+		{
+			const auto& imageData = image->getData();
+			upload(image->getChannels(), imageData.data(), (uint32_t)imageData.size());
+		}
 
 		wgpu::TextureViewDescriptor textureViewDesc = {
 			.format = mFormat,
@@ -135,21 +153,27 @@ namespace Trinity
 
 	void Texture2D::upload(uint32_t channels, const void* data, uint32_t size)
 	{
+		upload(0, mWidth, mHeight, channels, data, size);
+	}
+
+	void Texture2D::upload(uint32_t level, uint32_t width, uint32_t height, uint32_t channels, 
+		const void* data, uint32_t size)
+	{
 		wgpu::ImageCopyTexture destination = {
 			.texture = mHandle,
-			.mipLevel = 0,
+			.mipLevel = level,
 			.aspect = wgpu::TextureAspect::All
 		};
 
 		wgpu::TextureDataLayout dataLayout = {
 			.offset = 0,
-			.bytesPerRow = mWidth * channels,
-			.rowsPerImage = mHeight
+			.bytesPerRow = width * channels,
+			.rowsPerImage = height
 		};
 
 		wgpu::Extent3D texSize = {
-			.width = mWidth,
-			.height = mHeight,
+			.width = width,
+			.height = height,
 			.depthOrArrayLayers = 1
 		};
 
@@ -162,12 +186,19 @@ namespace Trinity
 		mImage = image;
 	}
 
+	void Texture2D::setHasMipmaps(bool hasMipmaps)
+	{
+		mHasMipmaps = hasMipmaps;
+	}
+
 	bool Texture2D::read(FileReader& reader, ResourceCache& cache)
 	{
 		if (!Texture::read(reader, cache))
 		{
 			return false;
 		}
+
+		reader.read(&mHasMipmaps);
 
 		auto& fileSystem = FileSystem::get();
 		auto imageFileName = Resource::getReadPath(reader.getPath(), reader.readString());
@@ -187,7 +218,7 @@ namespace Trinity
 			}
 
 			auto* image = cache.getResource<Image>(imageFileName);
-			if (!load(image, mFormat))
+			if (!load(image, mFormat, mHasMipmaps))
 			{
 				LogError("Texture2D::load() failed for image: %s!!", imageFileName.c_str());
 				return false;
@@ -203,6 +234,8 @@ namespace Trinity
 		{
 			return false;
 		}
+
+		writer.write(&mHasMipmaps);
 
 		if (mImage != nullptr)
 		{

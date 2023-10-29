@@ -10,6 +10,7 @@ namespace Trinity
 	class VertexBuffer;
 	class IndexBuffer;
 	class Material;
+	class Camera;
 	class Transform;
 
 	class Terrain : public Resource
@@ -108,21 +109,19 @@ namespace Trinity
 		virtual bool write() override;
 
 		virtual bool load(ResourceCache& cache, HeightMap& heightMap, Material& material, 
-			uint32_t maxLOD, uint32_t patchSize, float cellSpacing);
+			uint32_t patchSize, float cellSpacing);
 
-		virtual void update(const Transform& transform);
+		virtual void preDrawCalculations(const Camera& camera);
 		virtual std::type_index getType() const override;
 
 		virtual void setHeightMap(HeightMap& heightMap);
 		virtual void setMaterial(Material& material);
-		virtual void setMaxLOD(uint32_t maxLOD);
 		virtual void setPatchSize(uint32_t patchSize);
 		virtual void setCellSpacing(float cellSpacing);
 
 	protected:
 
-		virtual void preDrawCalculations(const Transform& transform);
-		virtual void preDrawLODCalculations(const Transform& transform);
+		virtual void preDrawLODCalculations(const Camera& camera);
 		virtual void preDrawIndicesCalculations();
 
 		uint32_t getIndex(uint32_t patchX, uint32_t patchZ, uint32_t patchIndex, 
@@ -141,7 +140,6 @@ namespace Trinity
 
 	protected:
 
-		std::vector<Patch> mPatches;
 		uint32_t mSize{ 0 };
 		uint32_t mPatchSize{ 0 };
 		uint32_t mCalcPatchSize{ 0 };
@@ -149,6 +147,8 @@ namespace Trinity
 		uint32_t mMaxLOD{ 0 };
 		float mCellSpacing{ 1.0f };
 		uint32_t mIndicesToDraw{ 0 };
+
+		std::vector<Patch> mPatches;
 		std::vector<uint32_t> mIndices;
 		std::vector<double> mDistanceThreshold;
 		BoundingBox mBoundingBox;
@@ -157,5 +157,10 @@ namespace Trinity
 		Material* mMaterial{ nullptr };
 		VertexBuffer* mVertexBuffer{ nullptr };
 		IndexBuffer* mIndexBuffer{ nullptr };
+
+		glm::vec3 oldCameraPosition;
+		glm::vec3 oldCameraRotation;
+		float cameraMovementDelta{ 10.0f };
+		float cameraRotationDelta{ glm::radians(1.0f) };
 	};
 }

@@ -147,6 +147,11 @@ namespace Trinity
 
 	bool HeightMap::write(FileWriter& writer)
 	{
+		if (!Resource::write(writer))
+		{
+			return false;
+		}
+
 		writer.write(&mWidth);
 		writer.write(&mHeight);
 		writer.writeVector(mData);

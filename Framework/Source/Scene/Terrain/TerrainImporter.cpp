@@ -44,8 +44,8 @@ namespace Trinity
 		fileName.append(fs::path(heightMapPath).filename().string());
 		fileName.replace_extension("tmap");
 
-		bool isRAW = fs::path(heightMapPath).extension() == "raw";
-		auto heightMap = std::unique_ptr<HeightMap>();
+		bool isRAW = fs::path(heightMapPath).extension() == ".raw";
+		auto heightMap = std::make_unique<HeightMap>();
 
 		if (!heightMap->create(FileSystem::get().sanitizePath(fileName.string()), cache, loadContent))
 		{
@@ -73,7 +73,7 @@ namespace Trinity
 		return heightMap;
 	}
 
-	std::unique_ptr<Sampler> createDefaultSampler(ResourceCache& cache, const std::string& samplersPath, bool loadContent = true)
+	std::unique_ptr<Sampler> createSampler(ResourceCache& cache, const std::string& samplersPath, bool loadContent = true)
 	{
 		auto fileName = fs::path(samplersPath);
 		fileName.append("default.tsamp");
@@ -85,13 +85,18 @@ namespace Trinity
 			return nullptr;
 		}
 
-		SamplerProperties properties{};
-		sampler->setProperties(properties);
+		SamplerProperties properties{
+			.magFilter = wgpu::FilterMode::Linear,
+			.minFilter = wgpu::FilterMode::Linear,
+			.mipmapFilter = wgpu::MipmapFilterMode::Linear
+		};
 
+		sampler->setProperties(properties);
 		return sampler;
 	}
 
-	std::unique_ptr<Texture> createTexture(Image& image, ResourceCache& cache, const std::string& texturesPath, bool loadContent = true)
+	std::unique_ptr<Texture> createTexture(Image& image, bool mipmaps, ResourceCache& cache, 
+		const std::string& texturesPath, bool loadContent = true)
 	{
 		auto fileName = fs::path(texturesPath);
 		fileName.append(fs::path(image.getFileName()).filename().string());
@@ -105,10 +110,12 @@ namespace Trinity
 		}
 
 		texture->setImage(&image);
+		texture->setHasMipmaps(mipmaps);
+
 		return texture;
 	}
 
-	std::unique_ptr<Shader> createDefaultShader(ResourceCache& cache, const std::vector<std::string>& defines, bool loadContent = true)
+	std::unique_ptr<Shader> createShader(ResourceCache& cache, const std::vector<std::string>& defines, bool loadContent = true)
 	{
 		auto shader = std::make_unique<Shader>();
 		if (!shader->create(TerrainMaterial::kDefaultShader, cache, false))
@@ -143,7 +150,7 @@ namespace Trinity
 		bool loadContent = true
 	)
 	{
-		auto defaultSampler = createDefaultSampler(cache, samplersPath, loadContent);
+		auto defaultSampler = createSampler(cache, samplersPath, loadContent);
 		if (!defaultSampler)
 		{
 			LogError("createDefaultSampler() failed");
@@ -170,7 +177,7 @@ namespace Trinity
 			layerImages.push_back(std::move(image));
 		}
 
-		auto blendMapTexture = createTexture(*blendMapImage, cache, texturesPath, loadContent);
+		auto blendMapTexture = createTexture(*blendMapImage, false, cache, texturesPath, loadContent);
 		if (!blendMapTexture)
 		{
 			LogError("createTexture() failed for: '%s'", blendMapFileName.c_str());
@@ -180,7 +187,7 @@ namespace Trinity
 		std::vector<std::unique_ptr<Texture>> layerTextures;
 		for (auto& image : layerImages)
 		{
-			auto texture = createTexture(*image, cache, texturesPath, loadContent);
+			auto texture = createTexture(*image, true, cache, texturesPath, loadContent);
 			if (!texture)
 			{
 				LogError("createTexture() failed for: '%s'", image->getFileName().c_str());
@@ -216,13 +223,14 @@ namespace Trinity
 			material->setTexture(name, *layerTextures[idx], *defaultSampler); 
 		}
 
-		auto shader = createDefaultShader(cache, shaderDefines, loadContent);
+		auto shader = createShader(cache, shaderDefines, loadContent);
 		if (!shader)
 		{
 			LogError("createDefaultShader() failed");
 			return nullptr;
 		}
 
+		material->setShaderDefines(std::move(shaderDefines));
 		material->setShader(*shader);
 
 		cache.addResource(std::move(blendMapImage));
@@ -234,13 +242,14 @@ namespace Trinity
 			cache.addResource(std::move(layerTextures[idx]));
 		}
 
+		cache.addResource(std::move(defaultSampler));
 		cache.addResource(std::move(shader));
+
 		return material;
 	}
 
 	std::unique_ptr<Terrain> createTerrain(
 		uint32_t size,
-		uint32_t maxLOD,
 		uint32_t patchSize,
 		float heightScale,
 		float cellSpacing,
@@ -282,7 +291,7 @@ namespace Trinity
 
 		if (loadContent)
 		{
-			if (!terrain->load(cache, *heightMap, *material, maxLOD, patchSize, cellSpacing))
+			if (!terrain->load(cache, *heightMap, *material, patchSize, cellSpacing))
 			{
 				LogError("Terrain::load() failed for: '%s'", outputFileName.c_str());
 				return nullptr;
@@ -290,8 +299,6 @@ namespace Trinity
 		}
 		else
 		{
-
-			terrain->setMaxLOD(maxLOD);
 			terrain->setPatchSize(patchSize);
 			terrain->setCellSpacing(cellSpacing);
 			terrain->setHeightMap(*heightMap);
@@ -307,7 +314,6 @@ namespace Trinity
 	Terrain* TerrainImporter::importTerrain(
 		const std::string& outputFileName, 
 		uint32_t size, 
-		uint32_t maxLOD, 
 		uint32_t patchSize, 
 		float heightScale, 
 		float cellSpacing, 
@@ -342,7 +348,6 @@ namespace Trinity
 
 		auto terrain = createTerrain(
 			size,
-			maxLOD,
 			patchSize,
 			heightScale,
 			cellSpacing,

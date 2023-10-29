@@ -33,9 +33,14 @@ namespace Trinity
 		virtual bool write() override;
 
         virtual bool create(uint32_t width, uint32_t height, wgpu::TextureFormat format, wgpu::TextureUsage usage);
-		virtual bool load(Image* image, wgpu::TextureFormat format);
+		virtual bool load(Image* image, wgpu::TextureFormat format, bool mipmaps = false);
+        
         virtual void upload(uint32_t channels, const void* data, uint32_t size);
+        virtual void upload(uint32_t level, uint32_t width, uint32_t height, uint32_t channels,
+            const void* data, uint32_t size);
+
         virtual void setImage(Image* image);
+        virtual void setHasMipmaps(bool hasMipmaps);
 
 	protected:
 
@@ -46,6 +51,7 @@ namespace Trinity
 
         uint32_t mWidth{ 0 };
         uint32_t mHeight{ 0 };
+        bool mHasMipmaps{ false };
         Image* mImage{ nullptr };
     };
 }

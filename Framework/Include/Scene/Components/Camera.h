@@ -2,6 +2,7 @@
 
 #include "Scene/Component.h"
 #include "Math/Types.h"
+#include "Math/Frustum.h"
 
 namespace Trinity
 {
@@ -25,14 +26,29 @@ namespace Trinity
 			return mNode;
 		}
 
-		glm::mat4 getView();
+		const glm::mat4& getProjection() const
+		{
+			return mProjection;
+		}
+
+		const glm::mat4& getView() const
+		{
+			return mView;
+		}
+
+		const Frustum& getFrustum() const
+		{
+			return mFrustum;
+		}
 
 		virtual std::type_index getType() const override;
 		virtual std::string getTypeStr() const override;
 
-		virtual glm::mat4 getProjection() const = 0;
-		virtual void setNode(Node& node);
+		virtual void setProjection(const glm::mat4& projection);
+		virtual void setView(const glm::mat4& view);
+		virtual void setFrustum(const Frustum& frustum);
 
+		virtual void setNode(Node& node);
 		virtual bool read(FileReader& reader, ResourceCache& cache, Scene& scene) override;
 		virtual bool write(FileWriter& writer, Scene& scene) override;
 
@@ -43,5 +59,8 @@ namespace Trinity
 	protected:
 
 		Node* mNode{ nullptr };
+		glm::mat4 mProjection;
+		glm::mat4 mView;
+		Frustum mFrustum;
 	};
 }

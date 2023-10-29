@@ -101,7 +101,7 @@ namespace Trinity
 
 	std::string Resource::getReadPath(const std::string& basePath, const std::string& fileName)
 	{
-		if (fileName.starts_with("/Framework"))
+		if (fileName.starts_with("/Assets/Framework"))
 		{
 			return fileName;
 		}
@@ -116,7 +116,7 @@ namespace Trinity
 
 	std::string Resource::getWritePath(const std::string& basePath, const std::string& fileName)
 	{
-		if (fileName.starts_with("/Framework"))
+		if (fileName.starts_with("/Assets/Framework"))
 		{
 			return fileName;
 		}

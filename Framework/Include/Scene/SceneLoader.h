@@ -32,5 +32,6 @@ namespace Trinity
 
 		std::unique_ptr<Scene> loadScene(const std::string& fileName, ResourceCache& cache);
 		std::unique_ptr<Scene> loadSceneWithModel(const std::string& fileName, ResourceCache& cache);
+		std::unique_ptr<Scene> loadEmptyScene(ResourceCache& cache);
 	};
 }

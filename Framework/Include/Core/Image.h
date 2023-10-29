@@ -14,6 +14,14 @@ namespace Trinity
 		Cube
 	};
 
+	struct Mipmap
+	{
+		uint32_t width{ 0 };
+		uint32_t height{ 0 };
+		uint32_t level{ 0 };
+		std::vector<uint8_t> data;
+	};
+
 	class Image : public Resource
 	{
 	public:
@@ -68,6 +76,7 @@ namespace Trinity
 		virtual bool load(uint32_t width, uint32_t height, uint32_t depth, uint32_t channels,
 			ImageType type, const uint8_t* data = nullptr);
 
+		virtual std::vector<Mipmap> generateMipmaps() const;
 		virtual glm::vec4 getPixel(uint32_t x, uint32_t y) const;
 		virtual uint32_t getPixelAsRGBA(uint32_t x, uint32_t y) const;
 

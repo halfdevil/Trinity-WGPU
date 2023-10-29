@@ -27,7 +27,7 @@ namespace Trinity
         const auto& depthStencilAttachment = frameBuffer.getDepthAttachment();
 
         wgpu::RenderPassDescriptor renderPassDesc = {
-            .colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size()),
+            .colorAttachmentCount = (uint32_t)colorAttachments.size(),
             .colorAttachments = colorAttachments.data()
         };
 

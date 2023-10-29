@@ -249,6 +249,7 @@ namespace Trinity
 		cameraPtr->setFOV(fov);
 		cameraPtr->setNearPlane(nearPlane);
 		cameraPtr->setFarPlane(farPlane);
+		cameraPtr->updateProjection();
 
 		auto& transform = cameraNode->getTransform();
 		transform.setTranslation(position);

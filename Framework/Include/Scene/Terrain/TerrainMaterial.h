@@ -9,7 +9,7 @@ namespace Trinity
 	public:
 
 		static constexpr const char* kDefaultShader = "/Assets/Framework/Shaders/Terrain.wgsl";
-		static constexpr uint32_t kMaxLayers = 4;
+		static constexpr uint32_t kMaxLayers = 5;
 
 		TerrainMaterial() = default;
 		virtual ~TerrainMaterial() = default;

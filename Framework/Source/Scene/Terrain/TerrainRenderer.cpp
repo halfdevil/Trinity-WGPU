@@ -56,6 +56,13 @@ namespace Trinity
 			LogError("updateSceneData() failed!!");
 			return;
 		}
+
+		renderPass.setBindGroup(kSceneBindGroupIndex, *mSceneData.sceneBindGroup);
+		renderPass.setPipeline(*mSceneData.pipeline);
+		renderPass.setBindGroup(kMaterialBindGroupIndex, *mSceneData.materialBindGroup);
+		renderPass.setVertexBuffer(0, *mSceneData.terrain->getVertexBuffer());
+		renderPass.setIndexBuffer(*mSceneData.terrain->getIndexBuffer());
+		renderPass.drawIndexed(mSceneData.terrain->getIndicesToDraw(), 1, 0, 0, 0);
 	}
 
 	bool TerrainRenderer::setupSceneData()
@@ -222,6 +229,7 @@ namespace Trinity
 				};
 
 				mSceneData.sceneBuffer->write(0, sizeof(SceneBufferData), &bufferData);
+				mSceneData.terrain->preDrawCalculations(*mSceneData.camera);
 			}
 
 			for (auto& lightData : mLights)

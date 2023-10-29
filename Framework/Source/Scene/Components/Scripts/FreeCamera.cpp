@@ -41,6 +41,12 @@ namespace Trinity
 	void FreeCamera::init()
 	{
 		Script::init();
+
+		auto* cameraNode = getNode();
+		if (cameraNode->hasComponent<Camera>())
+		{
+			mCamera = &cameraNode->getComponent<Camera>();
+		}
 	}
 
 	void FreeCamera::update(float deltaTime)
@@ -56,11 +62,13 @@ namespace Trinity
 
 			glm::quat qx = glm::angleAxis(mRotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 			glm::quat qy = glm::angleAxis(mRotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-
 			glm::quat orientation = glm::normalize(qy * transform.getRotation() * qx);
 
 			transform.setTranslation(transform.getTranslation() + mTranslation * glm::conjugate(orientation));
 			transform.setRotation(orientation);
+
+			mCamera->setView(glm::inverse(transform.getWorldMatrix()));
+			mCamera->setFrustum({ mCamera->getProjection() * mCamera->getView() });
 		}
 
 		mTranslation = glm::vec3{ 0.0f };
@@ -69,13 +77,10 @@ namespace Trinity
 
 	void FreeCamera::resize(uint32_t width, uint32_t height)
 	{
-		auto* cameraNode = getNode();
-		if (cameraNode->hasComponent<Camera>())
+		if (auto camera = dynamic_cast<PerspectiveCamera*>(mCamera))
 		{
-			if (auto camera = dynamic_cast<PerspectiveCamera*>(&cameraNode->getComponent<Camera>()))
-			{
-				camera->setAspectRatio((float)width / height);
-			}
+			camera->setAspectRatio((float)width / height);
+			camera->updateProjection();
 		}
 	}
 

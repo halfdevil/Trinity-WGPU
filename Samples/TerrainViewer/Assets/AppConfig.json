@@ -1,0 +1,78 @@
+{
+  "input": {
+    "actions": [
+      {
+        "name": "exit",
+        "keyboardKeys": [ 256 ]
+      }
+    ],
+    "axes": [
+      {
+        "name": "moveForward",
+        "keyboardKeys": [
+          {
+            "type": 87,
+            "scale": -1.0
+          },
+          {
+            "type": 83,
+            "scale": 1.0
+          }
+        ]
+      },
+      {
+        "name": "moveRight",
+        "keyboardKeys": [
+          {
+            "type": 68,
+            "scale": 1.0
+          },
+          {
+            "type": 65,
+            "scale": -1.0
+          }
+        ]
+      },
+      {
+        "name": "moveUp",
+        "keyboardKeys": [
+          {
+            "type": 69,
+            "scale": -1.0
+          },
+          {
+            "type": 81,
+            "scale": 1.0
+          }
+        ]
+      },
+      {
+        "name": "turn",
+        "keyboardKeys": [
+          {
+            "type": 262,
+            "scale": -1.0
+          },
+          {
+            "type": 263,
+            "scale": 1.0
+          }
+        ]
+      },
+      {
+        "name": "lookUp",
+        "keyboardKeys": [
+          {
+            "type": 265,
+            "scale": 1.0
+          },
+          {
+            "type": 264,
+            "scale": -1.0
+          }
+        ]
+      }
+    ]
+  },
+  "terrain": "/Assets/Terrain/terrain.ttrn"
+}

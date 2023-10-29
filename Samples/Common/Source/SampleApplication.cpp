@@ -41,7 +41,20 @@ namespace Trinity
 
 			if (!mScene)
 			{
-				LogError("SceneLoader::loadScene() failed for model '%s'", modelFile.c_str());
+				LogError("SceneLoader::loadSceneWithModel() failed for model '%s'", modelFile.c_str());
+				return false;
+			}
+
+			onSceneLoaded();
+		}
+		else
+		{
+			SceneLoader sceneLoader;
+			mScene = sceneLoader.loadEmptyScene(*mResourceCache);
+
+			if (!mScene)
+			{
+				LogError("SceneLoader::loadEmptyScene() failed");
 				return false;
 			}
 

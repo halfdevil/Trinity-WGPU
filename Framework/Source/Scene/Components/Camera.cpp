@@ -6,17 +6,6 @@
 
 namespace Trinity
 {
-	glm::mat4 Camera::getView()
-	{
-		if (mNode == nullptr)
-		{
-			return glm::mat4(1.0f);
-		}
-
-		auto& transform = mNode->getComponent<Transform>();
-		return glm::inverse(transform.getWorldMatrix());
-	}
-
 	std::type_index Camera::getType() const
 	{
 		return typeid(Camera);
@@ -25,6 +14,21 @@ namespace Trinity
 	std::string Camera::getTypeStr() const
 	{
 		return getStaticType();
+	}
+
+	void Camera::setProjection(const glm::mat4& projection)
+	{
+		mProjection = projection;
+	}
+
+	void Camera::setView(const glm::mat4& view)
+	{
+		mView = view;
+	}
+
+	void Camera::setFrustum(const Frustum& frustum)
+	{
+		mFrustum = frustum;
 	}
 
 	void Camera::setNode(Node& node)

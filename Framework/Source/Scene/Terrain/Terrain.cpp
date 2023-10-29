@@ -2,6 +2,8 @@
 #include "Scene/Terrain/HeightMap.h"
 #include "Scene/Terrain/TerrainMaterial.h"
 #include "Scene/Components/Transform.h"
+#include "Scene/Components/Camera.h"
+#include "Scene/Node.h"
 #include "Graphics/VertexBuffer.h"
 #include "Graphics/IndexBuffer.h"
 #include "Graphics/UniformBuffer.h"
@@ -35,12 +37,10 @@ namespace Trinity
 		return Resource::write();
 	}
 
-	bool Terrain::load(ResourceCache& cache, HeightMap& heightMap, Material& material, uint32_t maxLOD, 
-		uint32_t patchSize, float cellSpacing)
+	bool Terrain::load(ResourceCache& cache, HeightMap& heightMap, Material& material, uint32_t patchSize, float cellSpacing)
 	{
 		setHeightMap(heightMap);
 		setMaterial(material);
-		setMaxLOD(maxLOD);
 		setPatchSize(patchSize);
 		setCellSpacing(cellSpacing);
 
@@ -53,9 +53,28 @@ namespace Trinity
 		return true;
 	}
 
-	void Terrain::update(const Transform& transform)
+	void Terrain::preDrawCalculations(const Camera& camera)
 	{
-		preDrawCalculations(transform);
+		const auto& transform = camera.getNode()->getTransform();
+		const auto& position = transform.getTranslation();
+		const auto& rotation = glm::eulerAngles(transform.getRotation());
+
+		if (std::abs(rotation.x - oldCameraRotation.x) < cameraRotationDelta &&
+			std::abs(rotation.y - oldCameraRotation.y) < cameraRotationDelta)
+		{
+			if (std::abs(position.x - oldCameraPosition.x) < cameraMovementDelta &&
+				std::abs(position.y - oldCameraPosition.y) < cameraMovementDelta &&
+				std::abs(position.z - oldCameraPosition.z) < cameraMovementDelta)
+			{
+				return;
+			}
+		}
+
+		oldCameraPosition = position;
+		oldCameraRotation = rotation;
+
+		preDrawLODCalculations(camera);
+		preDrawIndicesCalculations();
 	}
 
 	std::type_index Terrain::getType() const
@@ -73,11 +92,6 @@ namespace Trinity
 		mMaterial = &material;
 	}
 
-	void Terrain::setMaxLOD(uint32_t maxLOD)
-	{
-		mMaxLOD = maxLOD;
-	}
-
 	void Terrain::setPatchSize(uint32_t patchSize)
 	{
 		mPatchSize = patchSize;
@@ -89,32 +103,34 @@ namespace Trinity
 		mCellSpacing = cellSpacing;
 	}
 
-	void Terrain::preDrawCalculations(const Transform& transform)
+	void Terrain::preDrawLODCalculations(const Camera& camera)
 	{
-		preDrawLODCalculations(transform);
-		preDrawIndicesCalculations();
-	}
-
-	void Terrain::preDrawLODCalculations(const Transform& transform)
-	{
+		const auto& transform = camera.getNode()->getTransform();
 		const auto& position = transform.getTranslation();
+		const auto& frustum = camera.getFrustum();
 		const auto& count = mNumPatches * mNumPatches;
 
 		for (uint32_t idx = 0; idx < count; idx++)
 		{
 			auto& patch = mPatches[idx];
-			auto a = position - mPatches[idx].center;
-			
-			float distance = glm::dot(a, a);
-			patch.currentLOD = 0;
 
-			for (uint32_t lod = mMaxLOD - 1; lod > 0; lod--)
+			if (frustum.contains(patch.boundingBox))
 			{
-				if (distance >= mDistanceThreshold[lod])
+				float distance = glm::distance2(position, patch.center);
+				patch.currentLOD = 0;
+
+				for (uint32_t lod = mMaxLOD - 1; lod > 0; lod--)
 				{
-					patch.currentLOD = lod;
-					break;
+					if (distance >= mDistanceThreshold[lod])
+					{
+						patch.currentLOD = lod;
+						break;
+					}
 				}
+			}
+			else
+			{
+				patch.currentLOD = -1;
 			}
 		}
 	}
@@ -207,12 +223,12 @@ namespace Trinity
 			}
 		}
 
-		if (z >= mCalcPatchSize)
+		if (z >= mPatchSize)
 		{
 			z = mCalcPatchSize;
 		}
 
-		if (x >= mCalcPatchSize)
+		if (x >= mPatchSize)
 		{
 			x = mCalcPatchSize;
 		}
@@ -284,10 +300,17 @@ namespace Trinity
 			return false;
 		}
 
+		mVertexBuffer = vertexBuffer.get();
+		mIndexBuffer = indexBuffer.get();
+
+		cache.addResource(std::move(vertexLayout));
+		cache.addResource(std::move(vertexBuffer));
+		cache.addResource(std::move(indexBuffer));
+
 		mIndicesToDraw = 0;
 		preDrawIndicesCalculations();
 
-		return false;
+		return true;
 	}
 
 	void Terrain::calculateNormals(std::vector<Vertex>& vertices)
@@ -501,7 +524,6 @@ namespace Trinity
 		}
 
 		reader.read(&mPatchSize);
-		reader.read(&mMaxLOD);
 		reader.read(&mCellSpacing);
 
 		auto& fileSystem = FileSystem::get();
@@ -529,13 +551,19 @@ namespace Trinity
 				return false;
 			}
 
+			if (!material->compile(cache))
+			{
+				LogError("TerrainMaterial::compile() failed for '%s'", materialFileName.c_str());
+				return false;
+			}
+
 			cache.addResource(std::move(material));
 		}
 
 		auto* heightMap = cache.getResource<HeightMap>(heightMapFileName);
 		auto* material = cache.getResource<Material>(materialFileName);
 
-		if (!load(cache, *heightMap, *material, mMaxLOD, mPatchSize, mCellSpacing))
+		if (!load(cache, *heightMap, *material, mPatchSize, mCellSpacing))
 		{
 			LogError("Terrain::load() failed.");
 			return false;
@@ -552,7 +580,6 @@ namespace Trinity
 		}
 
 		writer.write(&mPatchSize);
-		writer.write(&mMaxLOD);
 		writer.write(&mCellSpacing);
 
 		auto& fileSystem = FileSystem::get();

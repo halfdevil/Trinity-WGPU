@@ -55,7 +55,7 @@ namespace Trinity
                     },
                     userdata);
             },
-            this);
+        this);
     }
 
     void GraphicsDevice::destroy()
@@ -115,7 +115,7 @@ namespace Trinity
 #ifndef __EMSCRIPTEN__
         mDevice.SetDeviceLostCallback(
             [](WGPUDeviceLostReason reason, char const* message, void* userdata) {
-                const bool destroyed = reason == WGPUDeviceLostReason_Destroyed;
+                const bool destroyed = reason & WGPUDeviceLostReason_Destroyed;
                 if (!destroyed)
                 {
                     LogError("WGPU error (%d): %s", reason, message);

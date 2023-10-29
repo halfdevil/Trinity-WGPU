@@ -25,7 +25,6 @@ namespace Trinity
 		Terrain* importTerrain(
 			const std::string& outputFileName,
 			uint32_t size,
-			uint32_t maxLOD,
 			uint32_t patchSize,
 			float heightScale,
 			float cellSpacing,

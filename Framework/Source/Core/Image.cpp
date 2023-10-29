@@ -8,8 +8,10 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <stb_image_resize.h>
 
 namespace Trinity
 {
@@ -101,6 +103,51 @@ namespace Trinity
 		}
 
 		return true;
+	}
+
+	std::vector<Mipmap> Image::generateMipmaps() const
+	{
+		std::vector<Mipmap> mipmaps;
+		mipmaps.push_back({
+			.width = mWidth,
+			.height = mHeight,
+			.level = 0,
+			.data = mData
+		});
+
+		uint32_t offset{ 0 };
+		uint32_t nextWidth = std::max(1u, mWidth / 2);
+		uint32_t nextHeight = std::max(1u, mHeight / 2);
+		uint32_t nextSize = nextWidth * nextHeight * mChannels;
+
+		while (true)
+		{
+			auto& prevMipmap = mipmaps.back();
+			Mipmap nextMipmap = {
+				.width = nextWidth,
+				.height = nextHeight,
+				.level = prevMipmap.level + 1,
+				.data = std::vector<uint8_t>(nextSize)
+			};
+
+			auto& prevData = prevMipmap.data;
+			auto& nextData = nextMipmap.data;
+
+			stbir_resize_uint8(prevData.data(), prevMipmap.width, prevMipmap.height, 0,
+				nextData.data(), nextMipmap.width, nextMipmap.height, 0, mChannels);
+
+			mipmaps.push_back(std::move(nextMipmap));
+			nextWidth = std::max(1u, nextWidth / 2);
+			nextHeight = std::max(1u, nextWidth / 2);
+			nextSize = nextWidth * nextHeight * mChannels;
+
+			if (nextWidth == 1 && nextHeight == 1)
+			{
+				break;
+			}
+		}
+
+		return mipmaps;
 	}
 
 	glm::vec4 Image::getPixel(uint32_t x, uint32_t y) const

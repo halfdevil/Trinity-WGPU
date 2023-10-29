@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 {
     static Trinity::ModelViewerSample app;
     app.run({
-        .title = "Trinity - Render Pass",
+        .title = "Trinity - Model Viewer",
 #ifdef __EMSCRIPTEN__
 		.configFile = "/Assets/AppConfig.json",
 #else

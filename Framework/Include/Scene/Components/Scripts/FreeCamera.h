@@ -5,6 +5,7 @@
 
 namespace Trinity
 {
+	class Camera;
 	class FreeCamera : public Script
 	{
 	public:
@@ -41,6 +42,7 @@ namespace Trinity
 
 	protected:
 
+		Camera* mCamera{ nullptr };
 		glm::vec3 mTranslation{ 0.0f };
 		glm::vec3 mRotation{ 0.0f };
 	};

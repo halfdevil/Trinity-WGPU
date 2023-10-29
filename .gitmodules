@@ -38,3 +38,6 @@
 [submodule "ThirdParty/meshoptimizer"]
 	path = ThirdParty/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
+[submodule "ThirdParty/optick"]
+	path = ThirdParty/optick
+	url = https://github.com/bombomby/optick.git

@@ -69,13 +69,8 @@ namespace Trinity
 
 	void BoundingBox::combinePoint(const glm::vec3& p)
 	{
-		if (p.x > max.x) max.x = p.x;
-		if (p.y > max.y) max.y = p.y;
-		if (p.z > max.z) max.z = p.z;
-
-		if (p.x < min.x) min.x = p.x;
-		if (p.y < min.y) min.y = p.y;
-		if (p.z < min.z) min.z = p.z;
+		min = glm::min(min, p);
+		max = glm::max(max, p);
 	}
 
 	void BoundingBox::combineBox(const BoundingBox& other)
@@ -105,8 +100,15 @@ namespace Trinity
 
 		for (const auto& box : boxes)
 		{
-			allPoints.emplace_back(box.min);
-			allPoints.emplace_back(box.max);
+			allPoints.emplace_back(box.min.x, box.min.y, box.min.z);
+			allPoints.emplace_back(box.min.x, box.min.y, box.max.z);
+			allPoints.emplace_back(box.min.x, box.max.y, box.min.z);
+			allPoints.emplace_back(box.min.x, box.max.y, box.max.z);
+
+			allPoints.emplace_back(box.max.x, box.min.y, box.min.z);
+			allPoints.emplace_back(box.max.x, box.min.y, box.max.z);
+			allPoints.emplace_back(box.max.x, box.max.y, box.min.z);
+			allPoints.emplace_back(box.max.x, box.max.y, box.max.z);
 		}
 
 		return { allPoints };

@@ -76,7 +76,7 @@ namespace Trinity
 			}
 		};
 
-		if (auto it = mTextures.find("blend_map"); it != mTextures.end())
+		if (auto it = mTextures.find("blend_map_texture"); it != mTextures.end())
 		{
 			layoutItems.push_back({
 				.binding = 1,
@@ -108,7 +108,7 @@ namespace Trinity
 
 		for (uint32_t idx = 0; idx < kMaxLayers; idx++)
 		{
-			auto name = std::format("layer_{}", idx);			 
+			auto name = std::format("layer{}_texture", idx + 1);			 
 			if (auto it = mTextures.find(name); it != mTextures.end())
 			{
 				layoutItems.push_back({
@@ -145,14 +145,14 @@ namespace Trinity
 		}
  
 		auto bindGroupLayout = std::make_unique<BindGroupLayout>();
-		if (!mBindGroupLayout->create(std::move(layoutItems)))
+		if (!bindGroupLayout->create(std::move(layoutItems)))
 		{
 			LogError("BindGroupLayout::create() failed!!");
 			return false;
 		}
 
 		auto bindGroup = std::make_unique<BindGroup>();
-		if (!mBindGroup->create(*mBindGroupLayout, std::move(items)))
+		if (!bindGroup->create(*bindGroupLayout, std::move(items)))
 		{
 			LogError("BindGroup::create() failed!!");
 			return false;
