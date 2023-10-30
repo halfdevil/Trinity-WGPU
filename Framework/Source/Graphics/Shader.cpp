@@ -3,8 +3,8 @@
 #include "VFS/FileSystem.h"
 #include "Core/Debugger.h"
 #include "Core/Logger.h"
-#include "Core/Utils.h"
 #include "Core/ResourceCache.h"
+#include "Utils/StringHelper.h"
 #include <sstream>
 
 namespace Trinity
@@ -159,7 +159,7 @@ namespace Trinity
 		{
 			const auto pos = line.find("#ifdef ");
 			auto name = line.substr(pos + 7);
-			trim(name);
+			StringHelper::trim(name);
 
 			if (!mDefines.contains(name))
 			{
@@ -185,8 +185,8 @@ namespace Trinity
 				auto name = line.substr(pos + 8, nameLen);
 				auto value = line.substr(p1);
 
-				trim(name);
-				trim(value);
+				StringHelper::trim(name);
+				StringHelper::trim(value);
 
 				addDefine(name, value);
 			}

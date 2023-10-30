@@ -1,5 +1,6 @@
 #include "Graphics/Material.h"
 #include "Graphics/Texture2D.h"
+#include "Graphics/TextureCube.h"
 #include "Graphics/BindGroup.h"
 #include "Graphics/BindGroupLayout.h"
 #include "Graphics/UniformBuffer.h"
@@ -92,12 +93,21 @@ namespace Trinity
 		}
 	}
 
-	bool Material::addTexture(const std::string& name, const std::string& textureFileName, 
+	bool Material::addTexture(const std::string& name, TextureType type, const std::string& textureFileName,
 		const std::string& samplerFileName, ResourceCache& cache)
 	{
 		if (!cache.isLoaded<Texture>(textureFileName))
 		{
-			auto texture = std::make_unique<Texture2D>();
+			std::unique_ptr<Texture> texture{ nullptr };
+			if (type == TextureType::TwoD)
+			{
+				texture = std::make_unique<Texture2D>();
+			}
+			else
+			{
+				texture = std::make_unique<TextureCube>();
+			}
+
 			if (!texture->create(textureFileName, cache))
 			{
 				LogError("Texture2D::create() failed for: %s!!", textureFileName.c_str());
@@ -186,11 +196,14 @@ namespace Trinity
 
 		for (uint32_t idx = 0; idx < numTextures; idx++)
 		{
+			TextureType type{ TextureType::TwoD };
+			reader.read(&type);
+
 			auto key = reader.readString();
 			auto textureFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 			auto samplerFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 
-			if (!addTexture(key, textureFileName, samplerFileName, cache))
+			if (!addTexture(key, type, textureFileName, samplerFileName, cache))
 			{
 				LogError("Material::addTexture() failed for: %s!!", key.c_str());
 				return false;
@@ -234,12 +247,14 @@ namespace Trinity
 		for (auto& it : mTextures)
 		{
 			auto key = it.first;
+			auto type = it.second.texture->getTextureType();
 			auto textureFileName = it.second.texture->getFileName();
 			auto samplerFileName = it.second.sampler->getFileName();
 
 			textureFileName = Resource::getWritePath(writer.getPath(), textureFileName);
 			samplerFileName = Resource::getWritePath(writer.getPath(), samplerFileName);
 
+			writer.write(&type);
 			writer.writeString(key);
 			writer.writeString(textureFileName);
 			writer.writeString(samplerFileName);

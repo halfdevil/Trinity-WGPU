@@ -16,6 +16,8 @@
 #include "Scene/Components/Scripts/FreeCamera.h"
 #include "Scene/Terrain/Terrain.h"
 #include "Scene/Terrain/TerrainRenderer.h"
+#include "Scene/Skybox/Skybox.h"
+#include "Scene/Skybox/SkyboxRenderer.h"
 #include <glm/glm.hpp>
 
 namespace Trinity
@@ -54,12 +56,37 @@ namespace Trinity
 			mTerrainRenderer->setCamera("default_camera");
 		}
 
+		if (mConfig.contains("skybox"))
+		{
+			auto skyboxFile = mConfig["skybox"].get<std::string>();
+			mSkybox = std::make_unique<Skybox>();
+
+			if (!mSkybox->create(skyboxFile, *mResourceCache))
+			{
+				LogError("Skybox::create() failed for: '%s'", skyboxFile.c_str());
+				return false;
+			}
+
+			mSkyboxRenderer = std::make_unique<SkyboxRenderer>();
+			if (!mSkyboxRenderer->prepare(*mSkybox, *mCamera->getCamera(), *mResourceCache))
+			{
+				LogError("SkyboxRenderer::prepare() failed for: '%s'", skyboxFile.c_str());
+				return false;
+			}
+		}
+
 		return true;
 	}
 
 	void TerrainViewerSample::render(float deltaTime)
     {
         mMainPass->begin();
+
+		if (mSkybox != nullptr)
+		{
+			mSkybox->setPosition(mCamera->getNode()->getTransform().getTranslation());
+			mSkyboxRenderer->draw(*mMainPass);
+		}
 		
 		if (mScene != nullptr)
 		{

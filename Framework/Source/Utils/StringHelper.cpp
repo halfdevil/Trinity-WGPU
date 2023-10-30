@@ -1,4 +1,4 @@
-#include "Core/Utils.h"
+#include "Utils/StringHelper.h"
 #include <algorithm> 
 #include <cctype>
 #include <locale>
@@ -6,27 +6,27 @@
 
 namespace Trinity
 {
-	void ltrim(std::string& s) 
+	void StringHelper::ltrim(std::string& s)
 	{
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
 			return !std::isspace(ch);
 		}));
 	}
 
-	void rtrim(std::string& s)
+	void StringHelper::rtrim(std::string& s)
 	{
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
 			return !std::isspace(ch);
 		}).base(), s.end());
 	}
 
-	void trim(std::string& s) 
+	void StringHelper::trim(std::string& s)
 	{
 		rtrim(s);
 		ltrim(s);
 	}
 
-	std::string toSnakeCase(const std::string& s)
+	std::string StringHelper::toSnakeCase(const std::string& s)
 	{
 		std::stringstream result;
 

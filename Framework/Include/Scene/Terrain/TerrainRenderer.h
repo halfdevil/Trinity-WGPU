@@ -27,7 +27,6 @@ namespace Trinity
 
 		static constexpr uint32_t kSceneBindGroupIndex = 0;
 		static constexpr uint32_t kMaterialBindGroupIndex = 1;
-		static constexpr uint32_t kTransformBindGroupIndex = 2;
 
 		struct LightBufferData
 		{

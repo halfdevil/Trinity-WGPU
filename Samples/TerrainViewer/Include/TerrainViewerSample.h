@@ -8,6 +8,8 @@ namespace Trinity
 	class FreeCamera;
 	class Terrain;
 	class TerrainRenderer;
+	class Skybox;
+	class SkyboxRenderer;
 
     class TerrainViewerSample : public SampleApplication
     {
@@ -40,5 +42,7 @@ namespace Trinity
 		FreeCamera* mCamera{ nullptr };
 		std::unique_ptr<Terrain> mTerrain{ nullptr };
 		std::unique_ptr<TerrainRenderer> mTerrainRenderer{ nullptr };
+		std::unique_ptr<Skybox> mSkybox{ nullptr };
+		std::unique_ptr<SkyboxRenderer> mSkyboxRenderer{ nullptr };
     };
 }

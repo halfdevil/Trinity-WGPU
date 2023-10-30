@@ -74,5 +74,6 @@
       }
     ]
   },
-  "terrain": "/Assets/Terrain/terrain.ttrn"
+  "terrain": "/Assets/Terrain/terrain.ttrn",
+  "skybox": "/Assets/Skybox/skybox.tsky"
 }

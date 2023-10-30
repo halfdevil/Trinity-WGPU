@@ -102,7 +102,7 @@ namespace Trinity
 		const wgpu::Device& device = GraphicsDevice::get();
 		const wgpu::Queue& queue = GraphicsDevice::get().getQueue();
 
-		if (image->getImageType() != ImageType::TwoD)
+		if (image->getImageType() == ImageType::TwoD)
 		{
 			image->convertToCube();
 		}
@@ -219,7 +219,7 @@ namespace Trinity
 		{
 			if (!cache.isLoaded<Image>(imageFileName))
 			{
-				auto image = std::unique_ptr<Image>();
+				auto image = std::make_unique<Image>();
 				if (!image->create(imageFileName, cache))
 				{
 					LogError("Image::create() failed for: %s!!", imageFileName.c_str());

@@ -276,8 +276,9 @@ namespace Trinity
 
 	void Image::convertToCubeMapFaces()
 	{
-		const uint32_t faceWidth = mWidth / 3;
-		const uint32_t faceHeight = mHeight / 4;
+		const bool isHorizontalCross = mWidth > mHeight;
+		const uint32_t faceWidth = isHorizontalCross ? mWidth / 4 : mWidth / 3;
+		const uint32_t faceHeight = isHorizontalCross ? mHeight / 3 : mHeight / 4;
 
 		Image result;
 		result.load(faceWidth, faceHeight, 6, mChannels, ImageType::Cube);
@@ -317,8 +318,8 @@ namespace Trinity
 						break;
 
 					case 4:
-						x = 2 * faceWidth - (i + 1);
-						y = mHeight - (j + 1);
+						x = isHorizontalCross ? 3 * faceWidth + i : 2 * faceWidth - (i + 1);
+						y = isHorizontalCross ? faceHeight + j : mHeight - (j + 1);
 						break;
 
 					case 5:

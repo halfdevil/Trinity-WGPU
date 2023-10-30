@@ -23,10 +23,10 @@
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/Image.h"
-#include "Core/Utils.h"
 #include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 #include "VFS/DiskFile.h"
+#include "Utils/StringHelper.h"
 #include <format>
 #include <queue>
 
@@ -950,7 +950,7 @@ namespace Trinity
 			{
 				if (gltfValue.first.find("Texture") != std::string::npos)
 				{
-					const std::string textureName = toSnakeCase(gltfValue.first);
+					const std::string textureName = StringHelper::toSnakeCase(gltfValue.first);
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 
@@ -963,7 +963,7 @@ namespace Trinity
 			{
 				if (gltfValue.first.find("Texture") != std::string::npos)
 				{
-					const std::string textureName = toSnakeCase(gltfValue.first);
+					const std::string textureName = StringHelper::toSnakeCase(gltfValue.first);
 					Texture* texture = textures[gltfValue.second.TextureIndex()];
 					Sampler* sampler = samplers[texSampMap.at(gltfValue.second.TextureIndex())];
 

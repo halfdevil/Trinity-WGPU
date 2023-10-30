@@ -19,6 +19,11 @@ namespace Trinity
 		FreeCamera(FreeCamera&&) = delete;
 		FreeCamera& operator = (FreeCamera&&) = delete;
 
+		Camera* getCamera() const
+		{
+			return mCamera;
+		}
+
 		virtual std::string getTypeStr() const override;
 
 		virtual void moveForward(float scale);

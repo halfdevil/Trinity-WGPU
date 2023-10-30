@@ -8,13 +8,12 @@
 #include "Core/Logger.h"
 #include "Core/Debugger.h"
 #include "Core/Image.h"
-#include "Core/Utils.h"
 #include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
 
 namespace Trinity
 {
-	std::unique_ptr<Image> createImage(const std::string& imagePath, ResourceCache& cache, 
+	static std::unique_ptr<Image> createImage(const std::string& imagePath, ResourceCache& cache, 
 		const std::string& imagesPath, bool loadContent = true)
 	{
 		fs::path fileName(imagesPath);
@@ -37,7 +36,7 @@ namespace Trinity
 		return image;
 	}
 
-	std::unique_ptr<HeightMap> createHeightMap(const std::string& heightMapPath, ResourceCache& cache,
+	static std::unique_ptr<HeightMap> createHeightMap(const std::string& heightMapPath, ResourceCache& cache,
 		const std::string& outputPath, uint32_t size, float heightScale, bool loadContent = true)
 	{
 		fs::path fileName(outputPath);
@@ -73,7 +72,7 @@ namespace Trinity
 		return heightMap;
 	}
 
-	std::unique_ptr<Sampler> createSampler(ResourceCache& cache, const std::string& samplersPath, bool loadContent = true)
+	static std::unique_ptr<Sampler> createSampler(ResourceCache& cache, const std::string& samplersPath, bool loadContent = true)
 	{
 		auto fileName = fs::path(samplersPath);
 		fileName.append("default.tsamp");
@@ -95,7 +94,7 @@ namespace Trinity
 		return sampler;
 	}
 
-	std::unique_ptr<Texture> createTexture(Image& image, bool mipmaps, ResourceCache& cache, 
+	static std::unique_ptr<Texture> createTexture(Image& image, bool hasMipmaps, ResourceCache& cache, 
 		const std::string& texturesPath, bool loadContent = true)
 	{
 		auto fileName = fs::path(texturesPath);
@@ -110,12 +109,12 @@ namespace Trinity
 		}
 
 		texture->setImage(&image);
-		texture->setHasMipmaps(mipmaps);
+		texture->setHasMipmaps(hasMipmaps);
 
 		return texture;
 	}
 
-	std::unique_ptr<Shader> createShader(ResourceCache& cache, const std::vector<std::string>& defines, bool loadContent = true)
+	static std::unique_ptr<Shader> createShader(ResourceCache& cache, const std::vector<std::string>& defines, bool loadContent = true)
 	{
 		auto shader = std::make_unique<Shader>();
 		if (!shader->create(TerrainMaterial::kDefaultShader, cache, false))
@@ -139,7 +138,7 @@ namespace Trinity
 		return shader;
 	}
 
-	std::unique_ptr<Material> createMaterial(
+	static std::unique_ptr<Material> createMaterial(
 		const std::string& blendMapFileName, 
 		const std::vector<std::string>& layerFileNames,
 		ResourceCache& cache,
@@ -248,7 +247,7 @@ namespace Trinity
 		return material;
 	}
 
-	std::unique_ptr<Terrain> createTerrain(
+	static std::unique_ptr<Terrain> createTerrain(
 		uint32_t size,
 		uint32_t patchSize,
 		float heightScale,

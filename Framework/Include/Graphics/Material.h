@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Resource.h"
+#include "Graphics/Texture.h"
 #include <string>
 #include <glm/glm.hpp>
 #include <optional>
@@ -11,7 +12,6 @@ namespace Trinity
 {
 	class BindGroup;
 	class BindGroupLayout;
-	class Texture;
 	class Sampler;
 	class Shader;
 	class UniformBuffer;
@@ -105,7 +105,7 @@ namespace Trinity
 		virtual void setShaderDefines(std::vector<std::string>&& defines);
 
 		virtual void setTexture(const std::string& name, Texture& texture, Sampler& sampler);
-		virtual bool addTexture(const std::string& name, const std::string& textureFileName, 
+		virtual bool addTexture(const std::string& name, TextureType type, const std::string& textureFileName, 
 			const std::string& samplerFileName, ResourceCache& cache);
 
 		virtual bool load(const std::string& shaderFileName, const std::vector<std::string>& defines, 
