@@ -93,6 +93,13 @@ namespace Trinity
 			min.z <= other.max.z && max.z >= other.min.z;
 	}
 
+	bool BoundingBox::contains(const BoundingBox& other) const
+	{
+		return min.x <= other.min.x && max.x >= other.max.x &&
+			min.y <= other.min.y && max.y >= other.max.y &&
+			min.z <= other.min.z && max.z >= other.max.z;
+	}
+
 	BoundingBox BoundingBox::combineBoxes(const std::vector<BoundingBox>& boxes)
 	{
 		std::vector<glm::vec3> allPoints;

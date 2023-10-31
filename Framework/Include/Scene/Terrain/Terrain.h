@@ -12,6 +12,7 @@ namespace Trinity
 	class Material;
 	class Camera;
 	class Transform;
+	class QuadTree;
 
 	class Terrain : public Resource
 	{
@@ -31,6 +32,7 @@ namespace Trinity
 			Patch* right{ nullptr };
 			Patch* left{ nullptr };
 			int32_t currentLOD{ -1 };
+			int32_t nodeIndex{ -1 };
 			BoundingBox boundingBox;
 			glm::vec3 center{ 0.0f };
 		};
@@ -128,6 +130,7 @@ namespace Trinity
 			uint32_t x, uint32_t z) const;
 
 		virtual bool setupDeviceObjects(ResourceCache& cache);
+		virtual bool setupQuadTree();
 		virtual void calculateNormals(std::vector<Vertex>& vertices);
 		virtual void createPatches();
 		virtual void calculatePatchData(std::vector<Vertex>& vertices);
@@ -148,6 +151,7 @@ namespace Trinity
 		float mCellSpacing{ 1.0f };
 		uint32_t mIndicesToDraw{ 0 };
 
+		std::unique_ptr<QuadTree> mQuadTree{ nullptr };
 		std::vector<Patch> mPatches;
 		std::vector<uint32_t> mIndices;
 		std::vector<double> mDistanceThreshold;

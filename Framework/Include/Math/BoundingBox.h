@@ -33,6 +33,7 @@ namespace Trinity
 
 		bool isPointInside(const glm::vec3& p) const;
 		bool isIntersecting(const BoundingBox& other) const;
+		bool contains(const BoundingBox& other) const;
 
 	public:
 

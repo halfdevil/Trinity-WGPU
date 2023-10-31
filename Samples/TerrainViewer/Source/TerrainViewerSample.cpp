@@ -16,6 +16,7 @@
 #include "Scene/Components/Scripts/FreeCamera.h"
 #include "Scene/Terrain/Terrain.h"
 #include "Scene/Terrain/TerrainRenderer.h"
+#include "Scene/Terrain/QuadTree.h"
 #include "Scene/Skybox/Skybox.h"
 #include "Scene/Skybox/SkyboxRenderer.h"
 #include <glm/glm.hpp>

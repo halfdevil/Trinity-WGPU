@@ -2,6 +2,7 @@
 #include "Scene/Terrain/Terrain.h"
 #include "Scene/Terrain/TerrainMaterial.h"
 #include "Scene/Terrain/HeightMap.h"
+#include "Scene/Terrain/QuadTree.h"
 #include "Graphics/Sampler.h"
 #include "Graphics/Texture2D.h"
 #include "Graphics/Shader.h"

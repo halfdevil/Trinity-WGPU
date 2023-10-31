@@ -1,6 +1,7 @@
 #include "Scene/Terrain/Terrain.h"
 #include "Scene/Terrain/HeightMap.h"
 #include "Scene/Terrain/TerrainMaterial.h"
+#include "Scene/Terrain/QuadTree.h"
 #include "Scene/Components/Transform.h"
 #include "Scene/Components/Camera.h"
 #include "Scene/Node.h"
@@ -50,6 +51,12 @@ namespace Trinity
 			return false;
 		}
 
+		if (!setupQuadTree())
+		{
+			LogError("Terrain::setupQuadTree() failed");
+			return false;
+		}
+
 		return true;
 	}
 
@@ -72,6 +79,8 @@ namespace Trinity
 
 		oldCameraPosition = position;
 		oldCameraRotation = rotation;
+
+		mQuadTree->update(camera.getFrustum());
 
 		preDrawLODCalculations(camera);
 		preDrawIndicesCalculations();
@@ -114,7 +123,7 @@ namespace Trinity
 		{
 			auto& patch = mPatches[idx];
 
-			if (frustum.contains(patch.boundingBox))
+			if (mQuadTree->isVisible(patch.nodeIndex))
 			{
 				float distance = glm::distance2(position, patch.center);
 				patch.currentLOD = 0;
@@ -309,6 +318,23 @@ namespace Trinity
 
 		mIndicesToDraw = 0;
 		preDrawIndicesCalculations();
+
+		return true;
+	}
+
+	bool Terrain::setupQuadTree()
+	{
+		mQuadTree = std::make_unique<QuadTree>();
+		if (!mQuadTree->create(mCalcPatchSize * mCellSpacing, mBoundingBox))
+		{
+			LogError("QuadTree::create() failed");
+			return false;
+		}
+
+		for (auto& patch : mPatches)
+		{
+			patch.nodeIndex = mQuadTree->getNodeIndex(patch.boundingBox);
+		}
 
 		return true;
 	}
