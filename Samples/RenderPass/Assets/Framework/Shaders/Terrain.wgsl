@@ -175,26 +175,26 @@ fn fs_main(in: FragmentInput) -> FragmentOutput
     base_color = material.base_color_factor;
 
 #ifdef HAS_LAYER1_TEXTURE
-    base_color = textureSample(layer1_texture, layer1_sampler, in.uv);
+    base_color = textureSample(layer1_texture, layer1_sampler, in.uv * 10.0f);
 #endif
 
 #ifdef HAS_LAYER2_TEXTURE
-    var c2 = textureSample(layer2_texture, layer2_sampler, in.uv);
+    var c2 = textureSample(layer2_texture, layer2_sampler, in.uv * 10.0f);
     base_color = mix(base_color, c2, t.r);
 #endif
 
 #ifdef HAS_LAYER3_TEXTURE
-    var c3 = textureSample(layer3_texture, layer3_sampler, in.uv);
+    var c3 = textureSample(layer3_texture, layer3_sampler, in.uv * 10.0f);
     base_color = mix(base_color, c3, t.g);
 #endif
 
 #ifdef HAS_LAYER4_TEXTURE
-    var c4 = textureSample(layer4_texture, layer4_sampler, in.uv);
+    var c4 = textureSample(layer4_texture, layer4_sampler, in.uv * 10.0f);
     base_color = mix(base_color, c4, t.b);
 #endif
 
 #ifdef HAS_LAYER5_TEXTURE
-    var c5 = textureSample(layer5_texture, layer5_sampler, in.uv);
+    var c5 = textureSample(layer5_texture, layer5_sampler, in.uv * 10.0f);
     base_color = mix(base_color, c5, t.a);
 #endif
 #else

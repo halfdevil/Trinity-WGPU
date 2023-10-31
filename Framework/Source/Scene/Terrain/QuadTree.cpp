@@ -44,16 +44,16 @@ namespace Trinity
 			auto maxY = boundingBox.max.y;
 
 			BoundingBox b1(glm::vec3(startX, minY, startZ + size.z / 2),
-				glm::vec3(startX + size.x / 2, maxY, size.z));
+				glm::vec3(startX + size.x / 2, maxY, startZ + size.z));
 
 			BoundingBox b2(glm::vec3(startX + size.x / 2, minY, startZ + size.z / 2),
-				glm::vec3(size.x, maxY, size.z));
+				glm::vec3(startX + size.x, maxY, startZ + size.z));
 
 			BoundingBox b3(glm::vec3(startX, minY, startZ),
 				glm::vec3(startX + size.x / 2, maxY, startZ + size.z / 2));
 
 			BoundingBox b4(glm::vec3(startX + size.x / 2, minY, startZ),
-				glm::vec3(size.x, maxY, startZ + size.z / 2));
+				glm::vec3(startX + size.x, maxY, startZ + size.z / 2));
 
 			auto ul = std::make_unique<Node>();
 			ul->boundingBox = b1;

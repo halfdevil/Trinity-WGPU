@@ -28,17 +28,9 @@ namespace Trinity
 		return true;
 	}
 
-	void ImGuiSample::render(float deltaTime)
-	{
-		mMainPass->begin();		
-		drawGui(deltaTime);
-		mMainPass->end();
-	}
-
 	void ImGuiSample::onGui()
 	{
 		ImGui::ShowDemoWindow();
-		ImGui::Render();
 	}
 
 	void ImGuiSample::setupInput()

@@ -191,13 +191,14 @@ namespace Trinity
 	{
 		mClock->update();
 		mInput->update();
-		update(mClock->getDeltaTime());
-		mInput->postUpdate();
+		mGraphicsDevice->clearScreen();
 
-		mGraphicsDevice->beginFrame();
+		update(mClock->getDeltaTime());
 		render(mClock->getDeltaTime());
-		mGraphicsDevice->endFrame();
+		drawGui(mClock->getDeltaTime());
+
 		mGraphicsDevice->present();
+		mInput->postUpdate();
 	}
 
 	void Application::exit()
@@ -209,7 +210,7 @@ namespace Trinity
 	{
 		mImGuiRenderer->newFrame(*mWindow, deltaTime);
 		onGui();
-		mImGuiRenderer->draw(ImGui::GetDrawData(), *mMainPass);
+		mImGuiRenderer->draw();
 	}
 
 	void Application::onClose()

@@ -13,6 +13,7 @@
 #include "Graphics/IndexBuffer.h"
 #include "Graphics/UniformBuffer.h"
 #include "Graphics/GraphicsDevice.h"
+#include "Graphics/SwapChain.h"
 #include "Input/Types.h"
 #include "Core/Window.h"
 #include "Core/Logger.h"
@@ -202,6 +203,7 @@ namespace Trinity
 		mImageContext.font = font.get();
 		mResourceCache = std::make_unique<ResourceCache>();
 		mResourceCache->addResource(std::move(font));
+		mRenderPass = std::make_unique<RenderPass>();
 
 		if (!createDeviceObjects())
 		{
@@ -239,12 +241,17 @@ namespace Trinity
 		ImGui::NewFrame();
 	}
 
-	void ImGuiRenderer::draw(ImDrawData* drawData, RenderPass& renderPass)
+	void ImGuiRenderer::draw()
 	{
+		ImGui::Render();
+
+		auto* drawData = ImGui::GetDrawData();
 		if (drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f)
 		{
 			return;
 		}
+
+		mRenderPass->begin();
 
 		if (mStagingContext.numVertices < (uint32_t)drawData->TotalVtxCount)
 		{
@@ -298,7 +305,7 @@ namespace Trinity
 		mRenderContext.vertexBuffer->write(0, vbSize, mStagingContext.vertices.data());
 		mRenderContext.indexBuffer->write(0, ibSize, mStagingContext.indices.data());
 
-		setupRenderStates(drawData, renderPass);
+		setupRenderStates(drawData);
 
 		const float width = drawData->DisplaySize.x * drawData->FramebufferScale.x;
 		const float height = drawData->DisplaySize.y * drawData->FramebufferScale.y;
@@ -328,7 +335,7 @@ namespace Trinity
 				if (auto it = bindGroups.find(texIdHash); it != bindGroups.end())
 				{
 					const auto* bindGroup = it->second;
-					renderPass.setBindGroup(kTextureBindGroupIndex, *bindGroup);
+					mRenderPass->setBindGroup(kTextureBindGroupIndex, *bindGroup);
 				}
 
 				ImVec2 clipMin((cmd->ClipRect.x - clipOff.x) * clipScale.x, (cmd->ClipRect.y - clipOff.y) * clipScale.y);
@@ -342,16 +349,19 @@ namespace Trinity
 				clipMin = ImClamp(clipMin, ImVec2(), displaySize);
 				clipMax = ImClamp(clipMax, ImVec2(), displaySize);
 
-				renderPass.setScissor((uint32_t)clipMin.x, (uint32_t)clipMin.y, (uint32_t)(clipMax.x - clipMin.x),
+				mRenderPass->setScissor((uint32_t)clipMin.x, (uint32_t)clipMin.y, (uint32_t)(clipMax.x - clipMin.x),
 					(uint32_t)(clipMax.y - clipMin.y));
 
-				renderPass.drawIndexed(cmd->ElemCount, 1, cmd->IdxOffset + idxOffset,
+				mRenderPass->drawIndexed(cmd->ElemCount, 1, cmd->IdxOffset + idxOffset,
 					cmd->VtxOffset + vtxOffset, 0);
 			}
 
 			vtxOffset += cmdList->VtxBuffer.Size;
 			idxOffset += cmdList->IdxBuffer.Size;
 		}
+
+		mRenderPass->end();
+		mRenderPass->submit();
 	}
 
 	void ImGuiRenderer::setupCallbacks(Window& window)
@@ -514,7 +524,7 @@ namespace Trinity
 		return true;
 	}
 
-	void ImGuiRenderer::setupRenderStates(ImDrawData* drawData, RenderPass& renderPass)
+	void ImGuiRenderer::setupRenderStates(ImDrawData* drawData)
 	{
 		float l = drawData->DisplayPos.x;
 		float r = drawData->DisplayPos.x + drawData->DisplaySize.x;
@@ -525,14 +535,14 @@ namespace Trinity
 		perFrameData.viewProj = glm::ortho(l, r, b, t);
 		mRenderContext.perFrameBuffer->write(0, sizeof(PerFrameData), &perFrameData);
 
-		renderPass.setViewport(0, 0, drawData->FramebufferScale.x * drawData->DisplaySize.x,
+		mRenderPass->setViewport(0, 0, drawData->FramebufferScale.x * drawData->DisplaySize.x,
 			drawData->FramebufferScale.y * drawData->DisplaySize.y, 0.0f, 1.0f);
 
-		renderPass.setVertexBuffer(0, *mRenderContext.vertexBuffer);
-		renderPass.setIndexBuffer(*mRenderContext.indexBuffer);
-		renderPass.setPipeline(*mRenderContext.pipeline);
-		renderPass.setBindGroup(kCommonBindGroupIndex, *mRenderContext.bindGroup);
-		renderPass.setBlendConstant(0.0f, 0.0f, 0.0f, 0.0f);
+		mRenderPass->setVertexBuffer(0, *mRenderContext.vertexBuffer);
+		mRenderPass->setIndexBuffer(*mRenderContext.indexBuffer);
+		mRenderPass->setPipeline(*mRenderContext.pipeline);
+		mRenderPass->setBindGroup(kCommonBindGroupIndex, *mRenderContext.bindGroup);
+		mRenderPass->setBlendConstant(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 	bool ImGuiRenderer::createCommonBindGroup()

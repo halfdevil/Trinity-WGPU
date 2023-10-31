@@ -44,6 +44,7 @@ namespace Trinity
 		}
 
         mMainPass->end();
+		mMainPass->submit();
     }
 
 	void RenderPassSample::onSceneLoaded()

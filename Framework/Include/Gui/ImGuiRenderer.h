@@ -22,6 +22,7 @@ namespace Trinity
 	class VertexLayout;
 	class VertexBuffer;
 	class IndexBuffer;
+	class SwapChain;
 	class Window;
 
 	class ImGuiRenderer
@@ -78,14 +79,14 @@ namespace Trinity
 		void destroy();
 
 		void newFrame(Window& window, float deltaTime);
-		void draw(ImDrawData* drawData, RenderPass& renderPass);
+		void draw();
 
 	protected:
 
 		void setupCallbacks(Window& window);
 		void updateMouseCursor(Window& window);
 		bool createDeviceObjects();
-		void setupRenderStates(ImDrawData* drawData, RenderPass& renderPass);
+		void setupRenderStates(ImDrawData* drawData);
 
 		bool createCommonBindGroup();
 		bool createImageBindGroup(const Texture& texture);
@@ -96,7 +97,8 @@ namespace Trinity
 		RenderContext mRenderContext;
 		ImageContext mImageContext;
 		StagingContext mStagingContext;
-		std::unique_ptr<ResourceCache> mResourceCache;
-		glm::vec2 mLastValidMousePos;
+		std::unique_ptr<ResourceCache> mResourceCache{ nullptr };
+		std::unique_ptr<RenderPass> mRenderPass{ nullptr };
+		glm::vec2 mLastValidMousePos{ 0.0f };
 	};
 }

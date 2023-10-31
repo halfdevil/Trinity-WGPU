@@ -15,7 +15,7 @@ namespace Trinity
     public:
 
         RenderPass() = default;
-        virtual ~RenderPass();
+        virtual ~RenderPass() = default;
 
         RenderPass(const RenderPass&) = delete;
         RenderPass& operator = (const RenderPass&) = delete;
@@ -23,29 +23,32 @@ namespace Trinity
         RenderPass(RenderPass&&) = default;
         RenderPass& operator = (RenderPass&&) = default;
 
-		virtual std::type_index getType() const override;
 		virtual void destroy() override;
+        virtual std::type_index getType() const override;
 
-        bool begin(const FrameBuffer& frameBuffer);
-        bool begin();
-        void end();
+        virtual bool begin(const FrameBuffer& frameBuffer);
+        virtual bool begin();
+        
+        virtual void end();
+        virtual void submit();
 
-        void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
+        virtual void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
             uint32_t firstInstance = 0) const;
 
-        void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0,
+        virtual void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0,
             int32_t baseVertex = 0, uint32_t firstInstance = 0) const;
 
-        void setBindGroup(uint32_t groupIndex, const BindGroup& bindGroup) const;
-        void setPipeline(const RenderPipeline& pipeline) const;
-        void setVertexBuffer(uint32_t slot, const VertexBuffer& vertexBuffer) const;
-        void setIndexBuffer(const IndexBuffer& indexBuffer) const;
-        void setViewport(float x, float y, float width, float height, float minDepth, float maxDepth) const;
-        void setScissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) const;
-        void setBlendConstant(float r, float g, float b, float a = 1.0f) const;
+        virtual void setBindGroup(uint32_t groupIndex, const BindGroup& bindGroup) const;
+        virtual void setPipeline(const RenderPipeline& pipeline) const;
+        virtual void setVertexBuffer(uint32_t slot, const VertexBuffer& vertexBuffer) const;
+        virtual void setIndexBuffer(const IndexBuffer& indexBuffer) const;
+        virtual void setViewport(float x, float y, float width, float height, float minDepth, float maxDepth) const;
+        virtual void setScissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) const;
+        virtual void setBlendConstant(float r, float g, float b, float a = 1.0f) const;
 
-    private:
+    protected:
 
-        wgpu::RenderPassEncoder mEncoder;
+        wgpu::CommandEncoder mCommandEncoder{ nullptr };
+        wgpu::RenderPassEncoder mRenderPassEncoder{ nullptr };
     };
 }

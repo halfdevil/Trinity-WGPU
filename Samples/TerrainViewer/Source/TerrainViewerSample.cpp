@@ -100,6 +100,7 @@ namespace Trinity
 		}
 
         mMainPass->end();
+		mMainPass->submit();
     }
 
 	void TerrainViewerSample::onSceneLoaded()

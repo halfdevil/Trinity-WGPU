@@ -123,7 +123,7 @@ namespace Trinity
 			for (auto& mipmap : mipmaps)
 			{
 				upload(mipmap.level, mipmap.width, mipmap.height, image->getChannels(), 
-					mipmap.data.data(), mipmap.data.size());
+					mipmap.data.data(), (uint32_t)mipmap.data.size());
 			}
 		}
 		else

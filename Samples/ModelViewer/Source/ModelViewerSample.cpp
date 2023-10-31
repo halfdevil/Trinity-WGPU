@@ -45,6 +45,7 @@ namespace Trinity
 		}
 
         mMainPass->end();
+		mMainPass->submit();
     }
 
 	void ModelViewerSample::onSceneLoaded()

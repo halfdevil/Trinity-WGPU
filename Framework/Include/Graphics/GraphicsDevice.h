@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Graphics/SwapChain.h"
+#include "Graphics/RenderPass.h"
+#include "Graphics/ComputePass.h"
 #include "Core/Singleton.h"
 #include "Core/Observer.h"
 #include "Core/Window.h"
@@ -37,11 +39,6 @@ namespace Trinity
             return mQueue;
         }
 
-        const wgpu::CommandEncoder& getEncoder() const
-        {
-            return mEncoder;
-        }
-
         const SwapChain& getSwapChain() const
         {
             return mSwapChain;
@@ -52,22 +49,20 @@ namespace Trinity
             return mDevice;
         }
 
-        void create(const Window& window);
-        void destroy();
+        virtual void create(const Window& window);
+        virtual void destroy();
 
-        void beginFrame();
-        void endFrame();
-
-        bool setupSwapChain(const Window& window, wgpu::PresentMode presentMode,
+        virtual bool setupSwapChain(const Window& window, wgpu::PresentMode presentMode,
             wgpu::TextureFormat depthFormat);
 
-        void setClearColor(const wgpu::Color& clearColor);
-        void present();
+        virtual void setClearColor(const wgpu::Color& clearColor);
+        virtual void clearScreen();
+        virtual void present();
 
     protected:
 
-        void setupDevice(wgpu::Device device);
-        void deviceLost(bool destroyed);
+        virtual void setupDevice(wgpu::Device device);
+        virtual void deviceLost(bool destroyed);
 
     public:
 
@@ -80,7 +75,6 @@ namespace Trinity
         wgpu::Surface mSurface;
         wgpu::Device mDevice;
         wgpu::Queue mQueue;
-        wgpu::CommandEncoder mEncoder;
         SwapChain mSwapChain;
     };
 }

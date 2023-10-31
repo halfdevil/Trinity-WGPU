@@ -11,6 +11,7 @@
 #include "Core/Image.h"
 #include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
+#include <format>
 
 namespace Trinity
 {
@@ -86,6 +87,9 @@ namespace Trinity
 		}
 
 		SamplerProperties properties{
+			.addressModeU = wgpu::AddressMode::Repeat,
+			.addressModeV = wgpu::AddressMode::Repeat,
+			.addressModeW = wgpu::AddressMode::Repeat,
 			.magFilter = wgpu::FilterMode::Linear,
 			.minFilter = wgpu::FilterMode::Linear,
 			.mipmapFilter = wgpu::MipmapFilterMode::Linear

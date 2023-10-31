@@ -277,7 +277,7 @@ namespace Trinity
 
 				vertex.position = glm::vec3{ x * mCellSpacing, heightData[idx * mSize + jdx], z * mCellSpacing };
 				vertex.normal = { 0.0f, 1.0f, 0.0f };
-				vertex.uv = { 1.0f - x2, z2 };
+				vertex.uv = { x2, z2 };
 
 				z++;
 				z2 += td;
