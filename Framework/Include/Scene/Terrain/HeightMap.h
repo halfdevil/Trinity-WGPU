@@ -3,6 +3,7 @@
 #include "Core/Resource.h"
 #include <vector>
 #include <string>
+#include <glm/glm.hpp>
 
 namespace Trinity
 {
@@ -19,17 +20,12 @@ namespace Trinity
 		HeightMap(HeightMap&&) = default;
 		HeightMap& operator = (HeightMap&&) = default;
 
-		uint32_t getWidth() const
+		const glm::uvec2& getSize() const
 		{
-			return mWidth;
+			return mSize;
 		}
 
-		uint32_t getHeight() const
-		{
-			return mHeight;
-		}
-
-		const std::vector<float>& getData() const
+		const std::vector<uint16_t>& getData() const
 		{
 			return mData;
 		}
@@ -38,9 +34,11 @@ namespace Trinity
 		virtual void destroy() override;
 		virtual bool write() override;
 
-		virtual bool load(const std::string& fileName, float heightScale);
-		virtual bool load(const std::string& fileName, uint32_t width, uint32_t height, float heightScale);
-		virtual void smooth();
+		virtual uint16_t getHeight(uint32_t x, uint32_t z) const;
+		virtual glm::uvec2 getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ);
+
+		virtual void setSize(const glm::uvec2& size);
+		virtual void setData(std::vector<uint16_t>&& data);
 
 		virtual std::type_index getType() const override;
 
@@ -51,8 +49,7 @@ namespace Trinity
 
 	protected:
 
-		uint32_t mWidth{ 0 };
-		uint32_t mHeight{ 0 };
-		std::vector<float> mData;
+		glm:uvec2 mSize{ 0 };
+		std::vector<uint16_t> mData;
 	};
 }

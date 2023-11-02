@@ -21,109 +21,36 @@ namespace Trinity
 		return Resource::write();
 	}
 
-	bool HeightMap::load(const std::string& fileName, float heightScale)
+	uint16_t HeightMap::getHeight(uint32_t x, uint32_t z) const
 	{
-		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
-		if (!file)
-		{
-			LogError("FileSystem::openFile() failed for '%s'", fileName.c_str());
-			return false;
-		}
-
-		FileReader reader(*file);
-		std::vector<uint8_t> buffer(reader.getSize());		
-		reader.read(buffer.data(), reader.getSize());
-
-		int32_t width{ 0 };
-		int32_t height{ 0 };
-
-		auto* image = stbi_load_from_memory(buffer.data(), reader.getSize(), 
-			&width, &height, nullptr, STBI_grey);
-
-		if (!image)
-		{
-			LogError("stbi_load_from_memory() failed for '%s'", fileName.c_str());
-			return false;
-		}
-
-		mData.resize(width * height);
-		for (int32_t idx = 0; idx < width * height; idx++)
-		{
-			mData[idx] = (image[idx] / 255.0f) * heightScale;
-		}
-
-		stbi_image_free(image);
-
-		mWidth = (uint32_t)width;
-		mHeight = (uint32_t)height;
-
-		return true;
+		return mData[y * mSize.x + x];
 	}
 
-	bool HeightMap::load(const std::string& fileName, uint32_t width, uint32_t height, float heightScale)
+	glm::uvec2 HeightMap::getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ)
 	{
-		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
-		if (!file)
+		glm::uvec2 height{ 65535, 0 };
+
+		for (uint32_t rz = 0; rz < sizeZ; rz++)
 		{
-			LogError("FileSystem::openFile() failed for '%s'", fileName.c_str());
-			return false;
-		}
-
-		FileReader reader(*file);
-		std::vector<uint8_t> buffer(reader.getSize());
-
-		reader.read(buffer.data(), reader.getSize());
-		mData.resize(width * height);
-
-		for (uint32_t idx = 0; idx < width * height; idx++)
-		{
-			mData[idx] = (buffer[idx] / 255.0f) * heightScale;
-		}
-
-		mWidth = width;
-		mHeight = height;
-
-		return true;
-	}
-
-	void HeightMap::smooth()
-	{
-		auto inBounds = [this](int32_t i, int32_t j)
-		{
-			return i >= 0 && i < (int32_t)mWidth &&
-				j >= 0 && j < (int32_t)mWidth;
-		};
-
-		auto average = [this, &inBounds](int32_t i, int32_t j)
-		{
-			float avg = 0.0f;
-			float num = 0.0f;
-
-			for (int32_t m = i - 1; m <= i + 1; m++)
+			auto* scanLine = &mData[x + (rz + z) * mSize.x];
+			for (uint32_t rx = 0; rx < sizeX; rx++)
 			{
-				for (int32_t n = j - 1; n <= j + 1; n++)
-				{
-					if (inBounds(m, n))
-					{
-						avg += mData[m * mWidth + n];
-						num += 1.0f;
-					}
-				}
-			}
-
-			return avg / num;
-		};
-
-		std::vector<float> dest(mData.size());
-		for (uint32_t idx = 0; idx < mHeight; idx++)
-		{
-			for (uint32_t jdx = 0; jdx < mWidth; jdx++)
-			{
-				dest[idx * mWidth + jdx] = average(idx, jdx);
+				height.x = std::min(height.x, scanLine[rx]);
+				height.z = std::max(height.y, scanLine[rz]);
 			}
 		}
 
-		mData = std::move(dest);
+		return height;
+	}
+
+	void HeightMap::setSize(const glm::uvec2& size)
+	{
+		mSize = size;
+	}
+
+	void HeightMap::setData(std::vector<uint16_t>&& data)
+	{
+		mData = std::move(data);
 	}
 
 	std::type_index HeightMap::getType() const
@@ -138,8 +65,7 @@ namespace Trinity
 			return false;
 		}
 
-		reader.read(&mWidth);
-		reader.read(&mHeight);
+		reader.read(&mSize);
 		reader.readVector(mData);
 		
 		return true;
@@ -152,8 +78,7 @@ namespace Trinity
 			return false;
 		}
 
-		writer.write(&mWidth);
-		writer.write(&mHeight);
+		writer.write(&mSize);
 		writer.writeVector(mData);
 
 		return true;
