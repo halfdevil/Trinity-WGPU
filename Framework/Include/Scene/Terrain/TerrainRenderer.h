@@ -31,7 +31,6 @@ namespace Trinity
 	{
 	public:
 
-		static constexpr uint32_t kMaxGridMesh = 7;
 		static constexpr uint32_t kMaxSelectionNodes = 4096;
 		static constexpr uint32_t kSceneBindGroupIndex = 0;
 		static constexpr uint32_t kMaterialBindGroupIndex = 1;
@@ -125,7 +124,6 @@ namespace Trinity
 	protected:
 
 		SceneData mSceneData;
-		QuadBufferData mQuadBufferData;
 		std::vector<LightData> mLights;
 		std::unique_ptr<SelectedLOD> mSelectedLOD{ nullptr };
 		std::unique_ptr<QuadTree> mQuadTree{ nullptr };
