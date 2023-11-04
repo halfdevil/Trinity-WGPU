@@ -1,0 +1,25 @@
+{
+  "mapDims": {
+    "minX": -1024.0,
+    "minY": -1024.0,
+    "minZ": 0.0,
+    "sizeX": 2048.0,
+    "sizeY": 2048.0,
+    "sizeZ": 512.0
+  },
+  "size": 2048,
+  "leafNodeSize": 8,
+  "gridResolutionMult": 4,
+  "numLODs": 8,
+  "lodLevelDistanceRatio": 2.0,
+  "heightMap": "/Assets/Terrain/terrain.raw",
+  "blendMap": "/Assets/Terrain/Images/blend.png",
+  "layerMaps": [
+    "/Assets/Terrain/Images/grass.png",
+    "/Assets/Terrain/Images/darkdirt.png",
+    "/Assets/Terrain/Images/lightdirt.png",
+    "/Assets/Terrain/Images/stone.png",
+    "/Assets/Terrain/Images/snow.png"
+  ],
+  "output": "/Assets/Terrain/terrain.ttrn"
+}

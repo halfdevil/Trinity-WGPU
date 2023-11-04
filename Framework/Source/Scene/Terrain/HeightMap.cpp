@@ -1,4 +1,6 @@
 #include "Scene/Terrain/HeightMap.h"
+#include "Scene/Terrain/Terrain.h"
+#include "Graphics/Texture2D.h"
 #include "VFS/FileSystem.h"
 #include "Core/Logger.h"
 #include <stb_image.h>
@@ -21,26 +23,85 @@ namespace Trinity
 		return Resource::write();
 	}
 
-	uint16_t HeightMap::getHeight(uint32_t x, uint32_t z) const
+	bool HeightMap::load(const std::string& fileName)
 	{
-		return mData[y * mSize.x + x];
+		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for '%s'", fileName.c_str());
+			return false;
+		}
+
+		FileReader reader(*file);
+		std::vector<uint8_t> buffer(reader.getSize());
+		reader.read(buffer.data(), reader.getSize());
+		
+		int32_t width{ 0 };
+		int32_t height{ 0 };
+
+		auto* image = stbi_load_from_memory(buffer.data(), reader.getSize(),
+			&width, &height, nullptr, STBI_grey);
+		if (!image)
+		{
+			LogError("stbi_load_from_memory() failed for '%s'", fileName.c_str());
+			return false;
+		}
+
+		mData.resize(width * height);
+		for (int32_t idx = 0; idx < width * height; idx++)
+		{
+			mData[idx] = image[idx] * 257.0f;
+		}
+
+		stbi_image_free(image);
+		mSize = { width, height };
+		
+		return true;
 	}
 
-	glm::uvec2 HeightMap::getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ)
+	bool HeightMap::load(const std::string& fileName, uint32_t width, uint32_t height)
 	{
-		glm::uvec2 height{ 65535, 0 };
+		auto file = FileSystem::get().openFile(fileName, FileOpenMode::OpenRead);
+		if (!file)
+		{
+			LogError("FileSystem::openFile() failed for '%s'", fileName.c_str());
+			return false;
+		}
+
+		FileReader reader(*file);
+		std::vector<uint8_t> buffer(reader.getSize());
+		reader.read(buffer.data(), reader.getSize());
+
+		mData.resize(width * height);
+		for (uint32_t idx = 0; idx < width * height; idx++)
+		{
+			mData[idx] = buffer[idx] * 257.0f;
+		}
+
+		mSize = { width, height };
+		return true;
+	}
+
+	uint16_t HeightMap::getHeight(uint32_t x, uint32_t z) const
+	{
+		return mData[z * mSize.x + x];
+	}
+
+	void HeightMap::getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ,
+		uint16_t& minZ, uint16_t& maxZ) const
+	{
+		minZ = 65535;
+		maxZ = 0;
 
 		for (uint32_t rz = 0; rz < sizeZ; rz++)
 		{
 			auto* scanLine = &mData[x + (rz + z) * mSize.x];
 			for (uint32_t rx = 0; rx < sizeX; rx++)
 			{
-				height.x = std::min(height.x, scanLine[rx]);
-				height.z = std::max(height.y, scanLine[rz]);
+				minZ = std::min(minZ, scanLine[rx]);
+				maxZ = std::max(maxZ, scanLine[rz]);
 			}
 		}
-
-		return height;
 	}
 
 	void HeightMap::setSize(const glm::uvec2& size)

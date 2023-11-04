@@ -18,3 +18,5 @@ set(LINK_LIBRARIES "Trinity-Framework")
 target_include_directories("Trinity-TerrainTool" PRIVATE ${INCLUDE_DIRS})
 target_compile_definitions("Trinity-TerrainTool" PRIVATE ${COMPILE_DEFS})
 target_link_libraries("Trinity-TerrainTool" PRIVATE ${LINK_LIBRARIES} ${LINK_OPTIONS})
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/TerrainConfig.json" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)

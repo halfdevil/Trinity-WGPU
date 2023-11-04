@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Math/BoundingSphere.h"
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -31,9 +32,15 @@ namespace Trinity
 		void combinePoint(const glm::vec3& p);
 		void combineBox(const BoundingBox& other);
 
+		float getMinDistanceFromPointSq(const glm::vec3& p);
+		float getMaxDistanceFromPointSq(const glm::vec3& p);
+
 		bool isPointInside(const glm::vec3& p) const;
 		bool isIntersecting(const BoundingBox& other) const;
 		bool contains(const BoundingBox& other) const;
+
+		bool isIntersectSphere(const BoundingSphere& s);
+		bool isInsideSphere(const BoundingSphere& s);
 
 	public:
 

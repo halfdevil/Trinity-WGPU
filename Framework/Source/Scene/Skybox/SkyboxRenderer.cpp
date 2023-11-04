@@ -72,7 +72,7 @@ namespace Trinity
 				mSceneData.sceneBindGroupLayout,
 				materialLayout
 			},
-			.vertexBuffers = { skybox->getVertexBuffer() },
+			.vertexLayouts = { skybox->getVertexLayout() },
 			.colorTargets = {{
 				.format = swapChain.getColorFormat()
 			}},

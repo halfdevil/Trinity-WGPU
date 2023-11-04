@@ -8,6 +8,7 @@ namespace Trinity
 {
 	class Terrain;
 	class ResourceCache;
+	struct MapDimension;
 
 	class TerrainImporter
 	{
@@ -24,10 +25,12 @@ namespace Trinity
 
 		Terrain* importTerrain(
 			const std::string& outputFileName,
+			const MapDimension& mapDims,
 			uint32_t size,
-			uint32_t patchSize,
-			float heightScale,
-			float cellSpacing,
+			uint32_t numLODs,
+			uint32_t leafNodeSize,
+			uint32_t gridResolutionMult,
+			float lodDistanceRatio,
 			const std::string& heightMapFileName,
 			const std::string& blendMapFileName,
 			const std::vector<std::string>& layerFileNames,

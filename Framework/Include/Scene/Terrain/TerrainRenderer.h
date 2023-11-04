@@ -4,10 +4,13 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <memory>
 
 namespace Trinity
 {
 	class Terrain;
+	class QuadTree;
+	class QuadGridMesh;
 	class Material;
 	class BindGroupLayout;
 	class BindGroup;
@@ -16,15 +19,20 @@ namespace Trinity
 	class UniformBuffer;
 	class StorageBuffer;
 	class ResourceCache;
+	class VertexLayout;
 	class Node;
 	class Scene;
 	class Camera;
 	class Light;
+	struct SelectedLOD;
+	struct SelectedNode;
 
 	class TerrainRenderer
 	{
 	public:
 
+		static constexpr uint32_t kMaxGridMesh = 7;
+		static constexpr uint32_t kMaxSelectionNodes = 4096;
 		static constexpr uint32_t kSceneBindGroupIndex = 0;
 		static constexpr uint32_t kMaterialBindGroupIndex = 1;
 
@@ -35,6 +43,23 @@ namespace Trinity
 			glm::vec4 direction;
 			glm::vec2 info;
 			glm::vec2 padding;
+		};
+
+		struct TerrainBufferData
+		{
+			glm::vec4 terrainScale{ 0.0f };
+			glm::vec4 terrainOffset{ 0.0f };
+			glm::vec2 quadWorldMax{ 0.0f };
+			glm::vec2 worldToTextureScale{ 0.0f };
+			glm::vec4 gridDimension{ 0.0f };
+			glm::vec4 heightMapTextureInfo{ 0.0f };
+		};
+
+		struct QuadBufferData
+		{
+			glm::vec4 morphConsts{ 0.0f };
+			glm::vec4 quadOffset{ 0.0f };
+			glm::vec4 quadScale{ 0.0f };
 		};
 
 		struct SceneBufferData
@@ -53,14 +78,17 @@ namespace Trinity
 
 		struct SceneData
 		{
-			Terrain* terrain{ nullptr };
 			Scene* scene{ nullptr };
+			Terrain* terrain{ nullptr };
 			Camera* camera{ nullptr };
 			ResourceCache* cache{ nullptr };
+			VertexLayout* gridMeshLayout{ nullptr };
 			BindGroup* sceneBindGroup{ nullptr };
 			BindGroup* materialBindGroup{ nullptr };
 			BindGroupLayout* sceneBindGroupLayout{ nullptr };
 			UniformBuffer* sceneBuffer{ nullptr };
+			UniformBuffer* terrainBuffer{ nullptr };
+			UniformBuffer* quadBuffer{ nullptr };
 			StorageBuffer* lightsBuffer{ nullptr };
 			RenderPipeline* pipeline{ nullptr };
 		};
@@ -76,18 +104,31 @@ namespace Trinity
 
 		virtual bool prepare(Terrain& terrain, Scene& scene, ResourceCache& cache);
 		virtual void setCamera(const std::string& nodeName);
-		virtual void draw(RenderPass& renderPass);
+		virtual void draw(const RenderPass& renderPass);
 
 	protected:
 
+		virtual bool setupPipeline();
 		virtual bool setupSceneData();
-		virtual bool updateSceneData();
 		virtual bool setupLights();
-		virtual bool updateLightData(Light* light, uint32_t index);
+		virtual bool setupTerrainData();
+		virtual bool setupQuadData();
+		virtual bool setupGridMesh();
+		virtual bool setupQuadTree();
+
+		virtual void updateSceneData();
+		virtual void updateLights();
+		virtual void updateTerrainData(const TerrainBufferData& bufferData);
+		virtual void updateQuadData(const QuadBufferData& bufferData);
+		virtual void drawSelection(const RenderPass& renderPass, uint32_t lodLevel);
 
 	protected:
 
 		SceneData mSceneData;
+		QuadBufferData mQuadBufferData;
 		std::vector<LightData> mLights;
+		std::unique_ptr<SelectedLOD> mSelectedLOD{ nullptr };
+		std::unique_ptr<QuadTree> mQuadTree{ nullptr };
+		std::unique_ptr<QuadGridMesh> mGridMesh{ nullptr };
 	};
 }

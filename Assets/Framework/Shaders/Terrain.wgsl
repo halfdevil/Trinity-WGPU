@@ -17,6 +17,23 @@ struct Light
   padding: vec2<f32>
 };
 
+struct TerrainData
+{
+  scale: vec4<f32>,
+  offset: vec4<f32>,
+  quad_world_max: vec2<f32>,
+  world_to_texture_scale: vec2<f32>,
+  grid_dimension: vec4<f32>,
+  height_map_texture_info: vec4<f32>
+};
+
+struct QuadData
+{
+  morph_consts: vec4<f32>,
+  offset: vec4<f32>,
+  scale: vec4<f32>
+};
+
 struct TerrainMaterial
 {
     base_color_factor: vec4<f32>,
@@ -31,83 +48,108 @@ var<uniform> per_frame_data: PerFrameData;
 @binding(1)
 var<storage, read> lights: array<Light>;
 
+@group(0)
+@binding(2)
+var<uniform> terrain_data: TerrainData;
+
+@group(0)
+@binding(3)
+var<uniform> quad_data: QuadData;
+
 @group(1)
 @binding(0)
 var<uniform> material: TerrainMaterial;
 
-#ifdef HAS_BLEND_MAP_TEXTURE
+#ifdef HAS_HEIGHT_MAP_TEXTURE
 @group(1)
 @binding(1)
-var blend_map_sampler: sampler;
+var height_map_sampler: sampler;
 
 @group(1)
 @binding(2)
+var height_map_texture: texture_2d<f32>;
+#endif
+
+#ifdef HAS_NORMAL_MAP_TEXTURE
+@group(1)
+@binding(3)
+var normal_map_sampler: sampler;
+
+@group(1)
+@binding(4)
+var normal_map_texture: texture_2d<f32>;
+#endif
+
+#ifdef HAS_BLEND_MAP_TEXTURE
+@group(1)
+@binding(5)
+var blend_map_sampler: sampler;
+
+@group(1)
+@binding(6)
 var blend_map_texture: texture_2d<f32>;
 #endif
 
 #ifdef HAS_LAYER1_TEXTURE
 @group(1)
-@binding(3)
+@binding(7)
 var layer1_sampler: sampler;
 
 @group(1)
-@binding(4)
+@binding(8)
 var layer1_texture: texture_2d<f32>;
 #endif
 
 #ifdef HAS_LAYER2_TEXTURE
 @group(1)
-@binding(5)
+@binding(9)
 var layer2_sampler: sampler;
 
 @group(1)
-@binding(6)
+@binding(10)
 var layer2_texture: texture_2d<f32>;
 #endif
 
 #ifdef HAS_LAYER3_TEXTURE
 @group(1)
-@binding(7)
+@binding(11)
 var layer3_sampler: sampler;
 
 @group(1)
-@binding(8)
+@binding(12)
 var layer3_texture: texture_2d<f32>;
 #endif
 
 #ifdef HAS_LAYER4_TEXTURE
 @group(1)
-@binding(9)
+@binding(13)
 var layer4_sampler: sampler;
 
 @group(1)
-@binding(10)
+@binding(14)
 var layer4_texture: texture_2d<f32>;
 #endif
 
 #ifdef HAS_LAYER5_TEXTURE
 @group(1)
-@binding(11)
+@binding(15)
 var layer5_sampler: sampler;
 
 @group(1)
-@binding(12)
+@binding(16)
 var layer5_texture: texture_2d<f32>;
 #endif
 
 struct VertexInput
 {
-  @location(0) position: vec3<f32>,
-  @location(1) normal: vec3<f32>,
-  @location(2) uv: vec2<f32>
+  @location(0) position: vec3<f32>
 };
 
 struct FragmentInput
 {
   @builtin(position) clip_position: vec4<f32>,
   @location(0) position: vec3<f32>,
-  @location(1) uv: vec2<f32>,
-  @location(2) normal: vec3<f32>
+  @location(1) uv: vec2<f32>
 };
 
 struct FragmentOutput
@@ -115,7 +157,59 @@ struct FragmentOutput
     @location(0) frag_color : vec4<f32>
 };
 
-fn normal(in_pos: vec3<f32>, in_normal: vec3<f32>, in_uv: vec2<f32>) -> vec3<f32>
+fn get_base_vertex_pos(in_pos: vec4<f32>) -> vec4<f32>
+{
+  var ret = in_pos * quad_data.scale + quad_data.offset;
+  ret.x = min(ret.x, terrain_data.quad_world_max.x);
+  ret.y = min(ret.y, terrain_data.quad_world_max.y);
+
+  return ret;
+}
+
+fn morph_vertex(in_pos: vec4<f32>, vertex: vec2<f32>, morph_lerp_k: f32) -> vec2<f32>
+{
+  var frac_part = (fract(in_pos.xy * vec2<f32>(terrain_data.grid_dimension.y, terrain_data.grid_dimension.y)) * 
+    vec2<f32>(terrain_data.grid_dimension.z, terrain_data.grid_dimension.z)) * quad_data.scale.xy;
+  
+  return vertex.xy - frac_part * morph_lerp_k;
+}
+
+fn calculate_uv(vertex: vec2<f32>) -> vec2<f32>
+{
+  var uv = (vertex.xy - terrain_data.offset.xy) / terrain_data.scale.xy;
+  uv *= terrain_data.world_to_texture_scale;
+  uv *= terrain_data.height_map_texture_info.zw * 0.5;
+
+  return uv;
+}
+
+fn sample_heightmap(uv : vec2<f32>) -> f32
+{
+  let texture_size = terrain_data.height_map_texture_info.xy;
+  let texel_size = terrain_data.height_map_texture_info.zw;
+
+  var n_uv = uv * texture_size - vec2<f32>(0.5, 0.5);
+  var uvf = floor(n_uv);
+  var f = n_uv - uvf;
+  n_uv = (uvf + vec2<f32>(0.5, 0.5)) * texel_size;
+
+  var c1 = u32(n_uv.x * texture_size.x);
+  var c2 = u32(n_uv.y * texture_size.y);
+  var c3 = u32((n_uv.x + texel_size.x) * texture_size.x);
+  var c4 = u32((n_uv.y + texel_size.y) * texture_size.y);
+
+  var t00 = textureLoad(height_map_texture, vec2<u32>(c1, c2), 0).x;
+  var t10 = textureLoad(height_map_texture, vec2<u32>(c3, c2), 0).x;
+  var ta = mix(t00, t10, f.x);
+
+  var t01 = textureLoad(height_map_texture, vec2<u32>(c1, c4), 0).x;
+  var t11 = textureLoad(height_map_texture, vec2<u32>(c3, c4), 0).x;
+  var tb = mix(t01, t11, f.x);
+
+  return mix(ta, tb, f.y);
+}
+
+fn normal(in_pos: vec3<f32>, in_uv: vec2<f32>) -> vec3<f32>
 {
   var pos_dx = dpdx(in_pos);
   var pos_dy = dpdy(in_pos);
@@ -123,7 +217,10 @@ fn normal(in_pos: vec3<f32>, in_normal: vec3<f32>, in_uv: vec2<f32>) -> vec3<f32
   var st2 = dpdy(vec3<f32>(in_uv, 0.0));
   var t = (st2.y * pos_dx - st1.y * pos_dy) / (st1.x * st2.y - st2.x * st1.y);
   
-  var n = normalize(in_normal);
+  var n = textureSample(normal_map_texture, normal_map_sampler, in_uv).rgb;
+  n = n * vec3<f32>(2.0, 2.0, 0.0) - vec3<f32>(1.0, 1.0, 0.0);
+  n.z = sqrt(1.0 - n.x * n.x - n.y * n.y);
+
   t = normalize(t - n * dot(n, t));
 
   var b = normalize(cross(n, t));
@@ -154,11 +251,24 @@ fn apply_directional_light(light: Light, normal: vec3<f32>) -> vec3<f32>
 fn vs_main(in: VertexInput) -> FragmentInput
 {
   var out: FragmentInput;
+
+  var vertex = get_base_vertex_pos(vec4<f32>(in.position, 1.0));
+  var pre_uv = calculate_uv(vertex.xy);
+  vertex.z = sample_heightmap(pre_uv);
+
+  var eye_dist = distance(vertex, vec4<f32>(per_frame_data.camera_pos, 1.0));
+  var morph_lerp_k = 1.0f - clamp(quad_data.morph_consts.z - eye_dist * quad_data.morph_consts.w, 0.0, 1.0);
+  var morph_vert = morph_vertex(vec4<f32>(in.position, 1.0), vertex.xy, morph_lerp_k);
+  vertex.x = morph_vert.x;
+  vertex.y = morph_vert.y;
+
+  var uv = calculate_uv(vertex.xy);
+  vertex.z = sample_heightmap(uv);
+  vertex.w = 1.0;
   
-  out.position = in.position;
-  out.normal = in.normal;
-  out.uv = in.uv;  
-  out.clip_position = per_frame_data.proj * per_frame_data.view * vec4<f32>(in.position, 1.0);
+  out.position = vertex.xyz;
+  out.uv = uv;  
+  out.clip_position = per_frame_data.proj * per_frame_data.view * vertex;
 
   return out;
 }
@@ -201,8 +311,7 @@ fn fs_main(in: FragmentInput) -> FragmentOutput
     base_color = material.base_color_factor;
 #endif
 
-    var n = normal(in.position, in.normal, in.uv);
-
+    var n = normal(in.position, in.uv);
     for (var i: u32 = 0; i < per_frame_data.num_lights; i++)
     {
         var light = lights[i];

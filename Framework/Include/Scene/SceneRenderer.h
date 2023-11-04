@@ -103,7 +103,7 @@ namespace Trinity
 		bool updateMeshData(Mesh* mesh, Node* node, RenderData& renderData);
 
 		bool updateSceneData();
-		bool setupLights();
+		bool updateLights();
 		bool updateLightData(Light* light, uint32_t index);
 
 		void draw(RenderPass& renderPass, RenderData& renderer);

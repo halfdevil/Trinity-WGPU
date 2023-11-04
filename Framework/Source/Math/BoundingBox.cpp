@@ -79,6 +79,35 @@ namespace Trinity
 		combinePoint(other.max);
 	}
 
+	float BoundingBox::getMinDistanceFromPointSq(const glm::vec3& p)
+	{
+		float dist{ 0.0f };
+
+		for (uint32_t idx = 0; idx < 3; idx++)
+		{
+			if (p[idx] < min[idx])
+			{
+				float d{ p[idx] - min[idx] };
+				dist += d * d;
+			}
+		}
+
+		return dist;
+	}
+
+	float BoundingBox::getMaxDistanceFromPointSq(const glm::vec3& p)
+	{
+		float dist{ 0.0f };
+
+		for (uint32_t idx = 0; idx < 3; idx++)
+		{
+			float k = std::max(std::abs(p[idx] - min[idx]), std::abs(p[idx] - max[idx]));
+			dist += k * k;
+		}
+
+		return dist;
+	}
+
 	bool BoundingBox::isPointInside(const glm::vec3& p) const
 	{
 		return p.x >= min.x && p.x <= max.x &&
@@ -98,6 +127,16 @@ namespace Trinity
 		return min.x <= other.min.x && max.x >= other.max.x &&
 			min.y <= other.min.y && max.y >= other.max.y &&
 			min.z <= other.min.z && max.z >= other.max.z;
+	}
+
+	bool BoundingBox::isIntersectSphere(const BoundingSphere& s)
+	{
+		return getMinDistanceFromPointSq(s.center) <= s.radius * s.radius;
+	}
+
+	bool BoundingBox::isInsideSphere(const BoundingSphere& s)
+	{
+		return getMaxDistanceFromPointSq(s.center) <= s.radius * s.radius;
 	}
 
 	BoundingBox BoundingBox::combineBoxes(const std::vector<BoundingBox>& boxes)

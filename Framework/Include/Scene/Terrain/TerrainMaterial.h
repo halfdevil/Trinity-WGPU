@@ -4,6 +4,9 @@
 
 namespace Trinity
 {
+	class HeightMap;
+	struct MapDimension;
+
 	class TerrainMaterial : public Material
 	{
 	public:
@@ -33,6 +36,12 @@ namespace Trinity
 		virtual bool create(const std::string& fileName, ResourceCache& cache, bool loadContent = true) override;
 		virtual void destroy() override;
 		virtual bool write() override;
+
+		virtual bool addHeightMapTexture(const std::vector<float>& heightMapData, const glm::uvec2& size, 
+			const MapDimension& mapDims, ResourceCache& cache);
+
+		virtual bool addNormalMapTexture(const std::vector<float>& heightMapData, const glm::uvec2& size, 
+			const MapDimension& mapDims, ResourceCache& cache, bool wrapEdges = false);
 
 		virtual void setBaseColorFactor(const glm::vec4& baseColorFactor);
 		virtual void setLayerScale(const glm::vec4& layerScale);

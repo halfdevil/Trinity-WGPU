@@ -13,13 +13,11 @@ namespace Trinity
     bool VertexBuffer::create(const VertexLayout& vertexLayout, uint32_t numVertices, const void* data)
     {
         const wgpu::Device& device = GraphicsDevice::get();
-
-        mVertexLayout = &vertexLayout;
         mNumVertices = numVertices;
 
         wgpu::BufferDescriptor bufferDescriptor{};
         bufferDescriptor.usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst;
-        bufferDescriptor.size = mVertexLayout->getSize() * mNumVertices;
+        bufferDescriptor.size = vertexLayout.getSize() * mNumVertices;
         bufferDescriptor.mappedAtCreation = false;
 
         mHandle = device.CreateBuffer(&bufferDescriptor);
@@ -29,17 +27,9 @@ namespace Trinity
             return false;
         }
 
-        const auto& vertexAttributes = mVertexLayout->getAttributes();
-        mBufferLayout = {
-            .arrayStride = mVertexLayout->getSize(),
-            .stepMode = wgpu::VertexStepMode::Vertex,
-            .attributeCount = static_cast<uint32_t>(vertexAttributes.size()),
-            .attributes = vertexAttributes.data()
-        };
-
         if (data)
         {
-            write(0, mVertexLayout->getSize() * mNumVertices, data);
+            write(0, vertexLayout.getSize() * mNumVertices, data);
         }
 
         return true;

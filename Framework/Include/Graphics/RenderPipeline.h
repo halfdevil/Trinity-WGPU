@@ -52,7 +52,7 @@ namespace Trinity
         std::string vsEntry{ kDefaultVSEntry };
         std::string fsEntry{ kDefaultFSEntry };
         std::vector<const BindGroupLayout*> bindGroupLayouts;
-        std::vector<const VertexBuffer*> vertexBuffers;
+        std::vector<const VertexLayout*> vertexLayouts;
         std::vector<ColorTargetState> colorTargets;
         PrimitiveState primitive;
         MultisampleState multisample;

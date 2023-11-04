@@ -26,6 +26,11 @@ namespace Trinity
 			return mMaterial;
 		}
 
+		VertexLayout* getVertexLayout() const
+		{
+			return mVertexLayout;
+		}
+
 		VertexBuffer* getVertexBuffer() const
 		{
 			return mVertexBuffer;
@@ -60,6 +65,7 @@ namespace Trinity
 		virtual std::string getTypeStr() const override;
 
 		virtual void setMaterial(Material& material);
+		virtual void setVertexLayout(VertexLayout& vertexLayout);
 		virtual void setVertexBuffer(VertexBuffer& vertexBuffer);
 		virtual void setIndexBuffer(IndexBuffer& indexBuffer);
 		virtual void setNumVertices(uint32_t numVertices);
@@ -73,6 +79,7 @@ namespace Trinity
 	protected:
 
 		Material* mMaterial{ nullptr };
+		VertexLayout* mVertexLayout{ nullptr };
 		VertexBuffer* mVertexBuffer{ nullptr };
 		IndexBuffer* mIndexBuffer{ nullptr };
 		uint32_t mNumVertices{ 0 };

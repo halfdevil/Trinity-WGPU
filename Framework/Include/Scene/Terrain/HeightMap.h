@@ -7,6 +7,9 @@
 
 namespace Trinity
 {
+	class Texture2D;
+	struct MapDimension;
+
 	class HeightMap : public Resource
 	{
 	public:
@@ -34,8 +37,12 @@ namespace Trinity
 		virtual void destroy() override;
 		virtual bool write() override;
 
+		virtual bool load(const std::string& fileName);
+		virtual bool load(const std::string& fileName, uint32_t width, uint32_t height);
+
 		virtual uint16_t getHeight(uint32_t x, uint32_t z) const;
-		virtual glm::uvec2 getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ);
+		virtual void getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ,
+			uint16_t& minZ, uint16_t& maxZ) const;
 
 		virtual void setSize(const glm::uvec2& size);
 		virtual void setData(std::vector<uint16_t>&& data);
@@ -49,7 +56,7 @@ namespace Trinity
 
 	protected:
 
-		glm:uvec2 mSize{ 0 };
+		glm::uvec2 mSize{ 0 };
 		std::vector<uint16_t> mData;
 	};
 }

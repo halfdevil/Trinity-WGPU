@@ -102,6 +102,7 @@ namespace Trinity
 		virtual void setAlphaCutoff(float alphaCutoff);
 		virtual void setAlphaMode(AlphaMode alphaMode);
 		virtual void setShader(Shader& shader);
+		virtual void addShaderDefine(const std::string& define);
 		virtual void setShaderDefines(std::vector<std::string>&& defines);
 
 		virtual void setTexture(const std::string& name, Texture& texture, Sampler& sampler);

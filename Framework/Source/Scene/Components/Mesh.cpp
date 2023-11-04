@@ -48,6 +48,7 @@ namespace Trinity
 			auto subMesh = std::make_unique<SubMesh>();
 			subMesh->setName(mesh.name);
 			subMesh->setMaterial(*materials[mesh.materialIndex]);
+			subMesh->setVertexLayout(*mesh.vertexLayout);
 			subMesh->setVertexBuffer(*mesh.vertexBuffer);
 
 			if (mesh.numIndices > 0)

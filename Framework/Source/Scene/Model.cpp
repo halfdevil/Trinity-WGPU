@@ -207,6 +207,7 @@ namespace Trinity
 				return false;
 			}
 
+			mesh.vertexLayout = vertexLayout.get();
 			mesh.vertexBuffer = vertexBuffer.get();
 			cache.addResource(std::move(vertexBuffer));
 

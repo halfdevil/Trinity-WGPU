@@ -13,50 +13,16 @@
 #include "Core/Image.h"
 #include "Core/ResourceCache.h"
 #include "VFS/FileSystem.h"
+#include "VFS/DiskFile.h"
 #include "CLI/App.hpp"
 #include "CLI/Formatter.hpp"
 #include "CLI/Config.hpp"
 
 namespace Trinity
 {
-	void TerrainTool::setSize(uint32_t size)
+	void TerrainTool::setConfigFileName(const std::string& configFileName)
 	{
-		mSize = size;
-	}
-
-	void TerrainTool::setPatchSize(uint32_t patchSize)
-	{
-		mPatchSize = patchSize;
-	}
-
-	void TerrainTool::setHeightScale(float heightScale)
-	{
-		mHeightScale = heightScale;
-	}
-
-	void TerrainTool::setCellSpacing(float cellSpacing)
-	{
-		mCellSpacing = cellSpacing;
-	}
-
-	void TerrainTool::setOutputFileName(const std::string& fileName)
-	{
-		mOutputFileName = fileName;
-	}
-
-	void TerrainTool::setHeightMapFileName(const std::string& fileName)
-	{
-		mHeightMapFileName = fileName;
-	}
-
-	void TerrainTool::setBlendMapFileName(const std::string& fileName)
-	{
-		mBlendMapFileName = fileName;
-	}
-
-	void TerrainTool::setLayerFileNames(std::vector<std::string>&& fileNames)
-	{
-		mLayerFileNames = fileNames;
+		mConfigFileName = configFileName;
 	}
 
 	void TerrainTool::execute()
@@ -66,23 +32,58 @@ namespace Trinity
 		mResult = true;
 		mShouldExit = true;
 
+		DiskFile configFile;
+		if (!configFile.create(mConfigFileName, mConfigFileName, FileOpenMode::OpenRead))
+		{
+			LogError("PhysicalFile::create() failed for: %s!!", mConfigFileName.c_str());
+			mResult = false;
+			return;
+		}
+
+		FileReader reader(configFile);
+		mConfig = json::parse(reader.readAsString());
+
+		auto mapDimsJson = mConfig["mapDims"];
+		auto outputFileName = mConfig["output"].get<std::string>();
+
+		MapDimension mapDims = {
+			.min = {
+				mapDimsJson["minX"].get<float>(),
+				mapDimsJson["minY"].get<float>(),
+				mapDimsJson["minZ"].get<float>(),
+			},
+			.size = {
+				mapDimsJson["sizeX"].get<float>(),
+				mapDimsJson["sizeY"].get<float>(),
+				mapDimsJson["sizeZ"].get<float>(),
+			}
+		};
+
+		std::vector<std::string> layerMaps;
+		for (auto layerMap : mConfig["layerMaps"])
+		{
+			layerMaps.push_back(layerMap.get<std::string>());
+		}
+
 		auto resourceCache = std::make_unique<ResourceCache>();
 		auto terrain = TerrainImporter().importTerrain(
-			mOutputFileName,
-			mSize,
-			mPatchSize,
-			mHeightScale,
-			mCellSpacing,
-			mHeightMapFileName,
-			mBlendMapFileName,
-			mLayerFileNames,
+			outputFileName,
+			mapDims,
+			mConfig["size"].get<uint32_t>(),
+			mConfig["numLODs"].get<uint32_t>(),
+			mConfig["leafNodeSize"].get<uint32_t>(),
+			mConfig["gridResolutionMult"].get<uint32_t>(),
+			mConfig["lodLevelDistanceRatio"].get<float>(),
+			mConfig["heightMap"].get<std::string>(),
+			mConfig["blendMap"].get<std::string>(),
+			layerMaps,
 			*resourceCache,
 			false
 		);
 
 		if (!terrain)
 		{
-			LogError("TerrainImporter::importTerrain() failed for: %s!!", mOutputFileName.c_str());
+			LogError("TerrainImporter::importTerrain() failed for: %s!!", outputFileName.c_str());
 			mResult = false;
 			return;
 		}
@@ -145,7 +146,7 @@ namespace Trinity
 
 		if (!terrain->write())
 		{
-			LogError("Terrain::write() failed for: %s!!", mOutputFileName.c_str());
+			LogError("Terrain::write() failed for: %s!!", outputFileName.c_str());
 			mResult = false;
 			return;
 		}
@@ -156,36 +157,14 @@ using namespace Trinity;
 
 int main(int argc, char* argv[])
 {
-	CLI::App cliApp{ "Model Converter" };
-	uint32_t size{ 0 };
-	uint32_t patchSize{ 0 };
-	float heightScale{ 0.0f };
-	float cellSpacing{ 0.0f };
-	std::string outputFileName;
-	std::string heightMapFileName;
-	std::string blendMapFileName;
-	std::vector<std::string> layerFileNames;
+	CLI::App cliApp{ "Terrain Tool" };
+	std::string configFileName;
 
-	cliApp.add_option<uint32_t>("-s, --size, size", size, "Size")->required();
-	cliApp.add_option<uint32_t>("-p, --patchSize, patchSize", patchSize, "Size")->required();
-	cliApp.add_option<float>("-t, --heightScale, heightScale", heightScale, "Height Scale")->required();
-	cliApp.add_option<float>("-c, --cellSpacing, cellSpacing", cellSpacing, "Cell Spacing")->required();
-	cliApp.add_option<std::string>("-o, --output, output", outputFileName, "Output Filename")->required();
-	cliApp.add_option<std::string>("-m, --heightMap, heightMap", heightMapFileName, "HeightMap Filename")->required();
-	cliApp.add_option<std::string>("-b, --blendMap, blendMap", blendMapFileName, "BlendMap Filename")->required();
-	cliApp.add_option<std::vector<std::string>>("-l, --layers, layers", layerFileNames, "Layers Filename")->required();
-
+	cliApp.add_option<std::string>("-c, --config, config", configFileName, "Config Filename")->required();
 	CLI11_PARSE(cliApp, argc, argv);
 
 	static TerrainTool app;
-	app.setSize(size);
-	app.setPatchSize(patchSize);
-	app.setHeightScale(heightScale);
-	app.setCellSpacing(cellSpacing);
-	app.setOutputFileName(outputFileName);
-	app.setHeightMapFileName(heightMapFileName);
-	app.setBlendMapFileName(blendMapFileName);
-	app.setLayerFileNames(std::move(layerFileNames));
+	app.setConfigFileName(configFileName);
 
 	if (!app.run(LogLevel::Info))
 	{

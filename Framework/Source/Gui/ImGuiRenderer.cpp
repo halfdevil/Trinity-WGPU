@@ -476,7 +476,7 @@ namespace Trinity
 				mRenderContext.bindGroupLayout,
 				mImageContext.bindGroupLayout
 			},
-			.vertexBuffers = { mRenderContext.vertexBuffer },
+			.vertexLayouts = { mRenderContext.vertexLayout },
 			.colorTargets = {{
 				.format = swapChain.getColorFormat(),
 				.blendState = wgpu::BlendState {

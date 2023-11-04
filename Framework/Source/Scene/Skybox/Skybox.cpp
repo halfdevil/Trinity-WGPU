@@ -126,6 +126,7 @@ namespace Trinity
 			return false;
 		}
 
+		mVertexLayout = vertexLayout.get();
 		mVertexBuffer = vertexBuffer.get();
 		mIndexBuffer = indexBuffer.get();
 

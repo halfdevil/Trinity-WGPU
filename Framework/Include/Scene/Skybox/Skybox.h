@@ -40,6 +40,11 @@ namespace Trinity
 			return mMaterial;
 		}
 
+		VertexLayout* getVertexLayout() const
+		{
+			return mVertexLayout;
+		}
+
 		VertexBuffer* getVertexBuffer() const
 		{
 			return mVertexBuffer;
@@ -72,6 +77,7 @@ namespace Trinity
 		float mSize{ 1.0f };
 		glm::vec3 mPosition{ 0.0f };
 		Material* mMaterial{ nullptr };
+		VertexLayout* mVertexLayout{ nullptr };
 		VertexBuffer* mVertexBuffer{ nullptr };
 		IndexBuffer* mIndexBuffer{ nullptr };
 	};

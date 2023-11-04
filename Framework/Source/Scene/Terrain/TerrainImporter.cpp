@@ -39,7 +39,7 @@ namespace Trinity
 	}
 
 	static std::unique_ptr<HeightMap> createHeightMap(const std::string& heightMapPath, ResourceCache& cache,
-		const std::string& outputPath, uint32_t size, float heightScale, bool loadContent = true)
+		const std::string& outputPath, uint32_t size, bool loadContent = true)
 	{
 		fs::path fileName(outputPath);
 		fileName.append(fs::path(heightMapPath).filename().string());
@@ -56,7 +56,7 @@ namespace Trinity
 
 		if (isRAW)
 		{
-			if (!heightMap->load(heightMapPath, size, size, heightScale))
+			if (!heightMap->load(heightMapPath, size, size))
 			{
 				LogError("HeightMap::load() failed for: '%s'", fileName.string().c_str());
 				return nullptr;
@@ -64,7 +64,7 @@ namespace Trinity
 		}
 		else
 		{
-			if (!heightMap->load(heightMapPath, heightScale))
+			if (!heightMap->load(heightMapPath))
 			{
 				LogError("HeightMap::load() failed for: '%s'", fileName.string().c_str());
 				return nullptr;
@@ -253,10 +253,12 @@ namespace Trinity
 	}
 
 	static std::unique_ptr<Terrain> createTerrain(
+		const MapDimension& mapDims,
 		uint32_t size,
-		uint32_t patchSize,
-		float heightScale,
-		float cellSpacing,
+		uint32_t numLODs,
+		uint32_t leafNodeSize,
+		uint32_t gridResolutionMult,
+		float lodDistanceRatio,
 		const std::string& outputFileName,
 		const std::string& heightMapFileName,
 		const std::string& blendMapFileName,
@@ -270,7 +272,7 @@ namespace Trinity
 		bool loadContent = true
 	)
 	{
-		auto heightMap = createHeightMap(heightMapFileName, cache, outputPath, size, heightScale, loadContent);
+		auto heightMap = createHeightMap(heightMapFileName, cache, outputPath, size, loadContent);
 		if (!heightMap)
 		{
 			LogError("createHeightMap() failed for: '%s'", heightMapFileName.c_str());
@@ -293,21 +295,13 @@ namespace Trinity
 			return nullptr;
 		}
 
-		if (loadContent)
-		{
-			if (!terrain->load(cache, *heightMap, *material, patchSize, cellSpacing))
-			{
-				LogError("Terrain::load() failed for: '%s'", outputFileName.c_str());
-				return nullptr;
-			}
-		}
-		else
-		{
-			terrain->setPatchSize(patchSize);
-			terrain->setCellSpacing(cellSpacing);
-			terrain->setHeightMap(*heightMap);
-			terrain->setMaterial(*material);
-		}
+		terrain->setMapDimension(mapDims);
+		terrain->setNumLODs(numLODs);
+		terrain->setLeafNodeSize(leafNodeSize);
+		terrain->setGridResolutionMult(gridResolutionMult);
+		terrain->setLODDistanceRatio(lodDistanceRatio);
+		terrain->setHeightMap(*heightMap);
+		terrain->setMaterial(*material);
 
 		cache.addResource(std::move(heightMap));
 		cache.addResource(std::move(material));
@@ -316,11 +310,13 @@ namespace Trinity
 	}
 
 	Terrain* TerrainImporter::importTerrain(
-		const std::string& outputFileName, 
-		uint32_t size, 
-		uint32_t patchSize, 
-		float heightScale, 
-		float cellSpacing, 
+		const std::string& outputFileName,
+		const MapDimension& mapDims,
+		uint32_t size,
+		uint32_t numLODs,
+		uint32_t leafNodeSize,
+		uint32_t gridResolutionMult,
+		float lodDistanceRatio,
 		const std::string& heightMapFileName, 
 		const std::string& blendMapFileName, 
 		const std::vector<std::string>& layerFileNames, 
@@ -351,10 +347,12 @@ namespace Trinity
 		fileSystem.createDirs(materialsPath.string());
 
 		auto terrain = createTerrain(
+			mapDims,
 			size,
-			patchSize,
-			heightScale,
-			cellSpacing,
+			numLODs,
+			leafNodeSize,
+			gridResolutionMult,
+			lodDistanceRatio,
 			outputFileName,
 			heightMapFileName,
 			blendMapFileName,

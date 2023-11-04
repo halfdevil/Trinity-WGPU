@@ -121,7 +121,7 @@ namespace Trinity
 				materialLayout,
 				meshLayout
 			},
-			.vertexBuffers = { subMesh->getVertexBuffer() },
+			.vertexLayouts = { subMesh->getVertexLayout() },
 			.primitive = {
 				.topology = wgpu::PrimitiveTopology::TriangleList,
 				.cullMode = wgpu::CullMode::Back
@@ -323,7 +323,7 @@ namespace Trinity
 				return false;
 			}
 
-			if (!setupLights())
+			if (!updateLights())
 			{
 				LogError("setupLights() failed!!");
 				return false;
@@ -412,7 +412,7 @@ namespace Trinity
 		return true;
 	}
 
-	bool SceneRenderer::setupLights()
+	bool SceneRenderer::updateLights()
 	{
 		auto lights = mSceneData.scene->getComponents<Light>();
 		if (lights.size() > 0)

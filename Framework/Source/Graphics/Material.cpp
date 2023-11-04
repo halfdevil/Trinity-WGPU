@@ -69,6 +69,11 @@ namespace Trinity
 		mShader = &shader;
 	}
 
+	void Material::addShaderDefine(const std::string& define)
+	{
+		mShaderDefines.push_back(define);
+	}
+
 	void Material::setShaderDefines(std::vector<std::string>&& defines)
 	{
 		mShaderDefines = std::move(defines);

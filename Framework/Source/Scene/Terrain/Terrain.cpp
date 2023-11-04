@@ -1,17 +1,7 @@
 #include "Scene/Terrain/Terrain.h"
 #include "Scene/Terrain/HeightMap.h"
 #include "Scene/Terrain/TerrainMaterial.h"
-#include "Scene/Terrain/QuadTree.h"
-#include "Scene/Components/Transform.h"
-#include "Scene/Components/Camera.h"
 #include "Scene/Node.h"
-#include "Graphics/VertexBuffer.h"
-#include "Graphics/IndexBuffer.h"
-#include "Graphics/UniformBuffer.h"
-#include "Graphics/StorageBuffer.h"
-#include "Graphics/BindGroupLayout.h"
-#include "Graphics/BindGroup.h"
-#include "Graphics/RenderPipeline.h"
 #include "VFS/FileSystem.h"
 #include "Core/ResourceCache.h"
 #include "Core/Logger.h"
@@ -29,8 +19,6 @@ namespace Trinity
 	void Terrain::destroy()
 	{
 		Resource::destroy();
-		mPatches.clear();
-		mDistanceThreshold.clear();
 	}
 
 	bool Terrain::write()
@@ -38,57 +26,14 @@ namespace Trinity
 		return Resource::write();
 	}
 
-	bool Terrain::load(ResourceCache& cache, HeightMap& heightMap, Material& material, uint32_t patchSize, float cellSpacing)
-	{
-		setHeightMap(heightMap);
-		setMaterial(material);
-		setPatchSize(patchSize);
-		setCellSpacing(cellSpacing);
-
-		if (!setupDeviceObjects(cache))
-		{
-			LogError("Terrain::setupDeviceObjects() failed");
-			return false;
-		}
-
-		if (!setupQuadTree())
-		{
-			LogError("Terrain::setupQuadTree() failed");
-			return false;
-		}
-
-		return true;
-	}
-
-	void Terrain::preDrawCalculations(const Camera& camera)
-	{
-		const auto& transform = camera.getNode()->getTransform();
-		const auto& position = transform.getTranslation();
-		const auto& rotation = glm::eulerAngles(transform.getRotation());
-
-		if (std::abs(rotation.x - oldCameraRotation.x) < cameraRotationDelta &&
-			std::abs(rotation.y - oldCameraRotation.y) < cameraRotationDelta)
-		{
-			if (std::abs(position.x - oldCameraPosition.x) < cameraMovementDelta &&
-				std::abs(position.y - oldCameraPosition.y) < cameraMovementDelta &&
-				std::abs(position.z - oldCameraPosition.z) < cameraMovementDelta)
-			{
-				return;
-			}
-		}
-
-		oldCameraPosition = position;
-		oldCameraRotation = rotation;
-
-		mQuadTree->update(camera.getFrustum());
-
-		preDrawLODCalculations(camera);
-		preDrawIndicesCalculations();
-	}
-
 	std::type_index Terrain::getType() const
 	{
 		return typeid(Terrain);
+	}
+
+	void Terrain::setMapDimension(const MapDimension& mapDims)
+	{
+		mMapDimension = mapDims;
 	}
 
 	void Terrain::setHeightMap(HeightMap& heightMap)
@@ -101,445 +46,22 @@ namespace Trinity
 		mMaterial = &material;
 	}
 
-	void Terrain::setPatchSize(uint32_t patchSize)
+	void Terrain::setNumLODs(uint32_t numLODs)
 	{
-		mPatchSize = patchSize;
-		mCalcPatchSize = patchSize - 1;
+		mNumLODs = numLODs;
 	}
 
-	void Terrain::setCellSpacing(float cellSpacing)
+	void Terrain::setLeafNodeSize(uint32_t leafNodeSize)
 	{
-		mCellSpacing = cellSpacing;
+		mLeafNodeSize = leafNodeSize;
 	}
 
-	void Terrain::preDrawLODCalculations(const Camera& camera)
+	void Terrain::setGridResolutionMult(uint32_t gridResoultionMult)
 	{
-		const auto& transform = camera.getNode()->getTransform();
-		const auto& position = transform.getTranslation();
-		const auto& frustum = camera.getFrustum();
-		const auto& count = mNumPatches * mNumPatches;
-
-		for (uint32_t idx = 0; idx < count; idx++)
-		{
-			auto& patch = mPatches[idx];
-
-			if (mQuadTree->isVisible(patch.nodeIndex))
-			{
-				float distance = glm::distance2(position, patch.center);
-				patch.currentLOD = 0;
-
-				for (uint32_t lod = mMaxLOD - 1; lod > 0; lod--)
-				{
-					if (distance >= mDistanceThreshold[lod])
-					{
-						patch.currentLOD = lod;
-						break;
-					}
-				}
-			}
-			else
-			{
-				patch.currentLOD = -1;
-			}
-		}
 	}
 
-	void Terrain::preDrawIndicesCalculations()
+	void Terrain::setLODDistanceRatio(float lodDistanceRatio)
 	{
-		if (!mIndexBuffer)
-		{
-			return;
-		}
-
-		uint32_t index{ 0 };
-		mIndicesToDraw = 0;
-		
-		for (uint32_t idx = 0; idx < mNumPatches; idx++)
-		{
-			for (uint32_t jdx = 0; jdx < mNumPatches; jdx++)
-			{
-				if (mPatches[index].currentLOD >= 0)
-				{
-					uint32_t x{ 0 };
-					uint32_t z{ 0 };
-					uint32_t step = 1 << mPatches[index].currentLOD;
-
-					while (z < mCalcPatchSize)
-					{
-						uint32_t index11 = getIndex(jdx, idx, index, x, z);
-						uint32_t index21 = getIndex(jdx, idx, index, x + step, z);
-						uint32_t index12 = getIndex(jdx, idx, index, x, z + step);
-						uint32_t index22 = getIndex(jdx, idx, index, x + step, z + step);
-
-						mIndices[mIndicesToDraw++] = index12;
-						mIndices[mIndicesToDraw++] = index11;
-						mIndices[mIndicesToDraw++] = index22;
-						mIndices[mIndicesToDraw++] = index22;
-						mIndices[mIndicesToDraw++] = index11;
-						mIndices[mIndicesToDraw++] = index21;
-
-						x += step;
-						if (x >= mCalcPatchSize)
-						{
-							x = 0;
-							z += step;
-						}
-					}
-				}
-
-				index++;
-			}
-		}
-
-		mIndexBuffer->write(0, sizeof(uint32_t) * mIndicesToDraw, mIndices.data());
-	}
-
-	uint32_t Terrain::getIndex(uint32_t patchX, uint32_t patchZ, uint32_t patchIndex, uint32_t x, uint32_t z) const
-	{
-		auto& patch = mPatches[patchIndex];
-
-		if (z == 0)
-		{
-			if (patch.top && patch.currentLOD < patch.top->currentLOD &&
-				(x % (1 << patch.top->currentLOD)) != 0)
-			{
-				x -= x % (1 << patch.top->currentLOD);
-			}
-		}
-		else if (z == mCalcPatchSize)
-		{
-			if (patch.bottom && patch.currentLOD < patch.bottom->currentLOD &&
-				(x % (1 << patch.bottom->currentLOD)) != 0)
-			{
-				x -= x % (1 << patch.bottom->currentLOD);
-			}
-		}
-
-		if (x == 0)
-		{
-			if (patch.left && patch.currentLOD < patch.left->currentLOD &&
-				(z % (1 << patch.left->currentLOD)) != 0)
-			{
-				z -= z % (1 << patch.left->currentLOD);
-			}
-		}
-		else if (x == mCalcPatchSize)
-		{
-			if (patch.right && patch.currentLOD < patch.right->currentLOD &&
-				(z % (1 << patch.right->currentLOD)) != 0)
-			{
-				z -= z % (1 << patch.right->currentLOD);
-			}
-		}
-
-		if (z >= mPatchSize)
-		{
-			z = mCalcPatchSize;
-		}
-
-		if (x >= mPatchSize)
-		{
-			x = mCalcPatchSize;
-		}
-
-		return (z + (mCalcPatchSize * patchZ)) * mSize + (x + (mCalcPatchSize * patchX));
-	}
-
-	bool Terrain::setupDeviceObjects(ResourceCache& cache)
-	{
-		mSize = mHeightMap->getWidth();
-		mMaxLOD = (uint32_t)std::log2(mCalcPatchSize);
-
-		auto vertexLayout = std::make_unique<VertexLayout>();
-		vertexLayout->setAttributes({
-			{ wgpu::VertexFormat::Float32x3, 0, 0 },
-			{ wgpu::VertexFormat::Float32x3, 12, 1 },
-			{ wgpu::VertexFormat::Float32x2, 24, 2 },
-		});
-
-		const auto& heightData = mHeightMap->getData();
-
-		uint32_t numVertices = mSize * mSize;
-		std::vector<Vertex> vertices(numVertices);
-
-		float x{ 0.0f };
-		float x2{ 0.0f };
-		float td{ 1.0f / (float)(mSize - 1) };
-
-		for (uint32_t idx = 0; idx < mSize; idx++)
-		{
-			float z{ 0.0f };
-			float z2{ 0.0f };
-
-			for (uint32_t jdx = 0; jdx < mSize; jdx++)
-			{
-				auto& vertex = vertices[idx * mSize + jdx];
-
-				vertex.position = glm::vec3{ x * mCellSpacing, heightData[idx * mSize + jdx], z * mCellSpacing };
-				vertex.normal = { 0.0f, 1.0f, 0.0f };
-				vertex.uv = { x2, z2 };
-
-				z++;
-				z2 += td;
-			}
-
-			x++;
-			x2 += td;
-		}
-
-		calculateNormals(vertices);
-		calculateDistanceThresholds();
-		createPatches();
-		calculatePatchData(vertices);
-
-		auto vertexBuffer = std::make_unique<VertexBuffer>();
-		if (!vertexBuffer->create(*vertexLayout, numVertices, vertices.data()))
-		{
-			LogError("VertexBuffer::create() failed");
-			return false;
-		}
-
-		uint32_t numIndices = mNumPatches * mNumPatches * mCalcPatchSize * mCalcPatchSize * 6;
-		mIndices.resize(numIndices);
-
-		auto indexBuffer = std::make_unique<IndexBuffer>();
-		if (!indexBuffer->create(wgpu::IndexFormat::Uint32, numIndices))
-		{
-			LogError("IndexBuffer::create() failed");
-			return false;
-		}
-
-		mVertexBuffer = vertexBuffer.get();
-		mIndexBuffer = indexBuffer.get();
-
-		cache.addResource(std::move(vertexLayout));
-		cache.addResource(std::move(vertexBuffer));
-		cache.addResource(std::move(indexBuffer));
-
-		mIndicesToDraw = 0;
-		preDrawIndicesCalculations();
-
-		return true;
-	}
-
-	bool Terrain::setupQuadTree()
-	{
-		mQuadTree = std::make_unique<QuadTree>();
-		if (!mQuadTree->create(mCalcPatchSize * mCellSpacing, mBoundingBox))
-		{
-			LogError("QuadTree::create() failed");
-			return false;
-		}
-
-		for (auto& patch : mPatches)
-		{
-			patch.nodeIndex = mQuadTree->getNodeIndex(patch.boundingBox);
-		}
-
-		return true;
-	}
-
-	void Terrain::calculateNormals(std::vector<Vertex>& vertices)
-	{
-		uint32_t count{ 0 };
-		glm::vec3 a, b, c, t;
-
-		for (uint32_t x = 0; x < mSize; x++)
-		{
-			for (uint32_t z = 0; z < mSize; z++)
-			{
-				count = 0;
-				glm::vec3 normal{ 0.0f };
-
-				if (x > 0 && z > 0)
-				{
-					a = vertices[(x - 1) * mSize + z - 1].position;
-					b = vertices[(x - 1) * mSize + z].position;
-					c = vertices[x * mSize + z].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));					
-					normal += t;
-
-					a = vertices[(x - 1) * mSize + z - 1].position;
-					b = vertices[x * mSize + z - 1].position;
-					c = vertices[x * mSize + z].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					count += 2;
-				}
-
-				if (x > 0 && z < mSize - 1)
-				{
-					a = vertices[(x - 1) * mSize + z].position;
-					b = vertices[(x - 1) * mSize + z + 1].position;
-					c = vertices[x * mSize + z + 1].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					a = vertices[(x - 1) * mSize + z].position;
-					b = vertices[x * mSize + z + 1].position;
-					c = vertices[x * mSize + z].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					count += 2;
-				}
-
-				if (x < mSize - 1 && z < mSize - 1)
-				{
-					a = vertices[x * mSize + z + 1].position;
-					b = vertices[x * mSize + z].position;
-					c = vertices[(x + 1) * mSize + z + 1].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					a = vertices[x * mSize + z + 1].position;
-					b = vertices[(x + 1) * mSize + z + 1].position;
-					c = vertices[(x + 1) * mSize + z].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					count += 2;
-				}
-
-				if (x < mSize - 1 && z > 0)
-				{
-					a = vertices[x * mSize + z - 1].position;
-					b = vertices[x * mSize + z].position;
-					c = vertices[(x + 1) * mSize + z].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					a = vertices[x * mSize + z - 1].position;
-					b = vertices[(x + 1) * mSize + z].position;
-					c = vertices[(x + 1) * mSize + z - 1].position;
-					t = glm::normalize(glm::cross((b - a), (c - a)));
-					normal += t;
-
-					count += 2;
-				}
-
-				if (count != 0)
-				{
-					normal = glm::normalize(normal);
-				}
-				else
-				{
-					normal = { 0.0f, 1.0f, 0.0f };
-				}
-
-				vertices[x * mSize + z].normal = normal;
-			}
-		}
-	}
-
-	void Terrain::createPatches()
-	{
-		mNumPatches = (mSize - 1) / mCalcPatchSize;
-		mPatches.resize(mNumPatches * mNumPatches);
-	}
-
-	void Terrain::calculatePatchData(std::vector<Vertex>& vertices)
-	{
-		mBoundingBox.min = glm::vec3{ std::numeric_limits<float>::max() };
-		mBoundingBox.max = glm::vec3{ std::numeric_limits<float>::lowest() };
-
-		for (uint32_t x = 0; x < mNumPatches; x++)
-		{
-			for (uint32_t z = 0; z < mNumPatches; z++)
-			{
-				uint32_t index = x * mNumPatches + z;
-
-				auto& patch = mPatches[index];
-				patch.currentLOD = 0;
-
-				auto xStart = x * mCalcPatchSize;
-				auto xEnd = xStart + mCalcPatchSize;
-				auto zStart = z * mCalcPatchSize;
-				auto zEnd = zStart + mCalcPatchSize;
-
-				patch.boundingBox.min = glm::vec3{ std::numeric_limits<float>::max() };
-				patch.boundingBox.max = glm::vec3{ std::numeric_limits<float>::lowest() };
-
-				for (uint32_t xx = xStart; xx <= xEnd; xx++)
-				{
-					for (uint32_t zz = zStart; zz <= zEnd; zz++)
-					{
-						patch.boundingBox.combinePoint(vertices[xx * mSize + zz].position);
-					}
-				}
-
-				patch.center = mBoundingBox.getCenter();
-				mBoundingBox.combineBox(patch.boundingBox);
-
-				if (x > 0)
-				{
-					patch.top = &mPatches[(x - 1) * mNumPatches + z];
-				}
-				else
-				{
-					patch.top = nullptr;
-				}
-
-				if (x < mNumPatches - 1)
-				{
-					patch.bottom = &mPatches[(x + 1) * mNumPatches + z];
-				}
-				else
-				{
-					patch.bottom = nullptr;
-				}
-
-				if (z > 0)
-				{
-					patch.left = &mPatches[x * mNumPatches + (z - 1)];
-				}
-				else
-				{
-					patch.left = nullptr;
-				}
-
-				if (z < mNumPatches - 1)
-				{
-					patch.right = &mPatches[x * mNumPatches + (z + 1)];
-				}
-				else
-				{
-					patch.right = nullptr;
-				}
-			}
-		}
-
-		mCenter = mBoundingBox.getCenter();
-	}
-
-	void Terrain::calculateDistanceThresholds()
-	{
-		double size = mPatchSize * mPatchSize * mCellSpacing * mCellSpacing;
-		mDistanceThreshold.resize(mMaxLOD);
-
-		for (uint32_t idx = 0; idx < mMaxLOD; idx++)
-		{
-			mDistanceThreshold[idx] = size * ((idx + 1 + idx / 2) * ((idx + 1 + idx / 2)));
-		}
-	}
-
-	void Terrain::setCurrentLODOfPatches(int32_t lod)
-	{
-		uint32_t count = mNumPatches * mNumPatches;
-		for (uint32_t idx = 0; idx < count; idx++)
-		{
-			mPatches[idx].currentLOD = lod;
-		}
-	}
-
-	void Terrain::setCurrentLODOfPatches(const std::vector<int32_t>& lods)
-	{
-		uint32_t count = mNumPatches * mNumPatches;
-		for (uint32_t idx = 0; idx < count; idx++)
-		{
-			mPatches[idx].currentLOD = lods[idx];
-		}
 	}
 
 	bool Terrain::read(FileReader& reader, ResourceCache& cache)
@@ -549,12 +71,13 @@ namespace Trinity
 			return false;
 		}
 
-		reader.read(&mPatchSize);
-		reader.read(&mCellSpacing);
+		reader.read(&mMapDimension);
+		reader.read(&mNumLODs);
+		reader.read(&mLeafNodeSize);
 
 		auto& fileSystem = FileSystem::get();
-
 		auto heightMapFileName = Resource::getReadPath(reader.getPath(), reader.readString());
+		
 		if (!cache.isLoaded<HeightMap>(heightMapFileName))
 		{
 			auto heightMap = std::make_unique<HeightMap>();
@@ -566,14 +89,36 @@ namespace Trinity
 
 			cache.addResource(std::move(heightMap));
 		}
-
+		
 		auto materialFileName = Resource::getReadPath(reader.getPath(), reader.readString());
 		if (!cache.isLoaded<Material>(materialFileName))
 		{
+			auto* heightMap = cache.getResource<HeightMap>(heightMapFileName);
+			const auto& data = heightMap->getData();
+			const auto& size = heightMap->getSize();
+
+			std::vector<float> heightMapData(data.size());
+			for (uint32_t idx = 0; idx < (uint32_t)data.size(); idx++)
+			{
+				heightMapData[idx] = data[idx] / 65535.0f;
+			}
+
 			auto material = std::make_unique<TerrainMaterial>();
 			if (!material->create(materialFileName, cache))
 			{
 				LogError("TerrainMaterial::create() failed for '%s'", materialFileName.c_str());
+				return false;
+			}
+
+			if (!material->addHeightMapTexture(heightMapData, size, mMapDimension, cache))
+			{
+				LogError("TerrainMaterial::addHeightMapTexture() failed for '%s'", materialFileName.c_str());
+				return false;
+			}
+
+			if (!material->addNormalMapTexture(heightMapData, size, mMapDimension, cache))
+			{
+				LogError("TerrainMaterial::addNormalMapTexture() failed for '%s'", materialFileName.c_str());
 				return false;
 			}
 
@@ -586,14 +131,8 @@ namespace Trinity
 			cache.addResource(std::move(material));
 		}
 
-		auto* heightMap = cache.getResource<HeightMap>(heightMapFileName);
-		auto* material = cache.getResource<Material>(materialFileName);
-
-		if (!load(cache, *heightMap, *material, mPatchSize, mCellSpacing))
-		{
-			LogError("Terrain::load() failed.");
-			return false;
-		}
+		mHeightMap = cache.getResource<HeightMap>(heightMapFileName);
+		mMaterial = cache.getResource<Material>(materialFileName);
 
 		return true;
 	}
@@ -605,10 +144,9 @@ namespace Trinity
 			return false;
 		}
 
-		writer.write(&mPatchSize);
-		writer.write(&mCellSpacing);
-
-		auto& fileSystem = FileSystem::get();
+		writer.write(&mMapDimension);
+		writer.write(&mNumLODs);
+		writer.write(&mLeafNodeSize);
 
 		if (mHeightMap != nullptr)
 		{

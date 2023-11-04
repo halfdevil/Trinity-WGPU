@@ -18,19 +18,9 @@ namespace Trinity
         VertexBuffer(VertexBuffer&&) = default;
         VertexBuffer& operator = (VertexBuffer&&) = default;
 
-        const VertexLayout* getVertexLayout() const
-        {
-            return mVertexLayout;
-        }
-
         uint32_t getNumVertices() const
         {
             return mNumVertices;
-        }
-
-        const wgpu::VertexBufferLayout& getBufferLayout() const
-        {
-            return mBufferLayout;
         }
 
         bool create(const VertexLayout& vertexLayout, uint32_t numVertices, const void* data = nullptr);
@@ -38,8 +28,6 @@ namespace Trinity
 
     private:
 
-        const VertexLayout* mVertexLayout{ nullptr };
         uint32_t mNumVertices{ 0 };
-        wgpu::VertexBufferLayout mBufferLayout;
     };
 }

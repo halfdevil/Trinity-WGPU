@@ -56,5 +56,12 @@ namespace Trinity
                 break;
             }
         }
+
+        mBufferLayout = {
+            .arrayStride = mSize,
+            .stepMode = wgpu::VertexStepMode::Vertex,
+            .attributeCount = (uint32_t)mAttributes.size(),
+            .attributes = mAttributes.data()
+        };
     }
 }

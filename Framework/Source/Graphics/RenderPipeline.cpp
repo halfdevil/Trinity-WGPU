@@ -36,11 +36,11 @@ namespace Trinity
         }
 
         std::vector<wgpu::VertexBufferLayout> buffers;
-        for (const VertexBuffer* vertexBuffer : renderProps.vertexBuffers)
+        for (const auto* vertexLayout : renderProps.vertexLayouts)
         {
-            if (vertexBuffer)
+            if (vertexLayout)
             {
-                buffers.push_back(vertexBuffer->getBufferLayout());
+                buffers.push_back(vertexLayout->getBufferLayout());
             }
         }
 

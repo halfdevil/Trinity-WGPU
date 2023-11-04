@@ -5,6 +5,7 @@
 namespace Trinity
 {
 	class Material;
+	class VertexLayout;
 	class VertexBuffer;
 	class IndexBuffer;
 	class Skeleton;
@@ -21,6 +22,7 @@ namespace Trinity
 			std::string name;
 			std::vector<uint8_t> vertexData;
 			std::vector<uint8_t> indexData;
+			VertexLayout* vertexLayout{ nullptr };
 			VertexBuffer* vertexBuffer{ nullptr };
 			IndexBuffer* indexBuffer{ nullptr };
 			uint32_t vertexSize{ 0 };

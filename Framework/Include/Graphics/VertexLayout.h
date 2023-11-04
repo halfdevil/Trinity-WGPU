@@ -18,6 +18,11 @@ namespace Trinity
             return mAttributes;
         }
 
+        const wgpu::VertexBufferLayout& getBufferLayout() const
+        {
+            return mBufferLayout;
+        }
+
         uint32_t getSize() const
         {
             return mSize;
@@ -29,6 +34,7 @@ namespace Trinity
     private:
 
         std::vector<wgpu::VertexAttribute> mAttributes;
+        wgpu::VertexBufferLayout mBufferLayout;
         uint32_t mSize{ 0 };
     };
 }

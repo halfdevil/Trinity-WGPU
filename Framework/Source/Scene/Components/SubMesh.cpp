@@ -21,6 +21,11 @@ namespace Trinity
 		mMaterial = &material;
 	}
 
+	void SubMesh::setVertexLayout(VertexLayout& vertexLayout)
+	{
+		mVertexLayout = &vertexLayout;
+	}
+
 	void SubMesh::setVertexBuffer(VertexBuffer& vertexBuffer)
 	{
 		mVertexBuffer = &vertexBuffer;
