@@ -35,10 +35,10 @@ namespace Trinity
 	public:
 
 		uint32_t x{ 0 };
-		uint32_t y{ 0 };
+		uint32_t z{ 0 };
 		uint16_t size{ 0 };
-		uint16_t minZ{ 0 };
-		uint16_t maxZ{ 0 };
+		uint16_t minY{ 0 };
+		uint16_t maxY{ 0 };
 
 		bool tl{ false };
 		bool tr{ false };
@@ -88,18 +88,18 @@ namespace Trinity
 			return (level & 0x8000) != 0;
 		}
 
-		void create(QuadTree* quadTree, uint32_t inX, uint32_t inY, uint32_t inSize, 
+		void create(QuadTree* quadTree, uint32_t inX, uint32_t inZ, uint32_t inSize, 
 			uint32_t inLevel, uint32_t lastIndex);
 
 		void getAreaMinMaxHeight(const QuadTree* quadTree, const glm::uvec2& from, 
-			const glm::uvec2& to, float& outMinZ, float& outMaxZ) const;
+			const glm::uvec2& to, float& outMinY, float& outMaxY) const;
 
 		SelectResult selectLOD(QuadTree* quadTree, SelectedLOD* selected, uint32_t stopAtLevel, 
 			Camera* camera);
 
 		glm::vec2 getWorldMinMaxX(uint32_t sizeX, const MapDimension& mapDims) const;
-		glm::vec2 getWorldMinMaxY(uint32_t sizeY, const MapDimension& mapDims) const;
-		glm::vec2 getWorldMinMaxZ(const MapDimension& mapDims) const;
+		glm::vec2 getWorldMinMaxZ(uint32_t sizeZ, const MapDimension& mapDims) const;
+		glm::vec2 getWorldMinMaxY(const MapDimension& mapDims) const;
 
 		BoundingBox getBoundingBox(const glm::uvec2& inSize, const MapDimension& mapDims) const;
 		BoundingSphere getBoundingSphere(const glm::uvec2& inSize, const MapDimension& mapDims) const;
@@ -107,11 +107,11 @@ namespace Trinity
 	public:
 
 		uint16_t x{ 0 };
-		uint16_t y{ 0 };
+		uint16_t z{ 0 };
 		uint16_t size{ 0 };
 		uint16_t level{ 0 };
-		uint16_t minZ{ 0 };
-		uint16_t maxZ{ 0 };
+		uint16_t minY{ 0 };
+		uint16_t maxY{ 0 };
 
 		QuadTreeNode* subTL{ nullptr };
 		QuadTreeNode* subTR{ nullptr };
@@ -181,7 +181,7 @@ namespace Trinity
 		virtual float getLODLevelNodeDiagonalSize(uint32_t lodLevel) const;
 
 		virtual glm::vec4 getMorphConstant(uint32_t lodLevel);
-		virtual void getAreaMinMaxHeight(const glm::uvec2& from, const glm::uvec2& size, float& minZ, float& maxZ) const;
+		virtual void getAreaMinMaxHeight(const glm::uvec2& from, const glm::uvec2& size, float& minY, float& maxY) const;
 
 	protected:
 

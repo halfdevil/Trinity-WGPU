@@ -58,10 +58,12 @@ namespace Trinity
 
 	void Terrain::setGridResolutionMult(uint32_t gridResoultionMult)
 	{
+		mGridResolutionMult = gridResoultionMult;
 	}
 
 	void Terrain::setLODDistanceRatio(float lodDistanceRatio)
 	{
+		mLODDistanceRatio = lodDistanceRatio;
 	}
 
 	bool Terrain::read(FileReader& reader, ResourceCache& cache)
@@ -74,6 +76,8 @@ namespace Trinity
 		reader.read(&mMapDimension);
 		reader.read(&mNumLODs);
 		reader.read(&mLeafNodeSize);
+		reader.read(&mGridResolutionMult);
+		reader.read(&mLODDistanceRatio);
 
 		auto& fileSystem = FileSystem::get();
 		auto heightMapFileName = Resource::getReadPath(reader.getPath(), reader.readString());
@@ -147,6 +151,8 @@ namespace Trinity
 		writer.write(&mMapDimension);
 		writer.write(&mNumLODs);
 		writer.write(&mLeafNodeSize);
+		writer.write(&mGridResolutionMult);
+		writer.write(&mLODDistanceRatio);
 
 		if (mHeightMap != nullptr)
 		{

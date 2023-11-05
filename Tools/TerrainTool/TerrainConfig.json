@@ -1,13 +1,13 @@
 {
   "mapDims": {
-    "minX": -1024.0,
-    "minY": -1024.0,
-    "minZ": 0.0,
-    "sizeX": 2048.0,
-    "sizeY": 2048.0,
-    "sizeZ": 512.0
+    "minX": -10240.0,
+    "minY": 0.0,
+    "minZ": -10240.0,
+    "sizeX": 20480.0,
+    "sizeY": 1024.0,
+    "sizeZ": 20480.0
   },
-  "size": 2048,
+  "size": 2049,
   "leafNodeSize": 8,
   "gridResolutionMult": 4,
   "numLODs": 8,

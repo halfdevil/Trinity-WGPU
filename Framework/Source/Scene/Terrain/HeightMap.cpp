@@ -50,7 +50,7 @@ namespace Trinity
 		mData.resize(width * height);
 		for (int32_t idx = 0; idx < width * height; idx++)
 		{
-			mData[idx] = image[idx] * 257.0f;
+			mData[idx] = (uint16_t)(image[idx] * 257.0f);
 		}
 
 		stbi_image_free(image);
@@ -75,7 +75,7 @@ namespace Trinity
 		mData.resize(width * height);
 		for (uint32_t idx = 0; idx < width * height; idx++)
 		{
-			mData[idx] = buffer[idx] * 257.0f;
+			mData[idx] = (uint16_t)(buffer[idx] * 257.0f);
 		}
 
 		mSize = { width, height };
@@ -88,18 +88,18 @@ namespace Trinity
 	}
 
 	void HeightMap::getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ,
-		uint16_t& minZ, uint16_t& maxZ) const
+		uint16_t& minY, uint16_t& maxY) const
 	{
-		minZ = 65535;
-		maxZ = 0;
+		minY = 65535;
+		maxY = 0;
 
 		for (uint32_t rz = 0; rz < sizeZ; rz++)
 		{
 			auto* scanLine = &mData[x + (rz + z) * mSize.x];
 			for (uint32_t rx = 0; rx < sizeX; rx++)
 			{
-				minZ = std::min(minZ, scanLine[rx]);
-				maxZ = std::max(maxZ, scanLine[rz]);
+				minY = std::min(minY, scanLine[rx]);
+				maxY = std::max(maxY, scanLine[rz]);
 			}
 		}
 	}

@@ -60,7 +60,6 @@ var<uniform> quad_data: QuadData;
 @binding(0)
 var<uniform> material: TerrainMaterial;
 
-#ifdef HAS_HEIGHT_MAP_TEXTURE
 @group(1)
 @binding(1)
 var height_map_sampler: sampler;
@@ -68,9 +67,7 @@ var height_map_sampler: sampler;
 @group(1)
 @binding(2)
 var height_map_texture: texture_2d<f32>;
-#endif
 
-#ifdef HAS_NORMAL_MAP_TEXTURE
 @group(1)
 @binding(3)
 var normal_map_sampler: sampler;
@@ -78,7 +75,6 @@ var normal_map_sampler: sampler;
 @group(1)
 @binding(4)
 var normal_map_texture: texture_2d<f32>;
-#endif
 
 #ifdef HAS_BLEND_MAP_TEXTURE
 @group(1)
@@ -161,24 +157,25 @@ fn get_base_vertex_pos(in_pos: vec4<f32>) -> vec4<f32>
 {
   var ret = in_pos * quad_data.scale + quad_data.offset;
   ret.x = min(ret.x, terrain_data.quad_world_max.x);
-  ret.y = min(ret.y, terrain_data.quad_world_max.y);
+  ret.z = min(ret.z, terrain_data.quad_world_max.y);
 
   return ret;
 }
 
 fn morph_vertex(in_pos: vec4<f32>, vertex: vec2<f32>, morph_lerp_k: f32) -> vec2<f32>
 {
-  var frac_part = (fract(in_pos.xy * vec2<f32>(terrain_data.grid_dimension.y, terrain_data.grid_dimension.y)) * 
-    vec2<f32>(terrain_data.grid_dimension.z, terrain_data.grid_dimension.z)) * quad_data.scale.xy;
+  var frac_part = (fract(in_pos.xz * 
+    vec2<f32>(terrain_data.grid_dimension.z, terrain_data.grid_dimension.z)) * 
+    vec2<f32>(terrain_data.grid_dimension.y, terrain_data.grid_dimension.y)) * quad_data.scale.xz;
   
   return vertex.xy - frac_part * morph_lerp_k;
 }
 
 fn calculate_uv(vertex: vec2<f32>) -> vec2<f32>
 {
-  var uv = (vertex.xy - terrain_data.offset.xy) / terrain_data.scale.xy;
+  var uv = (vertex.xy - terrain_data.offset.xz) / terrain_data.scale.xz;
   uv *= terrain_data.world_to_texture_scale;
-  uv *= terrain_data.height_map_texture_info.zw * 0.5;
+  uv += terrain_data.height_map_texture_info.zw * 0.5;
 
   return uv;
 }
@@ -252,19 +249,17 @@ fn vs_main(in: VertexInput) -> FragmentInput
 {
   var out: FragmentInput;
 
-  var vertex = get_base_vertex_pos(vec4<f32>(in.position, 1.0));
-  var pre_uv = calculate_uv(vertex.xy);
-  vertex.z = sample_heightmap(pre_uv);
+  var pre_vertex = get_base_vertex_pos(vec4<f32>(in.position, 1.0));
+  var pre_uv = calculate_uv(pre_vertex.xy);
+  pre_vertex.y = sample_heightmap(pre_uv);
 
-  var eye_dist = distance(vertex, vec4<f32>(per_frame_data.camera_pos, 1.0));
+  var eye_dist = distance(pre_vertex, vec4<f32>(per_frame_data.camera_pos, 1.0));
   var morph_lerp_k = 1.0f - clamp(quad_data.morph_consts.z - eye_dist * quad_data.morph_consts.w, 0.0, 1.0);
-  var morph_vert = morph_vertex(vec4<f32>(in.position, 1.0), vertex.xy, morph_lerp_k);
-  vertex.x = morph_vert.x;
-  vertex.y = morph_vert.y;
-
-  var uv = calculate_uv(vertex.xy);
-  vertex.z = sample_heightmap(uv);
-  vertex.w = 1.0;
+  var morph_vertex = morph_vertex(vec4<f32>(in.position, 1.0), pre_vertex.xz, morph_lerp_k);
+  
+  var uv = calculate_uv(morph_vertex);
+  var vertex = vec4<f32>(morph_vertex.x, 0.0, morph_vertex.y, 1.0);
+  vertex.y = sample_heightmap(uv);
   
   out.position = vertex.xyz;
   out.uv = uv;  

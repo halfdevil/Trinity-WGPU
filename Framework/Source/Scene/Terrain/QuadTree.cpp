@@ -12,24 +12,24 @@ namespace Trinity
 		lodLevel(inLodLevel), tl(inTL), tr(inTR), bl(inBL), br(inBR)
 	{
 		this->x = node.x;
-		this->y = node.y;
+		this->z = node.z;
 		this->size = node.size;
-		this->minZ = node.minZ;
-		this->maxZ = node.maxZ;
+		this->minY = node.minY;
+		this->maxY = node.maxY;
 	}
 
 	BoundingBox SelectedNode::getBoundingBox(const glm::uvec2& inSize, const MapDimension& mapDims) const
 	{
 		glm::vec3 min { 
 			mapDims.min.x + x * mapDims.size.x / (float)(inSize.x - 1),
-			mapDims.min.y + y * mapDims.size.y / (float)(inSize.y - 1),
-			mapDims.min.z + minZ * mapDims.size.z / 65535.0f
+			mapDims.min.y + minY * mapDims.size.y / 65535.0f,
+			mapDims.min.z + z * mapDims.size.z / (float)(inSize.y - 1)
 		};
 
 		glm::vec3 max {
 			mapDims.min.x + (x + size) * mapDims.size.x / (float)(inSize.x - 1),
-			mapDims.min.y + (y + size) * mapDims.size.y / (float)(inSize.y - 1),
-			mapDims.min.z + maxZ * mapDims.size.z / 65535.0f
+			mapDims.min.y + maxY * mapDims.size.y / 65535.0f,
+			mapDims.min.z + (z + size) * mapDims.size.y / (float)(inSize.y - 1)
 		};
 
 		return { min, max };
@@ -41,10 +41,10 @@ namespace Trinity
 		selectedNodes.resize(inMaxNumSelections);
 	}
 
-	void QuadTreeNode::create(QuadTree* quadTree, uint32_t inX, uint32_t inY, uint32_t inSize, uint32_t inLevel, uint32_t lastIndex)
+	void QuadTreeNode::create(QuadTree* quadTree, uint32_t inX, uint32_t inZ, uint32_t inSize, uint32_t inLevel, uint32_t lastIndex)
 	{
 		x = (uint16_t)inX;
-		y = (uint16_t)inY;
+		z = (uint16_t)inZ;
 		size = (uint16_t)inSize;
 		level = (uint16_t)inLevel;
 
@@ -53,14 +53,19 @@ namespace Trinity
 		auto& nodes = quadTree->getNodes();
 		auto& hmSize = heightMap->getSize();
 
+		subTL = nullptr;
+		subTR = nullptr;
+		subBL = nullptr;
+		subBR = nullptr;
+
 		if (size == quadTree->getLeafNodeSize())
 		{
 			level |= 0x8000;
 
 			uint32_t limitX = std::min(hmSize.x, (uint32_t)x + size + 1);
-			uint32_t limitY = std::min(hmSize.y, (uint32_t)y + size + 1);
+			uint32_t limitZ = std::min(hmSize.y, (uint32_t)z + size + 1);
 
-			heightMap->getMinMaxHeight(x, y, limitX - x, limitX - y, minZ, maxZ);
+			heightMap->getMinMaxHeight(x, z, limitX - x, limitZ - z, minY, maxY);
 
 			float* pTLZ = (float*)&subTL;
 			float* pTRZ = (float*)&subTR;
@@ -68,86 +73,85 @@ namespace Trinity
 			float* pBRZ = (float*)&subBR;
 
 			limitX = std::min(hmSize.x - 1, (uint32_t)x + size);
-			limitY = std::max(hmSize.y - 1, (uint32_t)y + size);
+			limitZ = std::min(hmSize.y - 1, (uint32_t)z + size);
 
-			*pTLZ = mapDims->min.z + heightMap->getHeight(x, y) * mapDims->size.z / 65535.0f;
-			*pTRZ = mapDims->min.z + heightMap->getHeight(limitX, y) * mapDims->size.z / 65535.0f;
-			*pBLZ = mapDims->min.z + heightMap->getHeight(x, limitY) * mapDims->size.z / 65535.0f;
-			*pBRZ = mapDims->min.z + heightMap->getHeight(limitX, limitY) * mapDims->size.z / 65535.0f;
+			*pTLZ = mapDims->min.y + heightMap->getHeight(x, z) * mapDims->size.y / 65535.0f;
+			*pTRZ = mapDims->min.y + heightMap->getHeight(limitX, z) * mapDims->size.y / 65535.0f;
+			*pBLZ = mapDims->min.y + heightMap->getHeight(x, limitZ) * mapDims->size.y / 65535.0f;
+			*pBRZ = mapDims->min.y + heightMap->getHeight(limitX, limitZ) * mapDims->size.y / 65535.0f;
 		}
 		else
 		{
 			uint32_t subSize = size / 2;
 
 			subTL = &nodes[lastIndex++];
-			subTL->create(quadTree, x, y, subSize, level + 1, lastIndex);
-			minZ = subTL->minZ;
-			maxZ = subTL->maxZ;
+			subTL->create(quadTree, x, z, subSize, level + 1, lastIndex);
+			minY = subTL->minY;
+			maxY = subTL->maxY;
 
 			if ((x + subSize) < hmSize.x)
 			{
 				subTR = &nodes[lastIndex++];
-				subTR->create(quadTree, x + subSize, y, subSize, level + 1, lastIndex);
-				minZ = std::min(minZ, subTR->minZ);
-				maxZ = std::max(maxZ, subTR->maxZ);
+				subTR->create(quadTree, x + subSize, z, subSize, level + 1, lastIndex);
+				minY = std::min(minY, subTR->minY);
+				maxY = std::max(maxY, subTR->maxY);
 			}
 
-			if ((y + subSize) < hmSize.y)
+			if ((z + subSize) < hmSize.y)
 			{
 				subBL = &nodes[lastIndex++];
-				subBL->create(quadTree, x, y + subSize, subSize, level + 1, lastIndex);
-				minZ = std::min(minZ, subBL->minZ);
-				maxZ = std::max(maxZ, subBL->maxZ);
+				subBL->create(quadTree, x, z + subSize, subSize, level + 1, lastIndex);
+				minY = std::min(minY, subBL->minY);
+				maxY = std::max(maxY, subBL->maxY);
 			}
 
-			if ((x + subSize) < hmSize.x && (y + subSize) < hmSize.y)
+			if ((x + subSize) < hmSize.x && (z + subSize) < hmSize.y)
 			{
 				subBR = &nodes[lastIndex++];
-				subBR->create(quadTree, x + subSize, y + subSize, subSize, level + 1, lastIndex);
-				minZ = std::min(minZ, subBR->minZ);
-				maxZ = std::max(maxZ, subBR->maxZ);
+				subBR->create(quadTree, x + subSize, z + subSize, subSize, level + 1, lastIndex);
+				minY = std::min(minY, subBR->minY);
+				maxY = std::max(maxY, subBR->maxY);
 			}
 		}
 	}
 
 	void QuadTreeNode::getAreaMinMaxHeight(const QuadTree* quadTree, const glm::uvec2& from,
-		const glm::uvec2& to, float& outMinZ, float& outMaxZ) const
+		const glm::uvec2& to, float& outMinY, float& outMaxY) const
 	{
-		if (to.x < (uint32_t)x || to.y < (uint32_t)y || from.x > (uint32_t)(x + size) ||
-			from.y > (uint32_t)(y + size))
+		if (to.x < (uint32_t)x || to.y < (uint32_t)z || from.x > (uint32_t)(x + size) ||
+			from.y > (uint32_t)(z + size))
 		{
 			return;
 		}
 
-		if (isLeaf() || (from.x < (uint32_t)x && from.y < (uint32_t)y && 
-			to.x > (uint32_t)(x + size) && to.y > (uint32_t)(y + size)))
+		if (isLeaf() || (from.x < (uint32_t)x && from.y < (uint32_t)z && 
+			to.x > (uint32_t)(x + size) && to.y > (uint32_t)(z + size)))
 		{
-			auto worldZ = getWorldMinMaxZ(*quadTree->getMapDimension());
-			
-			outMinZ = std::min(outMinZ, worldZ.x);
-			outMaxZ = std::max(outMaxZ, worldZ.y);
+			auto worldY = getWorldMinMaxY(*quadTree->getMapDimension());			
+			outMinY = std::min(outMinY, worldY.x);
+			outMaxY = std::max(outMaxY, worldY.y);
 
 			return;
 		}
 
 		if (subTL != nullptr)
 		{
-			subTL->getAreaMinMaxHeight(quadTree, from, to, outMinZ, outMaxZ);
+			subTL->getAreaMinMaxHeight(quadTree, from, to, outMinY, outMaxY);
 		}
 
 		if (subTR != nullptr)
 		{
-			subTR->getAreaMinMaxHeight(quadTree, from, to, outMinZ, outMaxZ);
+			subTR->getAreaMinMaxHeight(quadTree, from, to, outMinY, outMaxY);
 		}
 
 		if (subBL != nullptr)
 		{
-			subBL->getAreaMinMaxHeight(quadTree, from, to, outMinZ, outMaxZ);
+			subBL->getAreaMinMaxHeight(quadTree, from, to, outMinY, outMaxY);
 		}
 
 		if (subBR != nullptr)
 		{
-			subBR->getAreaMinMaxHeight(quadTree, from, to, outMinZ, outMaxZ);
+			subBR->getAreaMinMaxHeight(quadTree, from, to, outMinY, outMaxY);
 		}
 	}
 
@@ -253,27 +257,27 @@ namespace Trinity
 		};
 	}
 
-	glm::vec2 QuadTreeNode::getWorldMinMaxY(uint32_t sizeY, const MapDimension& mapDims) const
+	glm::vec2 QuadTreeNode::getWorldMinMaxZ(uint32_t sizeZ, const MapDimension& mapDims) const
 	{
 		return {
-			mapDims.min.y + y * mapDims.size.y / (float)(sizeY - 1),
-			mapDims.min.y + (y + size) * mapDims.size.y / (float)(sizeY - 1)
+			mapDims.min.z + z * mapDims.size.y / (float)(sizeZ - 1),
+			mapDims.min.z + (z + size) * mapDims.size.y / (float)(sizeZ - 1)
 		};
 	}
 
-	glm::vec2 QuadTreeNode::getWorldMinMaxZ(const MapDimension& mapDims) const
+	glm::vec2 QuadTreeNode::getWorldMinMaxY(const MapDimension& mapDims) const
 	{
 		return {
-			mapDims.min.z + minZ * mapDims.size.z / 65535.0f,
-			mapDims.min.z + maxZ * mapDims.size.z / 65535.0f
+			mapDims.min.y + minY * mapDims.size.y / 65535.0f,
+			mapDims.min.y + maxY * mapDims.size.y / 65535.0f
 		};
 	}
 
 	BoundingBox QuadTreeNode::getBoundingBox(const glm::uvec2& inSize, const MapDimension& mapDims) const
 	{
 		auto minMaxX = getWorldMinMaxX(inSize.x, mapDims);
-		auto minMaxY = getWorldMinMaxY(inSize.y, mapDims);
-		auto minMaxZ = getWorldMinMaxZ(mapDims);
+		auto minMaxY = getWorldMinMaxY(mapDims);
+		auto minMaxZ = getWorldMinMaxZ(inSize.y, mapDims);
 
 		return {
 			{ minMaxX.x, minMaxY.x, minMaxZ.x },
@@ -284,16 +288,16 @@ namespace Trinity
 	BoundingSphere QuadTreeNode::getBoundingSphere(const glm::uvec2& inSize, const MapDimension& mapDims) const
 	{
 		float scaleX = mapDims.size.x / (float)(inSize.x - 1);
-		float scaleY = mapDims.size.y / (float)(inSize.y - 1);
-		float scaleZ = mapDims.size.z / 65535.0f;
+		float scaleY = mapDims.size.y / 65535.0f;
+		float scaleZ = mapDims.size.z / (float)(inSize.y - 1);
 
 		float sizeHalfX = size / 2.0f;
-		float sizeHalfY = size / 2.0f;
-		float sizeHalfZ = (maxZ - minZ) / 2.0f;
+		float sizeHalfY = (maxY - minY) / 2.0f;
+		float sizeHalfZ = size / 2.0f;
 
 		float midX = x + sizeHalfX;
-		float midY = y + sizeHalfY;
-		float midZ = minZ + sizeHalfZ;
+		float midY = minY + sizeHalfY;
+		float midZ = z + sizeHalfZ;
 
 		sizeHalfX *= scaleX;
 		sizeHalfY *= scaleY;
@@ -366,15 +370,15 @@ namespace Trinity
 		mNumTopNodes.y = (size.y - 1) / mTopNodeSize + 1;
 		mTopNodes.resize(mNumTopNodes.y);
 
-		for (uint32_t y = 0; y < mNumTopNodes.y; y++)
+		for (uint32_t z = 0; z < mNumTopNodes.y; z++)
 		{
-			mTopNodes[y].resize(mNumTopNodes.x);
+			mTopNodes[z].resize(mNumTopNodes.x);
 			for (uint32_t x = 0; x < mNumTopNodes.x; x++)
 			{
-				mTopNodes[y][x] = &mNodes[nodeCounter];
+				mTopNodes[z][x] = &mNodes[nodeCounter];
 				nodeCounter++;
 
-				mTopNodes[y][x]->create(this, x * mTopNodeSize, y * mTopNodeSize, 
+				mTopNodes[z][x]->create(this, x * mTopNodeSize, z * mTopNodeSize, 
 					mTopNodeSize, 0, nodeCounter);
 			}
 		}
@@ -404,7 +408,7 @@ namespace Trinity
 		selected->visDistTooSmall = false;
 		for (uint32_t idx = 0; idx < mNumLODs; idx++)
 		{
-			total *= currentDetailBalance;
+			total += currentDetailBalance;
 			currentDetailBalance *= detailBalance;
 		}
 
@@ -427,11 +431,11 @@ namespace Trinity
 			prevPos = mMorphStart[idx];
 		}
 
-		for (uint32_t y = 0; y < mNumTopNodes.y; y++)
+		for (uint32_t z = 0; z < mNumTopNodes.y; z++)
 		{
 			for (uint32_t x = 0; x < mNumTopNodes.x; x++)
 			{
-				mTopNodes[y][x]->selectLOD(this, selected, mNumLODs - 1, camera);
+				mTopNodes[z][x]->selectLOD(this, selected, mNumLODs - 1, camera);
 			}
 		}
 
@@ -453,6 +457,9 @@ namespace Trinity
 			{
 				selectionBuffer[idx].minDistToCamera = 0.0f;
 			}
+
+			selected->minLODLevel = std::min(selected->minLODLevel, selectionBuffer[idx].lodLevel);
+			selected->maxLODLevel = std::max(selected->maxLODLevel, selectionBuffer[idx].lodLevel);
 		}
 
 		if (selectionParams.sortByDistance)
@@ -495,33 +502,33 @@ namespace Trinity
 		return { start, 1.0f / (end - start), end / (end - start), 1.0f / (end - start) };
 	}
 
-	void QuadTree::getAreaMinMaxHeight(const glm::uvec2& from, const glm::uvec2& size, float& minZ, float& maxZ) const
+	void QuadTree::getAreaMinMaxHeight(const glm::uvec2& from, const glm::uvec2& size, float& minY, float& maxY) const
 	{
 		float bfx = (from.x - mMapDimension->min.x) / mMapDimension->size.x;
-		float bfy = (from.y - mMapDimension->min.y) / mMapDimension->size.y;
+		float bfz = (from.y - mMapDimension->min.y) / mMapDimension->size.y;
 		float btx = (from.x + size.x - mMapDimension->min.x) / mMapDimension->size.x;
-		float bty = (from.y + size.y - mMapDimension->min.y) / mMapDimension->size.y;
+		float btz = (from.y + size.y - mMapDimension->min.y) / mMapDimension->size.y;
 
 		auto& hmSize = mHeightMap->getSize();
 
 		auto sizeFromX = std::clamp((uint32_t)(bfx * hmSize.x), 0u, hmSize.x - 1);
-		auto sizeFromY = std::clamp((uint32_t)(bfy * hmSize.y), 0u, hmSize.y - 1);
+		auto sizeFromZ = std::clamp((uint32_t)(bfz * hmSize.y), 0u, hmSize.y - 1);
 		auto sizeToX = std::clamp((uint32_t)(btx * hmSize.x), 0u, hmSize.x - 1);
-		auto sizeToY = std::clamp((uint32_t)(bty * hmSize.y), 0u, hmSize.y - 1);
+		auto sizeToZ = std::clamp((uint32_t)(btz * hmSize.y), 0u, hmSize.y - 1);
 
 		auto baseFromX = sizeFromX / mTopNodeSize;
-		auto baseFromY = sizeFromY / mTopNodeSize;
+		auto baseFromZ = sizeFromZ / mTopNodeSize;
 		auto baseToX = sizeToX / mTopNodeSize;
-		auto baseToY = sizeToY / mTopNodeSize;
+		auto baseToZ = sizeToZ / mTopNodeSize;
 
-		minZ = FLT_MAX;
-		maxZ = -FLT_MAX;
+		minY = FLT_MAX;
+		maxY = -FLT_MAX;
 
-		for (uint32_t y = baseFromY; y <= baseToY; y++)
+		for (uint32_t z = baseFromZ; z <= baseToZ; z++)
 		{
 			for (uint32_t x = baseFromX; x <= baseToX; x++)
 			{
-				mTopNodes[y][x]->getAreaMinMaxHeight(this, { sizeFromX, sizeFromY }, { sizeToX, sizeToY }, minZ, maxZ);
+				mTopNodes[z][x]->getAreaMinMaxHeight(this, { sizeFromX, sizeFromZ }, { sizeToX, sizeToZ }, minY, maxY);
 			}
 		}
 	}

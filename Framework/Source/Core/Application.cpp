@@ -165,7 +165,7 @@ namespace Trinity
 
 		onResize();
 
-		mGraphicsDevice->setClearColor({ 0.0f, 0.0f, 0.0f, 1.0f });
+		mGraphicsDevice->setClearColor({ 0.5f, 0.5f, 0.5f, 1.0f });
 		mWindow->showMouse(true, false);
 		mMainPass = std::make_unique<RenderPass>();
 

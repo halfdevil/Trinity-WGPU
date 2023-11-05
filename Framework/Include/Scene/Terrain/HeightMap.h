@@ -42,7 +42,7 @@ namespace Trinity
 
 		virtual uint16_t getHeight(uint32_t x, uint32_t z) const;
 		virtual void getMinMaxHeight(uint32_t x, uint32_t z, uint32_t sizeX, uint32_t sizeZ,
-			uint16_t& minZ, uint16_t& maxZ) const;
+			uint16_t& minY, uint16_t& maxY) const;
 
 		virtual void setSize(const glm::uvec2& size);
 		virtual void setData(std::vector<uint16_t>&& data);

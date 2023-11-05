@@ -118,7 +118,7 @@ namespace Trinity
 			size.x * size.y);
 
 		setTexture("height_map_texture", *texture, *sampler);
-		addShaderDefine("has_height_map_texturue");
+		addShaderDefine("has_height_map_texture");
 
 		cache.addResource(std::move(texture));
 		cache.addResource(std::move(sampler));
@@ -206,7 +206,7 @@ namespace Trinity
 			wgpu::TextureUsage::CopyDst;
 
 		auto texture = std::make_unique<Texture2D>();
-		if (!texture->create(size.x, size.y, wgpu::TextureFormat::RG16Uint, usage))
+		if (!texture->create(size.x, size.y, wgpu::TextureFormat::RG16Float, usage))
 		{
 			LogError("Texture2D::create() failed");
 			return false;
@@ -216,7 +216,7 @@ namespace Trinity
 			size.x * size.y);
 
 		setTexture("normal_map_texture", *texture, *sampler);
-		addShaderDefine("has_normal_map_texturue");
+		addShaderDefine("has_normal_map_texture");
 
 		cache.addResource(std::move(texture));
 		cache.addResource(std::move(sampler));
@@ -254,9 +254,6 @@ namespace Trinity
 			return false;
 		}
 
-		uint32_t layoutBindingIndex{ 0 };
-		uint32_t itemBindingIndex{ 0 };
-
 		std::vector<BindGroupLayoutItem> layoutItems =
 		{
 			{
@@ -292,7 +289,7 @@ namespace Trinity
 				.binding = 2,
 				.shaderStages = wgpu::ShaderStage::Vertex,
 				.bindingLayout = TextureBindingLayout {
-					.sampleType = wgpu::TextureSampleType::Float,
+					.sampleType = wgpu::TextureSampleType::UnfilterableFloat,
 					.viewDimension = wgpu::TextureViewDimension::e2D
 				}
 			});
@@ -382,7 +379,7 @@ namespace Trinity
 				});
 
 				layoutItems.push_back({
-					.binding = 2 * idx + 4,
+					.binding = 2 * idx + 8,
 					.shaderStages = wgpu::ShaderStage::Fragment,
 					.bindingLayout = TextureBindingLayout {
 						.sampleType = wgpu::TextureSampleType::Float,
@@ -391,12 +388,12 @@ namespace Trinity
 				});
 
 				items.push_back({
-					.binding = 2 * idx + 3,
+					.binding = 2 * idx + 7,
 					.resource = SamplerBindingResource(*(it->second.sampler))
 				});
 
 				items.push_back({
-					.binding = 2 * idx + 4,
+					.binding = 2 * idx + 8,
 					.resource = TextureBindingResource(*(it->second.texture))
 				});
 			}

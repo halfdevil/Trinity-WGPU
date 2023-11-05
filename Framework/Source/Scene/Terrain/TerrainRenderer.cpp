@@ -132,7 +132,7 @@ namespace Trinity
 			.vertexLayouts = { mSceneData.gridMeshLayout },
 			.primitive = {
 				.topology = wgpu::PrimitiveTopology::TriangleList,
-				.cullMode = wgpu::CullMode::Back
+				.cullMode = wgpu::CullMode::None
 			}
 		};
 
@@ -234,7 +234,7 @@ namespace Trinity
 			.binding = 2,
 			.shaderStages = wgpu::ShaderStage::Vertex,
 			.bindingLayout = BufferBindingLayout {
-				.type = wgpu::BufferBindingType::ReadOnlyStorage,
+				.type = wgpu::BufferBindingType::Uniform,
 				.minBindingSize = sizeof(TerrainBufferData)
 			}
 		});
@@ -243,7 +243,7 @@ namespace Trinity
 			.binding = 3,
 			.shaderStages = wgpu::ShaderStage::Vertex,
 			.bindingLayout = BufferBindingLayout {
-				.type = wgpu::BufferBindingType::ReadOnlyStorage,
+				.type = wgpu::BufferBindingType::Uniform,
 				.minBindingSize = sizeof(QuadBufferData)
 			}
 		});
@@ -256,7 +256,7 @@ namespace Trinity
 
 		sceneItems.push_back({
 			.binding = 3,
-			.size = sizeof(TerrainBufferData),
+			.size = sizeof(QuadBufferData),
 			.resource = BufferBindingResource(*mSceneData.quadBuffer)
 		});
 
@@ -512,15 +512,15 @@ namespace Trinity
 
 			quadData.quadScale = {
 				nodeBox.max.x - nodeBox.min.x,
-				nodeBox.max.y - nodeBox.min.y,
 				(float)lodLevel,
+				nodeBox.max.z - nodeBox.min.z,
 				0.0f
 			};
 
 			quadData.quadOffset = {
 				nodeBox.min.x,
-				nodeBox.min.y,
-				(nodeBox.min.z + nodeBox.max.z) * 0.5f,
+				(nodeBox.min.y + nodeBox.max.y) * 0.5f,
+				nodeBox.min.z,
 				0.0f
 			};
 
